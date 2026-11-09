@@ -1,0 +1,100 @@
+rules_version = '2';
+// Regole di sicurezza di Turni Arese.
+// Da copiare in Firebase › Firestore Database › Regole, poi "Pubblica".
+//
+// In breve:
+// - senza accesso si può solo: vedere se l'app è già configurata, cercare un nome per entrare
+//   (un nome alla volta, senza poter vedere l'elenco), usare un codice di primo accesso
+// - i balordi leggono turni, nomi, foto profilo e appuntamenti; cambiano solo le proprie ore
+//   da contratto e la propria foto
+// - il responsabile e il PC del banco scrivono agenda, turni, appuntamenti e note
+// - solo il responsabile gestisce accessi, codici e chiave di Gemini
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function signedIn() { return request.auth != null; }
+    function mPath(uid) { return /databases/$(database)/documents/members/$(uid); }
+    function isMember() { return signedIn() && exists(mPath(request.auth.uid)); }
+    function me() { return get(mPath(request.auth.uid)).data; }
+    function isAdmin() { return isMember() && me().role == 'admin'; }
+    function canAgenda() { return isMember() && me().role in ['admin', 'banco']; }
+    function myStaff() { return me().get('staffId', ''); }
+    function setupPath() { return /databases/$(database)/documents/setup/state; }
+    function invPath(code) { return /databases/$(database)/documents/invites/$(code); }
+
+    // stato della prima configurazione: si crea una volta sola
+    match /setup/state {
+      allow get: if true;
+      allow create: if signedIn() && !exists(setupPath()) && request.resource.data.admin == request.auth.uid;
+      allow update, delete: if false;
+    }
+
+    // nome -> come entrare (si legge un nome alla volta, l'elenco no)
+    match /logins/{slug} {
+      allow get: if true;
+      allow list: if isAdmin();
+      allow create, update: if isAdmin() || (signedIn()
+        && request.resource.data.uid == request.auth.uid
+        && getAfter(mPath(request.auth.uid)).data.get('staffId', '') == request.resource.data.staffId);
+      allow delete: if isAdmin();
+    }
+
+    // codici di primo accesso e codice postazione del PC del banco
+    match /invites/{code} {
+      allow get: if true;
+      allow list, create, update: if isAdmin();
+      allow delete: if isAdmin() || (signedIn() && getAfter(mPath(request.auth.uid)).data.get('code', '') == code);
+    }
+
+    // chi può entrare e con che ruolo
+    match /members/{uid} {
+      allow get: if signedIn() && (request.auth.uid == uid || isAdmin());
+      allow list: if isAdmin();
+      allow create: if signedIn() && request.auth.uid == uid && (
+        // primo responsabile, alla prima configurazione
+        (request.resource.data.role == 'admin'
+          && !exists(setupPath())
+          && getAfter(setupPath()).data.admin == uid)
+        ||
+        // balordo con il suo codice di primo accesso (non scaduto)
+        (request.resource.data.role == 'user'
+          && exists(invPath(request.resource.data.code))
+          && get(invPath(request.resource.data.code)).data.role == 'user'
+          && get(invPath(request.resource.data.code)).data.staffId == request.resource.data.staffId
+          && get(invPath(request.resource.data.code)).data.exp > request.time.toMillis())
+        ||
+        // PC del banco con il codice postazione
+        (request.resource.data.role == 'banco'
+          && exists(invPath(request.resource.data.code))
+          && get(invPath(request.resource.data.code)).data.role == 'banco')
+      );
+      allow update: if isAdmin();
+      allow delete: if isAdmin() || request.auth.uid == uid;
+    }
+
+    // chiave di Gemini: solo il responsabile
+    match /config/{docId} { allow read, write: if isAdmin(); }
+
+    // balordi: tutti li leggono; ognuno cambia solo le sue ore da contratto
+    match /staff/{id} {
+      allow read: if isMember();
+      allow create, delete: if isAdmin();
+      allow update: if isAdmin() || (isMember() && myStaff() == id
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['contratto']));
+    }
+
+    // foto profilo: ognuno la sua (il responsabile tutte)
+    match /avatars/{id} {
+      allow read: if isMember();
+      allow write: if isAdmin() || (isMember() && myStaff() == id
+        && request.resource.data.img is string && request.resource.data.img.size() < 400000);
+      allow delete: if isAdmin() || (isMember() && myStaff() == id);
+    }
+
+    // turni e appuntamenti: li leggono tutti, li scrivono responsabile e PC del banco
+    match /shifts/{id} { allow read: if isMember(); allow write: if canAgenda(); }
+    match /appts/{id}  { allow read: if isMember(); allow write: if canAgenda(); }
+    // note dell'agenda: solo responsabile e PC del banco
+    match /notes/{id}  { allow read, write: if canAgenda(); }
+  }
+}
