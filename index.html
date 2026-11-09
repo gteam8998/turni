@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>Turni Arese</title>
-<!-- versione 2026.11.10-3 -->
+<!-- versione 2026.11.10-4 -->
 <meta name="description" content="Turni e agenda del reparto Telefonia &amp; Service, MediaWorld Arese">
 <meta name="theme-color" content="#FFFFFF" media="(prefers-color-scheme: light)">
 <meta name="theme-color" content="#0B0F17" media="(prefers-color-scheme: dark)">
@@ -411,6 +411,24 @@ button.who:hover{background:var(--hover)}
 .peek>summary{cursor:pointer;font-weight:700;color:var(--tel);font-size:15px;padding:4px 0}
 .peek-img{overflow-x:auto;border-radius:10px;border:1.5px solid var(--line);margin-top:6px;background:var(--surface)}
 .peek-img img{display:block;height:120px;width:auto;max-width:none}
+/* niente esce dallo schermo nella revisione: nomi lunghi, select e date su iPhone */
+#upload{overflow-x:clip}
+.person .ph-top{flex-wrap:wrap;min-width:0}
+.person .incl{min-width:0;flex:1 1 12em}
+.pname{overflow-wrap:anywhere;min-width:0}
+.dg-date input,.dg-body input[type=date]{-webkit-appearance:none;appearance:none;display:block;min-width:0;max-width:100%;width:100%}
+.dgroup>summary>*{min-width:0}
+.dseg{border:0;margin:0;padding:0;min-width:0;grid-column:1/-1}
+.dseg legend{padding:0;margin-bottom:6px;font-weight:700;font-size:15px}
+.dseg-b{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px}
+.ds{position:relative;display:block;min-width:0}
+.ds input{position:absolute;opacity:0;inset:0;margin:0;cursor:pointer}
+.ds span{display:flex;align-items:center;justify-content:center;min-height:46px;padding:0 6px;border-radius:12px;border:1.5px solid var(--line);background:var(--surface);font-weight:700;font-size:14px;text-align:center;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.ds input:focus-visible+span{outline:2px solid var(--tel);outline-offset:2px}
+.ds.tel input:checked+span{background:var(--tel-fill);border-color:var(--tel);color:var(--tel-ink)}
+.ds.srv input:checked+span{background:var(--srv-fill);border-color:var(--srv);color:var(--srv-ink)}
+.ds.alt input:checked+span{background:var(--ink);border-color:var(--ink);color:var(--bg)}
+.up-model{margin:-4px 0 0;font-size:13px;color:var(--ink-3)}
 .excl{margin:0!important;font-size:14px;color:var(--ink-2)!important;padding:4px 4px 0}
 .lend{font-size:14px;font-weight:700;color:var(--wip);background:var(--wip-fill);border-radius:7px;padding:2px 9px}
 .prow{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
@@ -1071,7 +1089,7 @@ function qrSvg(text, color = "#0B1220", bg = "#FFFFFF") {
 if (typeof module !== "undefined") module.exports = { QRGEN, qrSvg };
 
 </script>
-<script src="firebase-config.js?v=2026.11.10-3"></script>
+<script src="firebase-config.js?v=2026.11.10-4"></script>
 <script>
 (() => {
 "use strict";
@@ -2044,7 +2062,7 @@ async function readPhotos(){
         const out = toReadOut(salvageJSON(res.text));
         if (!out.days.some(d => d.rows.length)) throw {code: "no_rows"};
         if (res.truncated) out.dubbi.push("la lettura si è interrotta prima della fine: controlla le ultime righe");
-        results.push({i, out}); f.status = "ok";
+        results.push({i, out}); f.status = "ok"; U.model = res.model;
       } catch (e) {
         if (e && e.code === "cancelled"){ f.status = ""; stop = true; break; }
         fails.push({i, e}); f.status = "err";
@@ -2208,7 +2226,7 @@ function personHtml(p, gi){
     <div class="prow">
       <div class="fld"><label for="m-${p.key}">In agenda è</label><select id="m-${p.key}" data-f="matchId">${opts}</select></div>
       ${p.matchId ? "" : `<div class="fld"><label for="n-${p.key}">Nome da usare</label><input id="n-${p.key}" data-f="newName" value="${esc(p.newName)}" maxlength="40"></div>`}
-      <div class="fld"><label for="d-${p.key}">Reparto di oggi</label><select id="d-${p.key}" data-f="dept"><option value="tel" ${p.dept === "tel" ? "selected" : ""}>Telefonia (TLC)</option><option value="srv" ${p.dept === "srv" ? "selected" : ""}>Service (HE)</option><option value="alt" ${p.dept === "alt" ? "selected" : ""}>Altro reparto${p.altSig ? ` (${esc(p.altSig)})` : ""}</option></select></div>
+      <fieldset class="fld dseg"><legend>Reparto di oggi</legend><div class="dseg-b">${[["tel", "Telefonia"], ["srv", "Service"], ["alt", p.altSig ? esc(p.altSig) : "Altro"]].map(([v, l]) => `<label class="ds ${v}"><input type="radio" name="d-${p.key}" value="${v}" data-f="dept" ${p.dept === v ? "checked" : ""}><span>${l}</span></label>`).join("")}</div></fieldset>
       <div class="fld hours"><label for="t-${p.key}">Orario</label><input id="t-${p.key}" data-f="text" value="${esc(p.text)}" class="${hi.bad ? "bad" : ""}" autocomplete="off"><div class="hint${hi.bad ? " bad" : ""}">${esc(hi.txt)}</div></div>
     </div>
   </div>`;
@@ -2216,7 +2234,7 @@ function personHtml(p, gi){
 function reviewHtml(){
   const total = U.groups.reduce((n, g) => n + g.people.length, 0);
   const doubts = U.doubts.length ? `<div class="doubts"><b>Da controllare sul foglio</b><ul>${U.doubts.map(d => `<li>${esc(d)}</li>`).join("")}</ul></div>` : "";
-  let h = `<section class="step"><div class="step-h"><b>2</b><h2>Controlla i turni letti</h2></div>`;
+  let h = `<section class="step"><div class="step-h"><b>2</b><h2>Controlla i turni letti</h2></div>${U.model ? `<p class="up-model">Letto con ${esc(U.model)}</p>` : ""}`;
   if (!total) return h + `<div class="doubts"><b>Non ho trovato nessuno da salvare.</b>${U.doubts.length ? `<ul>${U.doubts.map(d => `<li>${esc(d)}</li>`).join("")}</ul>` : ""}Rifai le foto più dritte, con nomi e griglia oraria ben leggibili.</div><button class="btn" data-act="up-reset">Ricomincia</button></section>`;
   const many = U.groups.length > 1;
   h += `<div class="found">${many ? `Ho letto ${total} turni su ${U.groups.length} giorni` : `Da salvare: ${total} ${total === 1 ? "persona" : "persone"}`}. Correggi l'orario se serve: scrivi tipo <span class="num">9-13, 13:30-16</span> oppure <b>Riposo</b>.</div>${doubts}`;
