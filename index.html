@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>Turni Arese</title>
-<!-- versione 2026.11.10-1 -->
+<!-- versione 2026.11.10-2 -->
 <meta name="description" content="Turni e agenda del reparto Telefonia &amp; Service, MediaWorld Arese">
 <meta name="theme-color" content="#FFFFFF" media="(prefers-color-scheme: light)">
 <meta name="theme-color" content="#0B0F17" media="(prefers-color-scheme: dark)">
@@ -1071,7 +1071,7 @@ function qrSvg(text, color = "#0B1220", bg = "#FFFFFF") {
 if (typeof module !== "undefined") module.exports = { QRGEN, qrSvg };
 
 </script>
-<script src="firebase-config.js?v=2026.11.10-1"></script>
+<script src="firebase-config.js?v=2026.11.10-2"></script>
 <script>
 (() => {
 "use strict";
@@ -2315,11 +2315,19 @@ function makeFirestoreDb(F, fs){
   const docApi = ref => ({
     id: ref.id, path: ref.path,
     get: async () => snapDoc(await F.getDoc(ref)),
+    getServer: async () => snapDoc(await F.getDocFromServer(ref)),
     set: d => F.setDoc(ref, d),
     update: d => F.updateDoc(ref, flatten(d)),
     delete: () => F.deleteDoc(ref),
-    onSnapshot: (next, err) => F.onSnapshot(ref, s => next(snapDoc(s)), e => err && err(e))
+    onSnapshot: (next, err) => F.onSnapshot(ref, {includeMetadataChanges: true}, s => next(snapDoc(s)), e => err && err(e))
   });
+  /* con la cache sul dispositivo, se i dati del server sono uguali a quelli in cache Firestore non
+     richiama il listener: lo chiedo comunque quando cambia "fromCache", così l'app sa di essere collegata */
+  const watchQ = (q, next, err) => { let first = true, wasCache = null;
+    return F.onSnapshot(q, {includeMetadataChanges: true}, s => {
+      const ch = s.docChanges().length, fc = s.metadata.fromCache;
+      if (first || ch || fc !== wasCache){ first = false; wasCache = fc; next(snapQ(s)); }
+    }, e => err && err(e)); };
   const queryApi = (base, cons = []) => {
     const q = () => cons.length ? F.query(base, ...cons) : base;
     return {
@@ -2328,7 +2336,7 @@ function makeFirestoreDb(F, fs){
       orderBy: (f, dir) => queryApi(base, cons.concat(F.orderBy(f, dir))),
       limit: n => queryApi(base, cons.concat(F.limit(n))),
       get: async () => snapQ(await F.getDocs(q())),
-      onSnapshot: (next, err) => F.onSnapshot(q(), s => next(snapQ(s)), e => err && err(e)),
+      onSnapshot: (next, err) => watchQ(q(), next, err),
       doc: id => docApi(id ? F.doc(base, id) : F.doc(base)),
       add: async d => docApi(await F.addDoc(base, d))
     };
@@ -2846,16 +2854,35 @@ async function importBackup(file){
   catch (e) { writeErr(e); }
 }
 async function importBackupData(j){
-  const ops = [];
+  const ops = [], remap = {};
+  /* se un balordo del backup c'è già con un altro codice (es. creato alla prima configurazione)
+     non lo duplico: unisco i dati e sposto i suoi turni sul codice che esiste già */
+  const have = (S.staff || []).filter(x => x && x.name);
+  for (const [id, s] of Object.entries(j.staff || {})){
+    if (!s || !s.name || have.some(x => x.id === id)) continue;
+    const same = have.filter(x => norm(x.name) === norm(s.name) || (x.full && sameName(x.full, s.full || s.name)));
+    if (same.length === 1) remap[id] = same[0].id;
+  }
   for (const [id, s] of Object.entries(j.staff || {})){
     if (!s || !s.name) continue;
+    if (remap[id]){
+      const x = have.find(h => h.id === remap[id]), up = {};
+      if (s.sheetName && !x.sheetName) up.sheetName = String(s.sheetName);
+      if (Number(s.contratto) > 0 && !x.contratto) up.contratto = Number(s.contratto);
+      if (Object.keys(up).length) ops.push({op: "update", path: "staff/" + remap[id], data: up});
+      continue;
+    }
     const d = {name: String(s.name), order: Number(s.order) || 0};
     if (s.sheetName) d.sheetName = String(s.sheetName);
     if (s.full) d.full = String(s.full);
     if (Number(s.contratto) > 0) d.contratto = Number(s.contratto);
     ops.push({op: "set", path: "staff/" + id, data: d});
   }
-  for (const [d, v] of Object.entries(j.shifts || {})){ if (validDate(d) && v && v.rows) ops.push({op: "set", path: "shifts/" + d, data: {date: d, rows: v.rows}}); }
+  for (const [d, v] of Object.entries(j.shifts || {})){
+    if (!validDate(d) || !v || !v.rows) continue;
+    const rows = {}; for (const [sid, bl] of Object.entries(v.rows)) rows[remap[sid] || sid] = bl;
+    ops.push({op: "set", path: "shifts/" + d, data: {date: d, rows}});
+  }
   for (const [id, v] of Object.entries(j.appts || {})) if (v && validDate(v.date)) ops.push({op: "set", path: "appts/" + id, data: v});
   for (const [id, v] of Object.entries(j.notes || {})) if (v && v.text) ops.push({op: "set", path: "notes/" + id, data: Object.assign({by: ""}, v)});
   for (let i = 0; i < ops.length; i += 400) await S.db.batch(ops.slice(i, i + 400));
@@ -3015,9 +3042,15 @@ async function onAuth(u){
   if (SES.claiming) return;
   SES.user = u;
   if (!u){ SES.member = null; SES.staffId = ""; document.body.dataset.role = ""; SES.ready = true; return route(); }
-  let m;
-  try { m = await BK.db.doc("members/" + u.uid).get(); }
-  catch { SES.member = null; SES.ready = true; LG.err = "Non riesco a collegarmi: controlla la connessione e riprova."; return route(); }
+  /* chi sono: provo dalla cache o dal server; se la connessione è lenta all'avvio riprovo qualche volta */
+  let m = null;
+  for (let i = 0; i < 4 && !m; i++){
+    const ref = BK.db.doc("members/" + u.uid);
+    try { m = i % 2 === 0 ? await ref.get() : await (ref.getServer || ref.get)(); }
+    catch { await new Promise(r => setTimeout(r, 1200 * (i + 1))); }
+  }
+  if (m && !m.exists && m.metadata && m.metadata.fromCache){ try { m = await BK.db.doc("members/" + u.uid).getServer(); } catch {} }
+  if (!m){ SES.member = null; SES.ready = true; LG.err = "Non riesco a collegarmi: controlla la connessione e riprova."; return route(); }
   if (!m.exists){ try { await BK.auth.signOut(); } catch {} SES.member = null; SES.ready = true; LG.err = "Questo accesso non è più attivo: chiedi un nuovo codice al responsabile."; LG.mode = "first"; return route(); }
   SES.member = Object.assign({uid: u.uid}, m.data());
   SES.staffId = SES.member.staffId || "";
@@ -3026,7 +3059,7 @@ async function onAuth(u){
   document.body.dataset.role = SES.member.role;
   startData();
   if (SES.memberUnsub) SES.memberUnsub();
-  SES.memberUnsub = S.db.doc("members/" + u.uid).onSnapshot(s => { if (!s.exists && SES.member){ toast("Il tuo accesso è stato azzerato."); logout(); } }, () => {});
+  SES.memberUnsub = S.db.doc("members/" + u.uid).onSnapshot(s => { if (!s.exists && SES.member && !(s.metadata && s.metadata.fromCache)){ toast("Il tuo accesso è stato azzerato."); logout(); } }, () => {});
   SES.ready = true; LG.err = ""; route();
 }
 function startData(){
