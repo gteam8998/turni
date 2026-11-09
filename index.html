@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>Turni Arese</title>
-<!-- versione 2026.11.10-2 -->
+<!-- versione 2026.11.10-3 -->
 <meta name="description" content="Turni e agenda del reparto Telefonia &amp; Service, MediaWorld Arese">
 <meta name="theme-color" content="#FFFFFF" media="(prefers-color-scheme: light)">
 <meta name="theme-color" content="#0B0F17" media="(prefers-color-scheme: dark)">
@@ -1071,7 +1071,7 @@ function qrSvg(text, color = "#0B1220", bg = "#FFFFFF") {
 if (typeof module !== "undefined") module.exports = { QRGEN, qrSvg };
 
 </script>
-<script src="firebase-config.js?v=2026.11.10-2"></script>
+<script src="firebase-config.js?v=2026.11.10-3"></script>
 <script>
 (() => {
 "use strict";
@@ -1853,12 +1853,15 @@ function crop(src, sx, sy, sw, sh, maxSide){
    Una richiesta per foto: il foglio intero + 3 strisce ingrandite, risposta in JSON con schema fisso.
    Poi è l'app a fare i controlli: colonne Da/A contro celle colorate, orari sulla mezz'ora, date. */
 const AI = {key: "", model: "", models: null};
-const GEM_MODELS = ["gemini-3.8-flash", "gemini-3.6-flash", "gemini-3-flash-preview", "gemini-2.5-flash", "gemini-3.5-flash-lite", "gemini-flash-latest"];
+const GEM_MODELS = ["gemini-3.8-flash", "gemini-3.6-flash", "gemini-3-flash-preview", "gemini-2.5-flash", "gemini-flash-latest", "gemini-3.5-flash-lite", "gemini-2.5-flash-lite", "gemini-flash-lite-latest"];
+/* modelli che in questa sessione hanno detto "non gratuito" o "limite di oggi finito": non li riprovo */
+const GEM_DEAD = {};
+const gemOk = () => { try { return localStorage.getItem("gem-ok") || ""; } catch { return ""; } };
 function modelsToTry(){
-  const pref = [...new Set([AI.model, ...GEM_MODELS].filter(Boolean))];
+  const pref = [...new Set([gemOk(), AI.model, ...GEM_MODELS].filter(Boolean))];
   const av = Array.isArray(AI.models) && AI.models.length ? new Set(AI.models) : null;
   const ok = pref.filter(m => !av || av.has(m));
-  return ok.length ? ok : pref;
+  return (ok.length ? ok : pref).filter(m => !GEM_DEAD[m]);
 }
 const blobB64 = b => new Promise((res, rej) => { const r = new FileReader(); r.onload = () => res(String(r.result).split(",")[1] || ""); r.onerror = () => rej(new Error("read")); r.readAsDataURL(b); });
 async function prepareImages(f){
@@ -1930,53 +1933,67 @@ function geminiRetryDelay(err){
   const d = ((err && err.error && err.error.details) || []).find(x => String(x["@type"] || "").includes("RetryInfo"));
   const s = d && parseFloat(String(d.retryDelay || "")); return Number.isFinite(s) ? Math.ceil(s) : 0;
 }
+/* Una richiesta per foto. Se un modello è al limite passo SUBITO al successivo (niente attese lunghe);
+   aspetto una volta sola, e poco, solo se sono al limite tutti. */
+const isNoFree = all => /limit: ?0\b|"quota_?value"\s*:\s*"?0"?|free_tier[^"]*"[^}]*"limit"\s*:\s*"?0/i.test(all);
 async function gemini(prompt, b64s, {signal, onWait} = {}){
   if (!AI.key) throw {code: "no_key"};
-  let lastErr = {code: "busy"};
-  for (const model of modelsToTry()){
-    let mode = 0;   // 0 = schema + alta risoluzione + ragionamento breve, 1 = solo schema, 2 = solo JSON
-    for (let attempt = 0; attempt < 5; attempt++){
-      const gen = {temperature: 0, maxOutputTokens: 32768, responseMimeType: "application/json"};
-      if (mode < 2) gen.responseSchema = READ_SCHEMA;
-      if (mode === 0){ gen.mediaResolution = "MEDIA_RESOLUTION_HIGH"; gen.thinkingConfig = {thinkingLevel: "low"}; }
-      const body = {contents: [{role: "user", parts: [...b64s.map(d => ({inline_data: {mime_type: "image/jpeg", data: d}})), {text: prompt}]}], generationConfig: gen};
-      const ctl = new AbortController(), tm = setTimeout(() => ctl.abort(), 180000);
-      const onAbort = () => ctl.abort(); signal && signal.addEventListener("abort", onAbort, {once: true});
-      let res;
-      try {
-        res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent`,
-          {method: "POST", headers: {"Content-Type": "application/json", "x-goog-api-key": AI.key}, body: JSON.stringify(body), signal: ctl.signal});
-      } catch (e) {
+  const errs = [];
+  for (let round = 0; round < 2; round++){
+    const limited = [], models = modelsToTry();
+    if (!models.length) break;
+    for (const model of models){
+      let mode = 0;   // 0 = schema + alta risoluzione + ragionamento breve, 1 = solo schema, 2 = solo JSON
+      for (let attempt = 0; attempt < 3; attempt++){
+        const gen = {temperature: 0, maxOutputTokens: 32768, responseMimeType: "application/json"};
+        if (mode < 2) gen.responseSchema = READ_SCHEMA;
+        if (mode === 0){ gen.mediaResolution = "MEDIA_RESOLUTION_HIGH"; gen.thinkingConfig = {thinkingLevel: "low"}; }
+        const body = {contents: [{role: "user", parts: [...b64s.map(d => ({inline_data: {mime_type: "image/jpeg", data: d}})), {text: prompt}]}], generationConfig: gen};
+        const ctl = new AbortController(), tm = setTimeout(() => ctl.abort(), 150000);
+        const onAbort = () => ctl.abort(); signal && signal.addEventListener("abort", onAbort, {once: true});
+        let res;
+        try {
+          res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent`,
+            {method: "POST", headers: {"Content-Type": "application/json", "x-goog-api-key": AI.key}, body: JSON.stringify(body), signal: ctl.signal});
+        } catch (e) {
+          clearTimeout(tm); signal && signal.removeEventListener("abort", onAbort);
+          if (signal && signal.aborted) throw {code: "cancelled"};
+          errs.push({code: "network", model}); if (attempt < 1) continue; break;
+        }
         clearTimeout(tm); signal && signal.removeEventListener("abort", onAbort);
-        if (signal && signal.aborted) throw {code: "cancelled"};
-        lastErr = {code: "network"}; if (attempt < 1) continue; break;
+        if (res.ok){
+          const j = await res.json().catch(() => ({}));
+          const c = j.candidates && j.candidates[0];
+          const text = ((c && c.content && c.content.parts) || []).filter(p => p.text && !p.thought).map(p => p.text).join("");
+          if (!text){ if ((j.promptFeedback && j.promptFeedback.blockReason) || (c && /SAFETY|PROHIBITED|RECITATION/.test(c.finishReason || ""))) throw {code: "refused"}; errs.push({code: "empty", model}); continue; }
+          try { localStorage.setItem("gem-ok", model); } catch {}
+          return {text, truncated: !!(c && c.finishReason === "MAX_TOKENS"), model};
+        }
+        const err = await res.json().catch(() => ({}));
+        const msg = String((err.error && err.error.message) || ""), all = msg + " " + JSON.stringify(err);
+        if (res.status === 400 && mode < 2 && /thinking|media|resolution|schema|unknown name|invalid json|not supported|property|cannot find field/i.test(msg)){ mode++; attempt--; continue; }
+        if (res.status === 400 && /api key/i.test(msg)) throw {code: "bad_key"};
+        if (res.status === 401 || res.status === 403) throw {code: /referer|referrer|blocked|restrict/i.test(msg) ? "forbidden" : "bad_key"};
+        if (res.status === 404){ GEM_DEAD[model] = 1; errs.push({code: "model", model}); break; }
+        if (res.status === 429){
+          if (isNoFree(all)){ GEM_DEAD[model] = 1; errs.push({code: "nofree", model, message: msg}); break; }
+          if (/per ?day|daily|PerDay/i.test(all)){ GEM_DEAD[model] = 1; errs.push({code: "daily", model, message: msg}); break; }
+          errs.push({code: "rate", model, message: msg}); limited.push(geminiRetryDelay(err) || 20); break;
+        }
+        if (res.status >= 500){
+          errs.push({code: "busy", model, message: msg});
+          if (attempt >= 1) break;
+          onWait && onWait(5); await sleep(5000, signal); onWait && onWait(0); continue;
+        }
+        throw {code: "http", message: msg, model};
       }
-      clearTimeout(tm); signal && signal.removeEventListener("abort", onAbort);
-      if (res.ok){
-        const j = await res.json().catch(() => ({}));
-        const c = j.candidates && j.candidates[0];
-        const text = ((c && c.content && c.content.parts) || []).filter(p => p.text && !p.thought).map(p => p.text).join("");
-        if (!text){ if ((j.promptFeedback && j.promptFeedback.blockReason) || (c && /SAFETY|PROHIBITED|RECITATION/.test(c.finishReason || ""))) throw {code: "refused"}; lastErr = {code: "empty"}; continue; }
-        return {text, truncated: !!(c && c.finishReason === "MAX_TOKENS"), model};
-      }
-      const err = await res.json().catch(() => ({}));
-      const msg = String((err.error && err.error.message) || "");
-      if (res.status === 400 && mode < 2 && /thinking|media|resolution|schema|unknown name|invalid json|not supported|property|cannot find field/i.test(msg)){ mode++; attempt--; continue; }
-      if (res.status === 400 && /api key/i.test(msg)) throw {code: "bad_key"};
-      if (res.status === 401 || res.status === 403) throw {code: /referer|referrer|blocked|restrict/i.test(msg) ? "forbidden" : "bad_key"};
-      if (res.status === 404){ lastErr = {code: "model"}; break; }
-      if (res.status === 429 && /per ?day|daily|PerDay/i.test(msg + JSON.stringify(err))){ lastErr = {code: "daily"}; break; }
-      if (res.status === 429 || res.status >= 500){
-        const wait = Math.min(90, geminiRetryDelay(err) || (attempt + 1) * 15);
-        lastErr = {code: res.status === 429 ? "rate" : "busy"};
-        if (attempt >= 3) break;
-        onWait && onWait(wait); await sleep(wait * 1000, signal); onWait && onWait(0);
-        continue;
-      }
-      throw {code: "http", message: msg};
     }
+    if (!limited.length || round) break;
+    const wait = Math.min(45, Math.max(5, Math.min(...limited)));
+    onWait && onWait(wait); await sleep(wait * 1000, signal); onWait && onWait(0);
   }
-  throw lastErr;
+  for (const c of ["rate", "busy", "network", "empty", "daily", "nofree", "model"]){ const e = [...errs].reverse().find(x => x.code === c); if (e) throw e; }
+  throw {code: "model"};
 }
 const READ_ERR = {
   no_key: "manca la chiave di Gemini (Impostazioni › Lettura delle foto)",
@@ -1986,16 +2003,17 @@ const READ_ERR = {
   rate: "Gemini è al limite gratuito al minuto: riprova tra qualche minuto",
   busy: "Gemini non risponde in questo momento: riprova più tardi",
   model: "nessun modello di Gemini disponibile per questa chiave",
+  nofree: "la chiave non ha uso gratuito per i modelli provati (su Google AI Studio controlla piano e limiti della chiave)",
   network: "nessuna risposta da Gemini: controlla la connessione",
   refused: "Gemini non ha voluto leggere la foto: rifalla solo sul foglio orari",
   empty: "Gemini ha risposto vuoto: riprova",
   no_rows: "non ho riconosciuto la tabella degli orari"
 };
-const STOP_CODES = ["no_key", "bad_key", "forbidden", "daily", "model"];
+const STOP_CODES = ["no_key", "bad_key", "forbidden", "daily", "model", "nofree"];
 function failReason(e){
   if (e && e.message === "heic") return "foto HEIC dell'iPhone che non sono riuscito a convertire (riprova, oppure caricala come JPG)";
   if (e && e.message === "decode") return "formato non leggibile";
-  if (e && READ_ERR[e.code]) return READ_ERR[e.code];
+  if (e && READ_ERR[e.code]) return READ_ERR[e.code] + (e.model && /rate|daily|nofree|busy/.test(e.code) ? ` [${e.model}${e.message ? ": " + e.message.replace(/\s+/g, " ").slice(0, 160) : ""}]` : "");
   if (e && e.code === "http") return "errore di Gemini" + (e.message ? ` (${e.message.slice(0, 120)})` : "");
   return "errore di connessione";
 }
@@ -2840,11 +2858,24 @@ async function saveAiKey(){
     if (!r.ok){ AD.test = "ko:" + (r.status === 400 || r.status === 403 ? "Chiave non valida o non autorizzata per questo sito." : `Errore ${r.status}: riprova.`); return renderSet(); }
     models = (j.models || []).filter(m => (m.supportedGenerationMethods || []).includes("generateContent")).map(m => String(m.name).replace("models/", ""));
   } catch { AD.test = "ko:Nessuna risposta da Google: controlla la connessione."; return renderSet(); }
-  const model = GEM_MODELS.find(m => models.includes(m)) || models.find(m => /flash/.test(m) && !/image|tts|audio|live/.test(m)) || "";
+  /* provo con una domanda minuscola quali modelli rispondono davvero con questa chiave (gratis) */
+  const cands = [...GEM_MODELS.filter(m => models.includes(m)), ...models.filter(m => /flash/.test(m) && !/image|tts|audio|live|embed/.test(m) && !GEM_MODELS.includes(m))].slice(0, 6);
+  let model = "", note = "";
+  for (const m of cands){
+    AD.test = `ok:Provo il modello ${m}…`; renderSet();
+    try {
+      const r = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(m)}:generateContent`, {method: "POST", headers: {"Content-Type": "application/json", "x-goog-api-key": key},
+        body: JSON.stringify({contents: [{role: "user", parts: [{text: "Rispondi solo: ok"}]}], generationConfig: {maxOutputTokens: 200}})});
+      if (r.ok){ model = m; break; }
+      const e = await r.json().catch(() => ({})), all = String((e.error && e.error.message) || "") + JSON.stringify(e);
+      if (r.status === 429 && !isNoFree(all) && !/per ?day|daily|PerDay/i.test(all)){ model = model || m; note = " (adesso è al limite al minuto, tra poco va)"; break; }
+    } catch {}
+  }
+  if (model){ try { localStorage.setItem("gem-ok", model); } catch {} Object.keys(GEM_DEAD).forEach(k => delete GEM_DEAD[k]); }
   try { await S.db.doc("config/ai").set({key, model, models: models.filter(m => /gemini/.test(m)).slice(0, 60), at: new Date().toISOString()}); }
   catch (e) { return writeErr(e); }
   AI.key = key; AI.model = model; AI.models = models;
-  AD.test = model ? `ok:La chiave funziona. Leggerò le foto con ${model}.` : "ko:La chiave funziona ma non trovo un modello adatto: riprova più tardi.";
+  AD.test = model ? `ok:La chiave funziona. Leggerò le foto con ${model}${note}.` : "ko:La chiave è valida ma nessun modello Flash risponde gratis adesso: riprova tra qualche minuto o controlla i limiti su Google AI Studio.";
   renderSet();
 }
 async function importBackup(file){
