@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>Turni Arese</title>
-<!-- versione 2026.11.10-4 -->
+<!-- versione 2026.11.10-5 -->
 <meta name="description" content="Turni e agenda del reparto Telefonia &amp; Service, MediaWorld Arese">
 <meta name="theme-color" content="#FFFFFF" media="(prefers-color-scheme: light)">
 <meta name="theme-color" content="#0B0F17" media="(prefers-color-scheme: dark)">
@@ -513,12 +513,21 @@ body[data-role="banco"] .me-only{display:none!important}
 .set-h svg{width:28px;height:28px;color:var(--ink-3)}
 .card h2 svg{width:20px;height:20px;color:var(--ink-3)}
 .card.prof{grid-template-columns:auto minmax(0,1fr);align-items:center;gap:18px}
-.prof-t{display:grid;gap:4px}
+.prof-t{display:grid;gap:4px;min-width:0;grid-template-columns:minmax(0,1fr)}
+.prof-t b{overflow-wrap:anywhere}
+.prof-t .row-act .btn{white-space:normal;min-width:0}
+@media (max-width:350px){.card.prof{grid-template-columns:minmax(0,1fr);justify-items:start}}
 .prof-t b{font-family:var(--f-head);font-size:22px}
 .prof-t small{color:var(--ink-3);font-weight:700}
 .row-act{display:flex;flex-wrap:wrap;gap:8px}
 .row-act .btn,.card label.btn{justify-content:center;white-space:nowrap}
-.seg2.wide{display:grid;grid-template-columns:repeat(3,1fr)}
+.seg2.wide{display:grid;grid-template-columns:repeat(3,minmax(0,1fr))}
+.seg2.wide button{min-width:0;padding:0 6px}
+.pw-row{min-width:0}.pw-row .round{flex:none}
+#scr-set .card,#scr-set form,#scr-set .fld{min-width:0}
+#scr-set .card{grid-template-columns:minmax(0,1fr)}
+#scr-set .card.prof{grid-template-columns:auto minmax(0,1fr)}
+#scr-set{overflow-x:clip}
 .seg2.wide button{justify-content:center}
 .btn.out{justify-content:center;color:var(--now);border-color:var(--line)}
 .acc{list-style:none;margin:0;padding:0;display:grid;gap:4px}
@@ -528,7 +537,8 @@ body[data-role="banco"] .me-only{display:none!important}
 .acc-t b{font-size:16px}
 .acc-t small{color:var(--ink-2);font-size:13px}
 .acc-t .code{font-size:16px;color:var(--ink);letter-spacing:.06em}
-.acc-full{margin:4px 0 2px;min-height:40px;padding:6px 10px;font-size:15px;width:100%;max-width:280px}
+.acc-full{margin:4px 0 2px;min-height:42px;padding:6px 12px;font-size:16px;width:100%;max-width:280px;border:1.5px solid var(--line);border-radius:12px;background:var(--bg);color:var(--ink)}
+.acc-full:focus{outline:none;border-color:var(--tel)}
 .acc-t .acc-full-t{color:var(--ink-3)}
 .acc-a .btn{min-height:42px;font-size:14px;padding:0 12px}
 @media (max-width:420px){ .acc li{grid-template-columns:auto minmax(0,1fr)} .acc-a{grid-column:1/-1} }
@@ -1089,7 +1099,7 @@ function qrSvg(text, color = "#0B1220", bg = "#FFFFFF") {
 if (typeof module !== "undefined") module.exports = { QRGEN, qrSvg };
 
 </script>
-<script src="firebase-config.js?v=2026.11.10-4"></script>
+<script src="firebase-config.js?v=2026.11.10-5"></script>
 <script>
 (() => {
 "use strict";
@@ -1203,6 +1213,7 @@ function armed(btn){
 
 /* ---------- derived ---------- */
 const staffById = id => S.staff.find(s => s.id === id);
+const typingIn = sel => { const a = document.activeElement; return !!(a && /^(INPUT|TEXTAREA|SELECT)$/.test(a.tagName) && a.type !== "file" && a.closest(sel)); };
 /* turni così come salvati (tutti i reparti) e turni per l'agenda (solo Telefonia e Service) */
 const rawRows = date => (S.shifts[date] && S.shifts[date].rows) || {};
 const isOurs = b => !b || b.d !== "alt";
@@ -1491,7 +1502,7 @@ function subscribeStatic(){
   S.db.collection("staff").onSnapshot(s => {
     live(s); S.staff = docs(s).filter(x => x.name);
     if (!uploadActive()) renderShifts();
-    if (ROUTE === "me") renderMe(); else if (ROUTE === "set") renderSet();
+    if (ROUTE === "me") renderMe(); else if (ROUTE === "set" && !typingIn("#scr-set")) renderSet();
     if (S.staffOpen && !(document.activeElement && document.activeElement.closest && document.activeElement.closest(".stafflist"))) openStaff(document.activeElement && document.activeElement.id === "nsName");
   }, subErr);
   if (S.canWrite) S.db.collection("notes").where("pinned", "==", true).onSnapshot(s => { live(s); S.pinned = docs(s); renderNotes(); resolveNames(); }, subErr);
@@ -1767,7 +1778,8 @@ const U = { step: "pick", files: [], ctl: null, groups: [], doubts: [], err: "",
 let keyN = 0;
 const uploadActive = () => !$("#upload").hidden;
 
-function resetUpload(){ U.files.forEach(f => f.url && URL.revokeObjectURL(f.url)); Object.assign(U, {step: "pick", files: [], groups: [], doubts: [], err: "", saved: 0, progress: ""}); }
+function resetUpload(){ U.files.forEach(f => f.url && URL.revokeObjectURL(f.url)); U.groups.forEach(g => g.people.forEach(p => { if (p.crop) URL.revokeObjectURL(p.crop); }));
+  Object.assign(U, {step: "pick", files: [], groups: [], doubts: [], err: "", saved: 0, progress: "", model: ""}); }
 const when = iso => { const d = new Date(iso); if (isNaN(d)) return ""; return `${d.getDate()} ${MM[d.getMonth()].slice(0,3)} alle ${pad(d.getHours())}:${pad(d.getMinutes())}`; };
 
 function upGate(){
@@ -1799,10 +1811,10 @@ function renderUpload(){
     </div>` : ""}
   </section>`;
   if (!n && U.step === "pick") h += `<ul class="tips" aria-label="Per una foto che si legge bene"><li><b>Dritta</b>Dall'alto, senza storcere il foglio</li><li><b>Tutta</b>Nomi, Da/A e la griglia oraria</li><li><b>Luce</b>Niente riflessi né ombre sopra</li><li><b>Una per foglio</b>Di solito sono due al giorno</li></ul>`;
-  if (n && U.step === "pick") h += `<button class="btn primary big" data-act="up-read" style="width:100%">Leggi i turni ${n === 1 ? "dalla foto" : `dalle ${n} foto`}</button>${n > 6 ? `<p class="tip">Ci vuole circa mezzo minuto per foto: ${n} foto ≈ ${Math.max(1, Math.round(n * 0.5))} minuti. Tieni la pagina aperta.</p>` : ""}`;
+  if (n && U.step === "pick") h += `<button class="btn primary big" data-act="up-read" style="width:100%">Leggi i turni ${n === 1 ? "dalla foto" : `dalle ${n} foto`}</button>${n > 4 ? `<p class="tip">Ci vuole circa mezzo minuto per foto: ${n} foto ≈ ${Math.max(1, Math.round(n * 0.5))} minuti. Tieni l'app aperta.</p>` : ""}`;
   if (U.step === "reading"){
     h += `<section class="step"><div class="step-h"><b>2</b><h2>Sto leggendo i fogli…</h2></div>
-      <div class="reading"><span class="spin"></span><span><span id="upProg">${esc(U.progress)}</span><br><small style="font-weight:400">Leggo nomi, colonne Da/A e celle colorate di ogni riga. Non chiudere la pagina e non spegnere lo schermo.</small></span></div>
+      <div class="reading"><span class="spin"></span><span><span id="upProg">${esc(U.progress)}</span><br><small style="font-weight:400">Di solito bastano 20–40 secondi per foto. Tieni l'app aperta in primo piano.</small></span></div>
       <button class="btn" data-act="up-stop" style="justify-self:start">Ferma e controlla quelle già lette</button></section>`;
   }
   if (U.step === "review") h += reviewHtml();
@@ -1865,7 +1877,7 @@ function crop(src, sx, sy, sw, sh, maxSide){
   const c = document.createElement("canvas"); c.width = Math.round(sw*k); c.height = Math.round(sh*k);
   const g = c.getContext("2d"); g.fillStyle = "#fff"; g.fillRect(0, 0, c.width, c.height);
   g.drawImage(src, sx, sy, sw, sh, 0, 0, c.width, c.height);
-  return new Promise(r => c.toBlob(r, "image/jpeg", 0.9));
+  return new Promise(r => c.toBlob(r, "image/jpeg", 0.85));
 }
 /* ---------- lettura con Gemini (chiave gratuita di Google AI Studio) ----------
    Una richiesta per foto: il foglio intero + 3 strisce ingrandite, risposta in JSON con schema fisso.
@@ -1884,11 +1896,11 @@ function modelsToTry(){
 const blobB64 = b => new Promise((res, rej) => { const r = new FileReader(); r.onload = () => res(String(r.result).split(",")[1] || ""); r.onerror = () => rej(new Error("read")); r.readAsDataURL(b); });
 async function prepareImages(f){
   const bmp = await loadBitmap(f);
-  const W = bmp.width, H = bmp.height, imgs = [await crop(bmp, 0, 0, W, H, 3072)];
+  const W = bmp.width, H = bmp.height, imgs = [await crop(bmp, 0, 0, W, H, 1600)];
   const m = 3, ov = 0.07;
   for (let k = 0; k < m; k++){
     const y0 = Math.max(0, Math.round(H*(k/m - ov))), y1 = Math.min(H, Math.round(H*((k+1)/m + ov)));
-    imgs.push(await crop(bmp, 0, y0, W, y1 - y0, 3072));
+    imgs.push(await crop(bmp, 0, y0, W, y1 - y0, 2400));
   }
   return {images: imgs, desc: `le immagini dalla 2ª alla ${m + 1}ª sono ${m} strisce orizzontali dello stesso foglio a tutta larghezza, dall'alto in basso, ingrandite e un po' sovrapposte`};
 }
@@ -1896,24 +1908,28 @@ const READ_SCHEMA = {type: "OBJECT", properties: {
   giorni: {type: "ARRAY", items: {type: "OBJECT", properties: {
     data: {type: "STRING", nullable: true},
     righe: {type: "ARRAY", items: {type: "OBJECT", properties: {
-      r: {type: "INTEGER"}, y: {type: "NUMBER"}, nome: {type: "STRING"}, cognome: {type: "STRING"},
+      y: {type: "NUMBER"}, nome: {type: "STRING"}, cognome: {type: "STRING"},
       da: {type: "ARRAY", items: {type: "STRING"}}, a: {type: "ARRAY", items: {type: "STRING"}}, rep: {type: "STRING"},
       celle: {type: "ARRAY", items: {type: "OBJECT", properties: {sigla: {type: "STRING"}, da: {type: "STRING"}, a: {type: "STRING"}}, required: ["sigla", "da", "a"], propertyOrdering: ["sigla", "da", "a"]}}
-    }, required: ["r", "y", "nome", "cognome", "da", "a", "rep", "celle"], propertyOrdering: ["r", "y", "nome", "cognome", "da", "a", "rep", "celle"]}}
+    }, required: ["y", "nome", "cognome", "da", "a", "rep", "celle"], propertyOrdering: ["y", "nome", "cognome", "rep", "da", "a", "celle"]}}
   }, required: ["data", "righe"], propertyOrdering: ["data", "righe"]}},
   dubbi: {type: "ARRAY", items: {type: "STRING"}}
 }, required: ["giorni", "dubbi"], propertyOrdering: ["giorni", "dubbi"]};
-function buildPrompt(n, desc){
+function buildPrompt(n, desc, names){
   return `Sei un trascrittore accurato. Le immagini sono la foto di un foglio orari del personale di un negozio MediaWorld (Italia).
 Di solito è un FOGLIO GIORNALIERO (titolo tipo "ORARI ARESE"; in alto a destra la data, es. "Giorno: gio 29 ottobre 2026"): una tabella con UNA RIGA PER PERSONA. Colonne da sinistra: Nome, Cognome, Da, A, Da, A, REP (reparto), poi una GRIGLIA A MEZZ'ORE (intestazioni tipo "09:00 09:30", "09:30 10:00"…). Le celle della griglia sono colorate e contengono la sigla del reparto in cui la persona lavora in quella mezz'ora (TLC, HE, TV, PE, PC, GE, CS, NAS, REGIA…); "R" vuol dire riposo.
 A volte il foglio copre PIÙ GIORNI (settimana o mese): applica le stesse regole giorno per giorno; se c'è solo il numero del giorno prendi mese e anno dal titolo.
 ${n > 1 ? `Ti mando ${n} immagini dello STESSO foglio: la 1ª è il foglio intero; ${desc}. Leggi i dettagli dalle strisce ingrandite e usa la 1ª per la data e per la posizione "y". Ogni persona va scritta UNA sola volta anche se compare in due strisce.` : ""}
 
-COMPITO: trascrivi TUTTE le righe della tabella dall'alto in basso, anche quelle di riposo e di altri reparti. Non riassumere, non filtrare, non saltare righe.
+COMPITO: il foglio ha tutto il negozio, ma a me servono SOLO queste righe (le altre ignorale del tutto, non scriverle):
+1) le righe con REP = TLC oppure REP = HE (anche se sono di riposo);
+2) le righe di altri reparti che hanno almeno una cella TLC o HE nella griglia;
+${names && names.length ? `3) le righe di queste persone, in qualunque reparto siano oggi: ${names.join("; ")}.` : ""}
+Scorri tutta la tabella dall'alto in basso per non perderne nessuna: di solito sono tra 5 e 15 righe.
 Rispondi solo con il JSON richiesto:
 - giorni: un elemento per ogni giorno del foglio, con "data" in formato AAAA-MM-GG (null se non leggibile) e "righe".
-- per ogni riga: r = numero della riga contando dall'alto (1, 2, 3…); y = centro della riga nella 1ª immagine in percentuale dell'altezza (0 = bordo alto, 100 = bordo basso); nome e cognome come scritti; da e a = le colonne Da e A in ordine (prima e seconda fascia), orari "HH:MM"; se c'è "R" (riposo) lascia le liste vuote; rep = la colonna REP (se è spezzata su più righe ricomponila: "TL" + "C" = "TLC").
-- celle: i tratti di celle colorate CONSECUTIVE con la STESSA sigla, come {sigla, da: ora di inizio della prima cella, a: ora di fine dell'ultima cella}. Non mettere le celle "R". Se la sigla cambia a metà turno sono due tratti (es. TLC dalle 09:00 alle 13:00 e poi TV dalle 13:00 alle 17:00). Una cella vuota in mezzo è la pausa: chiude il tratto.
+- per ogni riga: y = centro della riga nella 1ª immagine in percentuale dell'altezza (0 = bordo alto, 100 = bordo basso); nome e cognome come scritti; da e a = le colonne Da e A in ordine (prima e seconda fascia), orari "HH:MM"; se c'è "R" (riposo) lascia le liste vuote; rep = la colonna REP (se è spezzata su più righe ricomponila: "TL" + "C" = "TLC").
+- celle: i tratti di celle colorate CONSECUTIVE con la STESSA sigla, come {sigla, da: ora di inizio della prima cella, a: ora di fine dell'ultima cella}. La sigla è il TESTO scritto dentro le celle di QUELLA riga (leggilo lettera per lettera dalla striscia ingrandita): non copiarla dalla colonna REP e non dedurla dal colore o dalle righe vicine. Chi ha REP = TLC può avere celle TV, PE, HE… e viceversa. Non mettere le celle "R". Se la sigla cambia a metà turno sono due tratti (es. TLC dalle 09:00 alle 13:00 e poi TV dalle 13:00 alle 17:00). Una cella vuota in mezzo è la pausa: chiude il tratto.
 - dubbi: frasi brevi tipo "Mario: seconda fascia poco leggibile". Lista vuota se tutto è chiaro.
 REGOLE PER NON SBAGLIARE
 - La foto può essere storta o prospettica: segui ogni riga dal nome fino alla fine della griglia senza saltare su quella sopra o sotto; usa le linee della tabella come guida.
@@ -1951,44 +1967,80 @@ function geminiRetryDelay(err){
   const d = ((err && err.error && err.error.details) || []).find(x => String(x["@type"] || "").includes("RetryInfo"));
   const s = d && parseFloat(String(d.retryDelay || "")); return Number.isFinite(s) ? Math.ceil(s) : 0;
 }
-/* Una richiesta per foto. Se un modello è al limite passo SUBITO al successivo (niente attese lunghe);
-   aspetto una volta sola, e poco, solo se sono al limite tutti. */
+/* Una richiesta per foto, in streaming: così vedo le righe arrivare e mi accorgo subito se Gemini si blocca.
+   Se un modello è al limite o non risponde passo al successivo; in tutto mai più di 4 minuti per foto. */
 const isNoFree = all => /limit: ?0\b|"quota_?value"\s*:\s*"?0"?|free_tier[^"]*"[^}]*"limit"\s*:\s*"?0/i.test(all);
-async function gemini(prompt, b64s, {signal, onWait} = {}){
+const thinkFor = m => /lite/.test(m) ? null : /gemini-2\.5/.test(m) ? {thinkingBudget: 1024} : {thinkingLevel: "low"};
+async function readGem(res, ctl, onText, idleMs){
+  const out = {text: "", fin: "", block: false, cut: false};
+  const take = j => { for (const x of (Array.isArray(j) ? j : [j])){ if (!x) continue;
+    if (x.promptFeedback && x.promptFeedback.blockReason) out.block = true;
+    const c = x.candidates && x.candidates[0]; if (!c) continue;
+    if (c.finishReason) out.fin = c.finishReason;
+    for (const p of ((c.content && c.content.parts) || [])) if (p.text && !p.thought) out.text += p.text; } };
+  if (!res.body || !res.body.getReader){ try { take(await res.json()); } catch { out.cut = true; } return out; }
+  const rd = res.body.getReader(), dec = new TextDecoder(); let buf = "", raw = "", sse = null, idle;
+  try {
+    for (;;){
+      clearTimeout(idle); idle = setTimeout(() => ctl.abort(), idleMs);
+      const {done, value} = await rd.read(); if (done) break;
+      const chunk = dec.decode(value, {stream: true});
+      if (sse === null){ const t = (buf + chunk).trimStart(); if (t) sse = !/^[\[{]/.test(t); }
+      if (sse === false){ raw += chunk; continue; }
+      buf += chunk; let i;
+      while ((i = buf.indexOf("\n")) >= 0){
+        const line = buf.slice(0, i).trim(); buf = buf.slice(i + 1);
+        if (line.startsWith("data:")){ try { take(JSON.parse(line.slice(5))); onText && onText(out.text); } catch {} }
+      }
+    }
+  } catch { out.cut = true; } finally { clearTimeout(idle); }
+  if (sse === false){ try { take(JSON.parse(raw)); } catch { out.cut = true; } }
+  else if (buf.trim().startsWith("data:")){ try { take(JSON.parse(buf.trim().slice(5))); } catch {} }
+  return out;
+}
+async function gemini(prompt, b64s, {signal, onWait, onText, onModel, budgetMs = 240000} = {}){
   if (!AI.key) throw {code: "no_key"};
-  const errs = [];
-  for (let round = 0; round < 2; round++){
+  const errs = [], tEnd = Date.now() + budgetMs, left = () => tEnd - Date.now();
+  out: for (let round = 0; round < 2; round++){
     const limited = [], models = modelsToTry();
     if (!models.length) break;
     for (const model of models){
+      if (left() < 20000){ errs.push({code: "slow", model}); break out; }
       let mode = 0;   // 0 = schema + alta risoluzione + ragionamento breve, 1 = solo schema, 2 = solo JSON
-      for (let attempt = 0; attempt < 3; attempt++){
-        const gen = {temperature: 0, maxOutputTokens: 32768, responseMimeType: "application/json"};
+      onModel && onModel(model);
+      for (let attempt = 0; attempt < 2; attempt++){
+        const gen = {temperature: 0, maxOutputTokens: 16384, responseMimeType: "application/json"};
         if (mode < 2) gen.responseSchema = READ_SCHEMA;
-        if (mode === 0){ gen.mediaResolution = "MEDIA_RESOLUTION_HIGH"; gen.thinkingConfig = {thinkingLevel: "low"}; }
+        if (mode === 0){ gen.mediaResolution = "MEDIA_RESOLUTION_HIGH"; const th = thinkFor(model); if (th) gen.thinkingConfig = th; }
         const body = {contents: [{role: "user", parts: [...b64s.map(d => ({inline_data: {mime_type: "image/jpeg", data: d}})), {text: prompt}]}], generationConfig: gen};
-        const ctl = new AbortController(), tm = setTimeout(() => ctl.abort(), 150000);
+        const ctl = new AbortController(); let timedOut = false;
+        const kill = ms => setTimeout(() => { timedOut = true; ctl.abort(); }, Math.max(1000, Math.min(ms, left())));
+        let tm = kill(100000);   // invio delle foto + prima risposta
         const onAbort = () => ctl.abort(); signal && signal.addEventListener("abort", onAbort, {once: true});
+        const done = () => { clearTimeout(tm); signal && signal.removeEventListener("abort", onAbort); };
         let res;
         try {
-          res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent`,
+          res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:streamGenerateContent?alt=sse`,
             {method: "POST", headers: {"Content-Type": "application/json", "x-goog-api-key": AI.key}, body: JSON.stringify(body), signal: ctl.signal});
         } catch (e) {
-          clearTimeout(tm); signal && signal.removeEventListener("abort", onAbort);
+          done();
           if (signal && signal.aborted) throw {code: "cancelled"};
+          if (timedOut){ errs.push({code: "slow", model}); break; }
           errs.push({code: "network", model}); if (attempt < 1) continue; break;
         }
-        clearTimeout(tm); signal && signal.removeEventListener("abort", onAbort);
         if (res.ok){
-          const j = await res.json().catch(() => ({}));
-          const c = j.candidates && j.candidates[0];
-          const text = ((c && c.content && c.content.parts) || []).filter(p => p.text && !p.thought).map(p => p.text).join("");
-          if (!text){ if ((j.promptFeedback && j.promptFeedback.blockReason) || (c && /SAFETY|PROHIBITED|RECITATION/.test(c.finishReason || ""))) throw {code: "refused"}; errs.push({code: "empty", model}); continue; }
+          clearTimeout(tm); tm = kill(150000);   // tutta la risposta
+          const r = await readGem(res, ctl, onText, 75000); done();
+          if (signal && signal.aborted) throw {code: "cancelled"};
+          if (r.block || /SAFETY|PROHIBITED|RECITATION/.test(r.fin)) throw {code: "refused"};
+          if (!r.text || (r.cut && !/"cognome"/.test(r.text))){ errs.push({code: r.cut ? "slow" : "empty", model}); break; }
           try { localStorage.setItem("gem-ok", model); } catch {}
-          return {text, truncated: !!(c && c.finishReason === "MAX_TOKENS"), model};
+          return {text: r.text, truncated: r.cut || r.fin === "MAX_TOKENS", model};
         }
+        done();
         const err = await res.json().catch(() => ({}));
-        const msg = String((err.error && err.error.message) || ""), all = msg + " " + JSON.stringify(err);
+        const e0 = Array.isArray(err) ? (err[0] || {}) : err;
+        const msg = String((e0.error && e0.error.message) || ""), all = msg + " " + JSON.stringify(err);
         if (res.status === 400 && mode < 2 && /thinking|media|resolution|schema|unknown name|invalid json|not supported|property|cannot find field/i.test(msg)){ mode++; attempt--; continue; }
         if (res.status === 400 && /api key/i.test(msg)) throw {code: "bad_key"};
         if (res.status === 401 || res.status === 403) throw {code: /referer|referrer|blocked|restrict/i.test(msg) ? "forbidden" : "bad_key"};
@@ -1996,21 +2048,18 @@ async function gemini(prompt, b64s, {signal, onWait} = {}){
         if (res.status === 429){
           if (isNoFree(all)){ GEM_DEAD[model] = 1; errs.push({code: "nofree", model, message: msg}); break; }
           if (/per ?day|daily|PerDay/i.test(all)){ GEM_DEAD[model] = 1; errs.push({code: "daily", model, message: msg}); break; }
-          errs.push({code: "rate", model, message: msg}); limited.push(geminiRetryDelay(err) || 20); break;
+          errs.push({code: "rate", model, message: msg}); limited.push(geminiRetryDelay(e0) || 20); break;
         }
-        if (res.status >= 500){
-          errs.push({code: "busy", model, message: msg});
-          if (attempt >= 1) break;
-          onWait && onWait(5); await sleep(5000, signal); onWait && onWait(0); continue;
-        }
+        if (res.status >= 500){ errs.push({code: "busy", model, message: msg}); break; }
         throw {code: "http", message: msg, model};
       }
     }
     if (!limited.length || round) break;
     const wait = Math.min(45, Math.max(5, Math.min(...limited)));
+    if (left() < (wait + 30) * 1000) break;
     onWait && onWait(wait); await sleep(wait * 1000, signal); onWait && onWait(0);
   }
-  for (const c of ["rate", "busy", "network", "empty", "daily", "nofree", "model"]){ const e = [...errs].reverse().find(x => x.code === c); if (e) throw e; }
+  for (const c of ["slow", "rate", "busy", "network", "empty", "daily", "nofree", "model"]){ const e = [...errs].reverse().find(x => x.code === c); if (e) throw e; }
   throw {code: "model"};
 }
 const READ_ERR = {
@@ -2020,6 +2069,7 @@ const READ_ERR = {
   daily: "il limite gratuito giornaliero di Gemini è finito: riprova domani",
   rate: "Gemini è al limite gratuito al minuto: riprova tra qualche minuto",
   busy: "Gemini non risponde in questo momento: riprova più tardi",
+  slow: "Gemini ci ha messo troppo e mi sono fermato: riprova (se capita ancora, controlla la connessione)",
   model: "nessun modello di Gemini disponibile per questa chiave",
   nofree: "la chiave non ha uso gratuito per i modelli provati (su Google AI Studio controlla piano e limiti della chiave)",
   network: "nessuna risposta da Gemini: controlla la connessione",
@@ -2031,7 +2081,7 @@ const STOP_CODES = ["no_key", "bad_key", "forbidden", "daily", "model", "nofree"
 function failReason(e){
   if (e && e.message === "heic") return "foto HEIC dell'iPhone che non sono riuscito a convertire (riprova, oppure caricala come JPG)";
   if (e && e.message === "decode") return "formato non leggibile";
-  if (e && READ_ERR[e.code]) return READ_ERR[e.code] + (e.model && /rate|daily|nofree|busy/.test(e.code) ? ` [${e.model}${e.message ? ": " + e.message.replace(/\s+/g, " ").slice(0, 160) : ""}]` : "");
+  if (e && READ_ERR[e.code]) return READ_ERR[e.code] + (e.model && /rate|daily|nofree|busy|slow/.test(e.code) ? ` [${e.model}${e.message ? ": " + e.message.replace(/\s+/g, " ").slice(0, 160) : ""}]` : "");
   if (e && e.code === "http") return "errore di Gemini" + (e.message ? ` (${e.message.slice(0, 120)})` : "");
   return "errore di connessione";
 }
@@ -2045,12 +2095,16 @@ async function readPhotos(){
   const t0 = Date.now();
   const upd = (cur) => {
     const sec = Math.round((Date.now() - t0) / 1000);
+    const f = U.files[cur - 1], rows = f && f.rows ? ` · ${f.rows} ${f.rows === 1 ? "riga letta" : "righe lette"}` : "";
     U.progress = U.wait ? `Gemini chiede una pausa (limite gratuito): riprendo tra ${U.wait} secondi…`
-      : `${total > 1 ? `Leggo la foto ${cur} di ${total}` : "Leggo il foglio"}… ${sec} s`;
+      : `${total > 1 ? `Leggo la foto ${cur} di ${total}` : "Leggo il foglio"}… ${sec} s${rows}`;
     const el = $("#upProg"); if (el) el.textContent = U.progress; else renderUpload();
   };
   let cur = 1; renderUpload(); upd(cur);
   const tick = setInterval(() => upd(cur), 1000);
+  /* lo schermo resta acceso durante la lettura: se il telefono va in blocco la richiesta si ferma */
+  let wl = null; try { if (navigator.wakeLock) wl = await navigator.wakeLock.request("screen"); } catch {}
+  const names = [...new Set(S.staff.map(x => String(x.full || x.name || "").trim()).filter(Boolean))].slice(0, 40);
   try {
     for (let i = 0; i < total && !stop && !signal.aborted; i++){
       cur = i + 1; const f = U.files[i]; f.status = "run"; renderUpload(); upd(cur);
@@ -2058,7 +2112,9 @@ async function readPhotos(){
         const {images, desc} = await prepareImages(f);
         if (signal.aborted) throw {code: "cancelled"};
         const b64s = await Promise.all(images.map(blobB64));
-        const res = await gemini(buildPrompt(images.length, desc), b64s, {signal, onWait: w => { U.wait = w; upd(cur); }});
+        f.rows = 0;
+        const res = await gemini(buildPrompt(images.length, desc, names), b64s, {signal, onWait: w => { U.wait = w; upd(cur); },
+          onModel: () => { f.rows = 0; }, onText: t => { f.rows = (t.match(/"cognome"/g) || []).length; }});
         const out = toReadOut(salvageJSON(res.text));
         if (!out.days.some(d => d.rows.length)) throw {code: "no_rows"};
         if (res.truncated) out.dubbi.push("la lettura si è interrotta prima della fine: controlla le ultime righe");
@@ -2069,7 +2125,7 @@ async function readPhotos(){
         if (e && STOP_CODES.includes(e.code)) stop = true;
       }
     }
-  } finally { clearInterval(tick); U.wait = 0; }
+  } finally { clearInterval(tick); U.wait = 0; try { wl && wl.release(); } catch {} }
   const stopped = signal.aborted;
   if (!results.length){
     const e = fails[0] && fails[0].e; U.step = "pick";
@@ -2091,15 +2147,20 @@ function fixTime(t){ const m = String(t||"").trim().match(/^(\d{1,2})(?:[:.,h]?(
 function validDate(s){ const m = String(s||"").match(/^(\d{4})-(\d{2})-(\d{2})$/); return m && ds(new Date(+m[1], +m[2]-1, +m[3])) === s ? s : null; }
 const capitalize = s => s.charAt(0).toUpperCase() + s.slice(1);
 const titleCase = s => String(s).toLowerCase().replace(/(^|[\s'-])\S/g, c => c.toUpperCase());
-function matchStaff(full){
+/* strict = riga di un altro reparto: abbino solo con nome e cognome (o nome del foglio) già noti, mai con il solo nome */
+function matchStaff(full, strict){
   const n = norm(full); if (!n) return "";
-  const words = n.split(" ");
+  const ws = n.split(" ");
+  /* nome e cognome scritti dal responsabile: bastano che stiano dentro il nome del foglio (che può avere secondi nomi) */
+  const fits = s => { const fw = words(s.full); return fw.length > 1 && fw.every(w => ws.includes(w)); };
+  const byFull = S.staff.filter(fits); if (byFull.length === 1) return byFull[0].id;
   const cmp = x => String(x || "").replace(/ /g, ""), nc = cmp(n);   // i vecchi nomi del foglio erano salvati senza spazi
   let hit = S.staff.find(s => s.sheetName && cmp(s.sheetName) === nc) || S.staff.find(s => norm(s.name) === n);
-  /* per nome: solo balordi senza nome completo del foglio già noto, o con lo stesso (due Francesco con cognomi diversi non si confondono) */
-  const free = S.staff.filter(s => !s.sheetName || cmp(s.sheetName) === nc);
-  if (!hit) { const c = free.filter(s => { const sw = norm(s.name).split(" "); return sw.every(w => words.includes(w)); }); if (c.length === 1) hit = c[0]; }
-  if (!hit) { const c = free.filter(s => { const sn = norm(s.name); return sn.length >= 3 && words.some(w => w.length >= 3 && w.startsWith(sn)); }); if (c.length === 1) hit = c[0]; }
+  if (strict) return hit ? hit.id : "";
+  /* per nome: solo balordi senza nome completo già noto, o con lo stesso (due Francesco con cognomi diversi non si confondono) */
+  const free = S.staff.filter(s => (!s.sheetName || cmp(s.sheetName) === nc) && !(words(s.full).length > 1 && !fits(s)));
+  if (!hit) { const c = free.filter(s => { const sw = norm(s.name).split(" "); return sw.every(w => ws.includes(w)); }); if (c.length === 1) hit = c[0]; }
+  if (!hit) { const c = free.filter(s => { const sn = norm(s.name); return sn.length >= 3 && ws.some(w => w.length >= 3 && w.startsWith(sn)); }); if (c.length === 1) hit = c[0]; }
   return hit ? hit.id : "";
 }
 const SIGLA = s => String(s||"").toUpperCase().replace(/[^A-Z]/g, "");
@@ -2126,7 +2187,7 @@ function ingest(results){
         const da = Array.isArray(row.da) ? row.da : [], aa = Array.isArray(row.a) ? row.a : [];
         const daBl = sorted(da.map((x, j) => ({s: fixTime(x), e: fixTime(aa[j])})).filter(b => b.s && b.e && toMin(b.e) > toMin(b.s)));
         /* si salvano: chi ha celle TLC/HE, e i balordi già in elenco qualunque sia il reparto di oggi (TV, PE, ...) */
-        const match = matchStaff(full);
+        const match = matchStaff(full, !ours.length && rep !== "TLC" && rep !== "HE");
         if (!ours.length && !(match && (segs.length || daBl.length))){
           if ((rep === "TLC" || rep === "HE" || match) && (daBl.length || segs.length) && !g.people.has(k))
             g.excluded.set(k, `${first} (${[...new Set(segs.map(x => x.sig))].join(", ") || "nessuna cella TLC/HE"})`);
@@ -2234,7 +2295,7 @@ function personHtml(p, gi){
 function reviewHtml(){
   const total = U.groups.reduce((n, g) => n + g.people.length, 0);
   const doubts = U.doubts.length ? `<div class="doubts"><b>Da controllare sul foglio</b><ul>${U.doubts.map(d => `<li>${esc(d)}</li>`).join("")}</ul></div>` : "";
-  let h = `<section class="step"><div class="step-h"><b>2</b><h2>Controlla i turni letti</h2></div>${U.model ? `<p class="up-model">Letto con ${esc(U.model)}</p>` : ""}`;
+  let h = `<section class="step"><div class="step-h"><b>2</b><h2>Controlla i turni letti</h2></div>${U.model ? `<p class="up-model">Letto con ${esc(U.model)}${/lite/.test(U.model) ? " (modello ridotto: controlla bene reparti e orari)" : ""}</p>` : ""}`;
   if (!total) return h + `<div class="doubts"><b>Non ho trovato nessuno da salvare.</b>${U.doubts.length ? `<ul>${U.doubts.map(d => `<li>${esc(d)}</li>`).join("")}</ul>` : ""}Rifai le foto più dritte, con nomi e griglia oraria ben leggibili.</div><button class="btn" data-act="up-reset">Ricomincia</button></section>`;
   const many = U.groups.length > 1;
   h += `<div class="found">${many ? `Ho letto ${total} turni su ${U.groups.length} giorni` : `Da salvare: ${total} ${total === 1 ? "persona" : "persone"}`}. Correggi l'orario se serve: scrivi tipo <span class="num">9-13, 13:30-16</span> oppure <b>Riposo</b>.</div>${doubts}`;
@@ -2543,7 +2604,7 @@ const gearBtn = () => `<button class="round desk-only" data-act="nav" data-to="s
 function subscribeAvatars(){
   S.db.collection("avatars").onSnapshot(s => {
     S.avatars = {}; s.docs.forEach(d => { const v = d.data(); if (v && typeof v.img === "string" && v.img.startsWith("data:image/")) S.avatars[d.id] = v.img; });
-    if (ROUTE === "me") renderMe(); else if (ROUTE === "set") renderSet(); else if (ROUTE === "agenda") renderShifts();
+    if (ROUTE === "me") renderMe(); else if (ROUTE === "set" && !typingIn("#scr-set")) renderSet(); else if (ROUTE === "agenda") renderShifts();
   }, () => {});
 }
 /* contenuto del cerchietto: la foto se c'è, altrimenti le iniziali */
@@ -3271,7 +3332,9 @@ S.fascia = "all";
 try { const f = localStorage.getItem("agenda-fascia"); if (["all", "mat", "pom", "ser"].includes(f)) S.fascia = f; } catch {}
 applyTheme();
 route();
-setInterval(() => { if (ROUTE === "agenda"){ renderHeader(); if (S.sel === todayStr() && S.view === "day") renderShifts(); } else if (ROUTE === "me") renderMe(); }, 60000);
+let dayNow = todayStr();
+setInterval(() => { if (SES.member && todayStr() !== dayNow){ dayNow = todayStr(); subscribeMe(); subscribeMyAppts(); }
+  if (ROUTE === "agenda"){ renderHeader(); if (S.sel === todayStr() && S.view === "day") renderShifts(); } else if (ROUTE === "me") renderMe(); }, 60000);
 if ("serviceWorker" in navigator && location.protocol === "https:") navigator.serviceWorker.register("sw.js").catch(() => {});
 
 (async () => {
