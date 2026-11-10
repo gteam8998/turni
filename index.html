@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>Turni Arese</title>
-<!-- versione 2026.11.10-5 -->
+<!-- versione 2026.11.10-6 -->
 <meta name="description" content="Turni e agenda del reparto Telefonia &amp; Service, MediaWorld Arese">
 <meta name="theme-color" content="#FFFFFF" media="(prefers-color-scheme: light)">
 <meta name="theme-color" content="#0B0F17" media="(prefers-color-scheme: dark)">
@@ -539,6 +539,10 @@ body[data-role="banco"] .me-only{display:none!important}
 .acc-t .code{font-size:16px;color:var(--ink);letter-spacing:.06em}
 .acc-full{margin:4px 0 2px;min-height:42px;padding:6px 12px;font-size:16px;width:100%;max-width:280px;border:1.5px solid var(--line);border-radius:12px;background:var(--bg);color:var(--ink)}
 .acc-full:focus{outline:none;border-color:var(--tel)}
+.paste>summary{cursor:pointer;display:grid;gap:2px;list-style:none;padding:2px 0}
+.paste>summary::-webkit-details-marker{display:none}
+.paste>summary small{color:var(--ink-3);font-weight:400}
+.paste textarea{width:100%;margin:12px 0 10px;border:1.5px solid var(--line);border-radius:12px;background:var(--bg);color:var(--ink);padding:10px 12px;font:14px/1.45 var(--f-mono, ui-monospace, monospace);resize:vertical}
 .acc-t .acc-full-t{color:var(--ink-3)}
 .acc-a .btn{min-height:42px;font-size:14px;padding:0 12px}
 @media (max-width:420px){ .acc li{grid-template-columns:auto minmax(0,1fr)} .acc-a{grid-column:1/-1} }
@@ -1099,7 +1103,7 @@ function qrSvg(text, color = "#0B1220", bg = "#FFFFFF") {
 if (typeof module !== "undefined") module.exports = { QRGEN, qrSvg };
 
 </script>
-<script src="firebase-config.js?v=2026.11.10-5"></script>
+<script src="firebase-config.js?v=2026.11.10-6"></script>
 <script>
 (() => {
 "use strict";
@@ -1810,6 +1814,9 @@ function renderUpload(){
       <label for="upGal">${ICON.img}Scegli dalla galleria<small>puoi selezionarne tante</small><input type="file" id="upGal" accept="image/*,.heic,.heif" multiple></label>
     </div>` : ""}
   </section>`;
+  if (U.step === "pick") h += `<details class="step paste"${U.pasteOpen ? " open" : ""}><summary><b>Incolla la lettura di Claude</b><small>Mandi la foto a Claude, copi la sua risposta e la incolli qui</small></summary>
+    <textarea id="upPaste" rows="7" spellcheck="false" autocapitalize="off" placeholder="TURNI 2026-11-01&#10;Nome | Cognome | REP | 09:00-13:00 | TLC 09:00-13:00">${esc(U.paste || "")}</textarea>
+    <button class="btn primary big" data-act="up-paste" style="width:100%">Controlla i turni incollati</button></details>`;
   if (!n && U.step === "pick") h += `<ul class="tips" aria-label="Per una foto che si legge bene"><li><b>Dritta</b>Dall'alto, senza storcere il foglio</li><li><b>Tutta</b>Nomi, Da/A e la griglia oraria</li><li><b>Luce</b>Niente riflessi né ombre sopra</li><li><b>Una per foglio</b>Di solito sono due al giorno</li></ul>`;
   if (n && U.step === "pick") h += `<button class="btn primary big" data-act="up-read" style="width:100%">Leggi i turni ${n === 1 ? "dalla foto" : `dalle ${n} foto`}</button>${n > 4 ? `<p class="tip">Ci vuole circa mezzo minuto per foto: ${n} foto ≈ ${Math.max(1, Math.round(n * 0.5))} minuti. Tieni l'app aperta.</p>` : ""}`;
   if (U.step === "reading"){
@@ -1951,6 +1958,34 @@ function salvageJSON(t){
     try { return JSON.parse(c + st.reverse().map(x => x === "{" ? "}" : "]").join("")); } catch {}
   }
   return null;
+}
+/* Lettura fatta da Claude, incollata nell'app. Formato a righe:
+   TURNI 2026-11-01            (data del foglio; si può ripetere per più giorni)
+   Nome | Cognome | REP | 09:00-13:00, 13:30-15:30 | TLC 09:00-13:00, TLC 13:30-15:30
+   Nome | Cognome | REP | R                       (riposo)
+   ? dubbio da controllare
+   Va bene anche il JSON della lettura. */
+function parseClaude(t){
+  t = String(t || "").replace(/\r/g, "").replace(/```[a-z]*/gi, "").trim();
+  if (/^[\[{]/.test(t)){ const j = salvageJSON(t); return j ? toReadOut(j) : {days: [], dubbi: []}; }
+  const out = {days: [], dubbi: []}; let day = null;
+  const iso = x => { const m = String(x).match(/(\d{4})-(\d{1,2})-(\d{1,2})|(\d{1,2})[\/.](\d{1,2})[\/.](\d{2,4})/); if (!m) return null;
+    return m[1] ? `${m[1]}-${pad(+m[2])}-${pad(+m[3])}` : `${m[6].length === 2 ? "20" + m[6] : m[6]}-${pad(+m[5])}-${pad(+m[4])}`; };
+  const tm = "(\\d{1,2}[:.]?\\d{0,2})";
+  const rng = new RegExp(`${tm}\\s*[-–—]\\s*${tm}`);
+  for (const raw of t.split("\n")){
+    const line = raw.replace(/^[\s*•-]+(?=\S)/, "").trim(); if (!line) continue;
+    if (/^turni\b/i.test(line) || (/^(giorno|data)\b/i.test(line) && iso(line))){ day = {data: iso(line), rows: []}; out.days.push(day); continue; }
+    if (/^\?/.test(line)){ out.dubbi.push(line.replace(/^\?\s*/, "")); continue; }
+    const f = line.split("|").map(x => x.trim()); if (f.length < 4 || !(f[0] || f[1])) continue;
+    if (!day){ day = {data: null, rows: []}; out.days.push(day); }
+    const da = [], a = [], celle = [];
+    if (!/^r(iposo)?$/i.test(f[3])) f[3].split(/[,;]/).forEach(x => { const m = x.match(rng); if (m){ da.push(m[1]); a.push(m[2]); } });
+    (f[4] || "").split(/[,;]/).forEach(x => { const m = x.trim().match(new RegExp(`^([A-Za-zÀ-ú]+)\\s+${tm}\\s*[-–—]\\s*${tm}`)); if (m) celle.push([m[1].toUpperCase(), m[2], m[3]]); });
+    day.rows.push({nome: f[0], cognome: f[1], rep: f[2].toUpperCase(), da: da.length ? da : ["R"], a: a.length ? a : ["R"], celle});
+  }
+  out.days = out.days.filter(d => d.rows.length);
+  return out;
 }
 /* risposta di Gemini -> stessa forma usata dal resto della lettura */
 function toReadOut(j){
@@ -2295,7 +2330,7 @@ function personHtml(p, gi){
 function reviewHtml(){
   const total = U.groups.reduce((n, g) => n + g.people.length, 0);
   const doubts = U.doubts.length ? `<div class="doubts"><b>Da controllare sul foglio</b><ul>${U.doubts.map(d => `<li>${esc(d)}</li>`).join("")}</ul></div>` : "";
-  let h = `<section class="step"><div class="step-h"><b>2</b><h2>Controlla i turni letti</h2></div>${U.model ? `<p class="up-model">Letto con ${esc(U.model)}${/lite/.test(U.model) ? " (modello ridotto: controlla bene reparti e orari)" : ""}</p>` : ""}`;
+  let h = `<section class="step"><div class="step-h"><b>2</b><h2>Controlla i turni letti</h2></div>${U.model ? `<p class="up-model">Letto ${U.model === "Claude" ? "da" : "con"} ${esc(U.model)}${/lite/.test(U.model) ? " (modello ridotto: controlla bene reparti e orari)" : ""}</p>` : ""}`;
   if (!total) return h + `<div class="doubts"><b>Non ho trovato nessuno da salvare.</b>${U.doubts.length ? `<ul>${U.doubts.map(d => `<li>${esc(d)}</li>`).join("")}</ul>` : ""}Rifai le foto più dritte, con nomi e griglia oraria ben leggibili.</div><button class="btn" data-act="up-reset">Ricomincia</button></section>`;
   const many = U.groups.length > 1;
   h += `<div class="found">${many ? `Ho letto ${total} turni su ${U.groups.length} giorni` : `Da salvare: ${total} ${total === 1 ? "persona" : "persone"}`}. Correggi l'orario se serve: scrivi tipo <span class="num">9-13, 13:30-16</span> oppure <b>Riposo</b>.</div>${doubts}`;
@@ -3256,6 +3291,13 @@ document.addEventListener("click", async e => {
   if (act === "go-agenda"){ location.hash = "agenda"; return; }
   if (act === "go-agenda-day"){ const d = U.lastDate; location.hash = "agenda"; if (d){ S.view = "day"; setSel(d); } return; }
   if (act === "up-read") return readPhotos();
+  if (act === "up-paste"){
+    const t = ($("#upPaste") || {}).value || ""; U.paste = t;
+    const out = parseClaude(t);
+    if (!out.days.some(d => d.rows.length)){ U.pasteOpen = true; U.err = "Non trovo righe nella lettura incollata: copia tutta la risposta di Claude, dalla riga TURNI in giù."; return renderUpload(); }
+    U.err = ""; U.groups = []; U.doubts = []; U.model = "Claude";
+    ingest([{i: -1, out}]); U.step = "review"; U.pasteOpen = false; renderUpload(); window.scrollTo(0, 0); return;
+  }
   if (act === "up-clear"){ if (!armed(el)) return; resetUpload(); return renderUpload(); }
   if (act === "up-rm"){ const f = U.files.splice(+el.dataset.i, 1)[0]; if (f) URL.revokeObjectURL(f.url); return renderUpload(); }
   if (act === "up-stop"){ U.ctl && U.ctl.abort(); return; }
@@ -3279,6 +3321,7 @@ document.addEventListener("click", async e => {
   }
 });
 document.addEventListener("input", e => {
+  if (e.target && e.target.id === "upPaste"){ U.paste = e.target.value; return; }
   const id = e.target.id, map = {lgName: "name", lgPw: "pw", lgPw2: "pw2", lgCode: "code"};
   if (map[id]) LG.v[map[id]] = e.target.value;
   if (id === "aiKey") AI.draft = e.target.value;
