@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>Turni Arese</title>
-<!-- versione 2026.11.10-10 -->
+<!-- versione 2026.11.10-11 -->
 <meta name="description" content="Turni e agenda del reparto Telefonia &amp; Service, MediaWorld Arese">
 <meta name="theme-color" content="#FFFFFF" media="(prefers-color-scheme: light)">
 <meta name="theme-color" content="#0B0F17" media="(prefers-color-scheme: dark)">
@@ -1103,7 +1103,7 @@ function qrSvg(text, color = "#0B1220", bg = "#FFFFFF") {
 if (typeof module !== "undefined") module.exports = { QRGEN, qrSvg };
 
 </script>
-<script src="firebase-config.js?v=2026.11.10-10"></script>
+<script src="firebase-config.js?v=2026.11.10-11"></script>
 <script>
 (() => {
 "use strict";
@@ -1644,7 +1644,13 @@ function openStaff(focusNew){
       root.addEventListener("change", async e => {
         const el = e.target.closest("[data-sid]"); if (!el || !needDb()) return;
         const v = el.value.trim(); if (el.dataset.k === "name" && !v) return;
-        try { await S.db.doc("staff/" + el.dataset.sid).update({[el.dataset.k]: v}); toast("Aggiornato"); } catch (er) { writeErr(er); }
+        const sid = el.dataset.sid, st0 = staffById(sid), up = {[el.dataset.k]: v}, ops = [];
+        /* rinomina con nome e cognome: aggiorno anche quello usato per entrare e i codici non ancora usati */
+        if (el.dataset.k === "name" && twoWords(v) && st0 && (!st0.full || norm(st0.full) === norm(st0.name))){
+          up.full = titleCase(v);
+          try { (await S.db.collection("invites").where("staffId", "==", sid).get()).docs.forEach(d => ops.push({op: "update", path: "invites/" + d.id, data: {name: up.full}})); } catch {}
+        }
+        try { await S.db.batch([{op: "update", path: "staff/" + sid, data: up}, ...ops]); if (ops.length) AD.members = null; toast("Aggiornato"); } catch (er) { writeErr(er); }
       });
       root.addEventListener("click", async e => {
         const b = e.target.closest("[data-del-staff]"); if (!b) return;
@@ -3050,6 +3056,9 @@ const words = s => norm(s).split(" ").filter(Boolean);
 const twoWords = s => words(s).length >= 2;
 const sameName = (a, b) => words(a).sort().join(" ") === words(b).sort().join(" ");
 /* nome e cognome già noti: quello segnato apposta, oppure il nome in elenco se ha già il cognome */
+const editDist = (a, b) => { const d = Array.from({length: a.length + 1}, (_, i) => [i]); for (let j = 1; j <= b.length; j++) d[0][j] = j;
+  for (let i = 1; i <= a.length; i++) for (let j = 1; j <= b.length; j++) d[i][j] = Math.min(d[i-1][j] + 1, d[i][j-1] + 1, d[i-1][j-1] + (a[i-1] === b[j-1] ? 0 : 1));
+  return d[a.length][b.length]; };
 const knownFull = st => !st ? "" : st.full || (twoWords(st.name) ? st.name : "");
 const firstName = st => st ? titleCase(String(st.full || st.name || "").trim().split(/\s+/)[0]) : "";
 const mkEmail = pre => `${(pre || "u").replace(/[^a-z0-9-]/g, "").slice(0, 20) || "u"}-${Date.now().toString(36)}${rnd(4)}@turni-arese.app`;
@@ -3129,7 +3138,10 @@ async function submitLogin(){
     try { const d = await BK.db.doc("invites/" + code).get(); inv = d.exists ? d.data() : null; } catch { return lgErr("Non riesco a collegarmi: controlla la connessione."); }
     if (!inv || inv.role !== "user" || (inv.exp || 0) < Date.now()) return lgErr("Codice non valido o scaduto: chiedine uno nuovo al responsabile.");
     /* bastano nome e cognome anche se sul foglio c'è un secondo nome (Erika Barzon = Erika Claudia Barzon) */
-    const iw = words(inv.name), okName = twoWords(inv.name) ? words(name).every(w => iw.includes(w)) : words(name)[0] === iw[0];
+    /* il codice è già la chiave: sul nome tollero secondi nomi e piccoli errori di battitura (Emanule = Emanuele) */
+    const iw = words(inv.name), near = (a, b) => a === b || (Math.min(a.length, b.length) >= 4 && editDist(a, b) <= (Math.max(a.length, b.length) > 6 ? 2 : 1));
+    const hit = words(name).filter(w => iw.some(x => near(w, x))).length;
+    const okName = twoWords(inv.name) ? hit >= 2 : near(words(name)[0], iw[0]);
     if (!okName) return lgErr("Nome e cognome non corrispondono a questo codice: scrivili come li ha segnati il responsabile.");
     SES.claiming = true;
     const email = mkEmail(slugOf(inv.name));
