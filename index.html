@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>Turni Arese</title>
-<!-- versione 2026.11.10-20 -->
+<!-- versione 2026.11.10-21 -->
 <meta name="description" content="Turni e agenda del reparto Telefonia &amp; Service, MediaWorld Arese">
 <meta name="theme-color" content="#FFFFFF" media="(prefers-color-scheme: light)">
 <meta name="theme-color" content="#0B0F17" media="(prefers-color-scheme: dark)">
@@ -1121,7 +1121,7 @@ function qrSvg(text, color = "#0B1220", bg = "#FFFFFF") {
 if (typeof module !== "undefined") module.exports = { QRGEN, qrSvg };
 
 </script>
-<script src="firebase-config.js?v=2026.11.10-20"></script>
+<script src="firebase-config.js?v=2026.11.10-21"></script>
 <script>
 (() => {
 "use strict";
@@ -2753,6 +2753,13 @@ function applyTheme(force){
   if (ROUTE === "me") renderMe(); else if (ROUTE === "agenda") render(); else if (ROUTE === "carica") renderUpload(); else if (ROUTE === "set") renderSet(); else if (ROUTE === "login") renderLogin();
 }
 function setMode(m){ try { localStorage.setItem(THEME_KEY, m); } catch {} applyTheme(true); }
+async function themeFromAvatar(img, say){
+  try {
+    const blob = await (await fetch(img)).blob();
+    const c = await makeCustom(blob); c.src = img.length + ":" + img.slice(-24);
+    localStorage.setItem(CUSTOM_KEY, JSON.stringify(c)); setMode("custom"); if (say) toast("Tema preso dalla tua foto profilo");
+  } catch { toast("Non riesco a leggere la foto profilo"); }
+}
 async function pickCustom(file){
   try { const c = await makeCustom(file); localStorage.setItem(CUSTOM_KEY, JSON.stringify(c)); setMode("custom"); toast("Tema personalizzato pronto"); }
   catch { toast("Non riesco a leggere questa foto: provane un'altra"); }
@@ -2769,6 +2776,9 @@ const gearBtn = () => `<button class="round desk-only" data-act="nav" data-to="s
 function subscribeAvatars(){
   S.db.collection("avatars").onSnapshot(s => {
     S.avatars = {}; s.docs.forEach(d => { const v = d.data(); if (v && typeof v.img === "string" && v.img.startsWith("data:image/")) S.avatars[d.id] = v.img; });
+    const mine = meId() && S.avatars[meId()];
+    if (mine && (P.themeAfterAvatar || (getMode() === "custom" && (getCustom() || {}).src !== mine.length + ":" + mine.slice(-24)))){ const first = P.themeAfterAvatar; P.themeAfterAvatar = false; themeFromAvatar(mine, first); }
+    if (!mine && getMode() === "custom" && SES.member) setMode("light");
     if (ROUTE === "me") renderMe(); else if (ROUTE === "set" && !typingIn("#scr-set")) renderSet(); else if (ROUTE === "agenda") renderShifts();
   }, () => {});
 }
@@ -3146,9 +3156,8 @@ function renderSet(){
       <div class="row-act"><label class="btn">${ICO.cam}${S.avatars[id] ? "Cambia foto" : "Aggiungi una foto"}<input type="file" accept="image/*" data-avatar="${id}" hidden></label>${S.avatars[id] ? `<button class="btn ghost" data-act="avatar-del" data-confirm="Sì, togli">Togli</button>` : ""}</div></div></section>` : ""}
     <section class="card"><h2>${ICO.auto}Tema</h2>
       <div class="seg2 wide" role="group" aria-label="Tema"><button data-act="theme" data-to="light" aria-pressed="${getMode() === "light"}">${ICO.sun}Chiaro</button><button data-act="theme" data-to="dark" aria-pressed="${getMode() === "dark"}">${ICO.moon}Scuro</button><button data-act="theme" data-to="custom" aria-pressed="${getMode() === "custom"}">${ICO.cam}Foto</button></div>
-      ${getCustom() ? `<div class="cu-prev"><span class="cu-sw">${getCustom().pal.map(c => `<i style="background:${c}"></i>`).join("")}</span><label class="btn">${ICO.cam}Cambia foto<input type="file" accept="image/*" data-custom-pick hidden></label></div>` : ""}
-      <p class="mut set-note">${getMode() === "custom" ? "Personalizzato: colori e disegni presi dalla tua foto. Vale solo su questo telefono." : "Con «Foto» scegli un'immagine: l'app prende i colori più forti e i disegni e li usa dappertutto."}</p>
-      <input type="file" accept="image/*" id="cuPick" data-custom-pick hidden>
+      ${getMode() === "custom" && getCustom() ? `<div class="cu-prev"><span class="cu-sw">${getCustom().pal.map(c => `<i style="background:${c}"></i>`).join("")}</span></div>` : ""}
+      <p class="mut set-note">${getMode() === "custom" ? "Colori e disegni presi dalla tua foto profilo: se la cambi, il tema si aggiorna da solo." : S.avatars[id] ? "Con «Foto» l'app prende i colori più forti e i disegni della tua foto profilo e li usa dappertutto." : "Con «Foto» l'app usa i colori della tua foto profilo: prima ti chiedo di sceglierne una."}</p>
     </section>
     ${isAdmin() ? `<section class="card"><h2>${ICO.cal}Avviso nuovi turni</h2>
       <p class="mut">Quando salvi dei turni, i colleghi che hanno attivato le notifiche ricevono «Nuovi turni caricati» sul telefono, e tutti lo trovano aprendo la loro area. A te arriva solo se lo attivi qui sotto.</p>
@@ -3522,7 +3531,20 @@ document.addEventListener("click", async e => {
   const el = e.target.closest("[data-act]"); if (!el) return;
   const act = el.dataset.act;
   if (act === "nav"){ const to = el.dataset.to; if (location.hash === "#" + to) route(); else location.hash = to; return; }
-  if (act === "theme"){ const to = el.dataset.to; if (to === "custom" && !getCustom()){ const f = $("#cuPick"); if (f) f.click(); return; } return setMode(["light", "dark", "custom"].includes(to) ? to : "light"); }
+  if (act === "theme"){
+    const to = el.dataset.to;
+    if (to === "custom"){
+      const img = meId() && S.avatars[meId()];
+      if (img) return themeFromAvatar(img, true);
+      /* niente foto profilo: invito a sceglierne una, poi il tema parte da solo */
+      P.themeAfterAvatar = true;
+      const inp = document.querySelector("#scr-set input[data-avatar]") || document.querySelector("input[data-avatar]");
+      toast("Prima scegli la tua foto profilo: il tema prende i colori da lì");
+      if (inp) inp.click();
+      return;
+    }
+    return setMode(["light", "dark"].includes(to) ? to : "light");
+  }
   if (act === "theme-flip") return setMode(getTheme() === "dark" ? "light" : "dark");
   if (act === "lg-mode"){ LG.mode = el.dataset.m; LG.err = ""; renderLogin(); const f = $("#lgName") || $("#lgCode"); f && f.focus(); return; }
   if (act === "lg-eye"){ LG.show = !LG.show; ["lgPw", "lgPw2"].forEach(id => { const f = $("#" + id); if (f) f.type = LG.show ? "text" : "password"; }); document.querySelectorAll('[data-act="lg-eye"]').forEach(b => { b.setAttribute("aria-pressed", LG.show); b.setAttribute("aria-label", (LG.show ? "Nascondi" : "Mostra") + " la password"); }); return; }
