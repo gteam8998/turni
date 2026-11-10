@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>Turni Arese</title>
-<!-- versione 2026.11.10-8 -->
+<!-- versione 2026.11.10-10 -->
 <meta name="description" content="Turni e agenda del reparto Telefonia &amp; Service, MediaWorld Arese">
 <meta name="theme-color" content="#FFFFFF" media="(prefers-color-scheme: light)">
 <meta name="theme-color" content="#0B0F17" media="(prefers-color-scheme: dark)">
@@ -1103,7 +1103,7 @@ function qrSvg(text, color = "#0B1220", bg = "#FFFFFF") {
 if (typeof module !== "undefined") module.exports = { QRGEN, qrSvg };
 
 </script>
-<script src="firebase-config.js?v=2026.11.10-8"></script>
+<script src="firebase-config.js?v=2026.11.10-10"></script>
 <script>
 (() => {
 "use strict";
@@ -1655,7 +1655,7 @@ function openStaff(focusNew){
         e.preventDefault(); if (!needDb()) return;
         const name = $("#nsName", root).value.trim();
         if (!name) return $("#stErr", root).textContent = "Scrivi il nome del balordo.";
-        try { await S.db.collection("staff").add({name, order: S.staff.length}); toast(`${name} aggiunto`); openStaff(true); }
+        try { await S.db.collection("staff").add({name, order: S.staff.length, ...(twoWords(name) ? {full: titleCase(name)} : {})}); toast(`${name} aggiunto`); openStaff(true); }
         catch (er) { writeErr(er); }
       };
     }, focusNew ? "#nsName" : null);
@@ -2396,11 +2396,12 @@ async function saveUpload(btn){
       if (!sid){
         const name = String(p.newName).trim(), nk = norm(name);
         const ex = created[nk] || (S.staff.find(s => norm(s.name) === nk) || {}).id;
-        sid = ex || (await S.db.collection("staff").add({name, order: S.staff.length + Object.keys(created).length, sheetName: sheet})).id;
+        sid = ex || (await S.db.collection("staff").add({name, order: S.staff.length + Object.keys(created).length, sheetName: sheet, ...(twoWords(p.full) ? {full: titleCase(p.full)} : {})})).id;
         created[nk] = sid;
       } else {
         const st = staffById(sid), patch = {};
         if (st && String(st.sheetName || "").replace(/ /g, "") !== sheet.replace(/ /g, "")) patch.sheetName = sheet;
+        if (st && !st.full && twoWords(p.full)) patch.full = titleCase(p.full);   // il foglio ci dà nome e cognome: niente da riscrivere per i codici
         if (Object.keys(patch).length) await S.db.doc("staff/" + sid).update(patch);
       }
       const r = parseDayText(p.text); if (r.skip) continue;
@@ -2860,14 +2861,15 @@ function renderSet(){
       const now = Date.now();
       const act = sid => AD.members.some(m => m.staffId === sid);
       const inv = sid => AD.invites.filter(i => i.role === "user" && i.staffId === sid && (i.exp || 0) > now).sort((a, b) => (b.exp || 0) - (a.exp || 0))[0];
-      const staff = [...S.staff].sort((a, b) => a.name.localeCompare(b.name));
+      /* tu sempre in cima, poi gli altri in ordine alfabetico */
+      const staff = [...S.staff].sort((a, b) => (b.id === id) - (a.id === id) || a.name.localeCompare(b.name));
       const banco = AD.invites.find(i => i.role === "banco"), bancos = AD.members.filter(m => m.role === "banco");
       adm = `
     <section class="card"><h2>${ICO.users}Accessi dei balordi</h2>
       <p class="mut">Per far entrare un collega scrivi il suo <b>nome e cognome</b>, crea il <b>codice di primo accesso</b> e daglielo: apre l'app, tocca «Primo accesso», scrive nome, cognome e codice e sceglie la sua password. Il codice vale 14 giorni e si usa una volta.</p>
-      <ul class="acc">${staff.map(s => { const a = act(s.id), i = inv(s.id), me = s.id === id, full = s.full || (i && i.name) || "";
+      <ul class="acc">${staff.map(s => { const a = act(s.id), i = inv(s.id), me = s.id === id, full = knownFull(s) || (i && i.name) || "";
         return `<li><span class="av ${dCls(usual(s.id))}">${avIn(s.id, s.name)}</span><div class="acc-t"><b>${esc(s.name)}${me ? " (tu)" : ""}</b>
-          ${a || me ? (s.full ? `<small class="acc-full-t">${esc(s.full)}</small>` : "") : `<input class="acc-full" data-full="${esc(s.id)}" value="${esc(twoWords(full) ? full : "")}" placeholder="Nome e cognome" aria-label="Nome e cognome di ${esc(s.name)}" maxlength="60" autocapitalize="words" spellcheck="false">`}
+          ${a || me || twoWords(full) ? (full && norm(full) !== norm(s.name) ? `<small class="acc-full-t">${esc(full)}</small>` : "") : `<input class="acc-full" data-full="${esc(s.id)}" value="${esc(twoWords(full) ? full : "")}" placeholder="Nome e cognome" aria-label="Nome e cognome di ${esc(s.name)}" maxlength="60" autocapitalize="words" spellcheck="false">`}
           <small>${a ? "Accesso attivo" : i ? `Codice <b class="num code">${esc(i.id)}</b> · scade il ${fmtExp(i.exp)}` : "Nessun accesso"}</small></div>
           <div class="acc-a">${me ? "" : a ? `<button class="btn ghost" data-act="adm-reset" data-id="${esc(s.id)}" data-confirm="Sì, azzera">Azzera accesso</button>` : `<button class="btn" data-act="adm-code" data-id="${esc(s.id)}">${i ? "Nuovo codice" : "Crea codice"}</button>`}</div></li>`; }).join("")}</ul>
       <button class="btn" data-act="staff">${ICO.users}Aggiungi, rinomina o togli balordi</button>
@@ -2928,7 +2930,7 @@ async function adminAct(act, el){
   try {
     if (act === "adm-code"){
       const sid = el.dataset.id, st = staffById(sid); if (!st) return;
-      const inp = document.querySelector(`[data-full="${CSS.escape(sid)}"]`), full = titleCase(String(inp ? inp.value : st.full || "").trim().replace(/\s+/g, " "));
+      const inp = document.querySelector(`[data-full="${CSS.escape(sid)}"]`), full = titleCase(String(inp ? inp.value : knownFull(st)).trim().replace(/\s+/g, " "));
       if (!twoWords(full)){ toast(`Scrivi nome e cognome di ${st.name} prima di creare il codice.`); inp && inp.focus(); return; }
       const twin = S.staff.find(x => x.id !== sid && x.full && sameName(x.full, full));
       if (twin){ toast(`${full} c'è già in elenco: controlla il cognome.`); inp && inp.focus(); return; }
@@ -3047,6 +3049,8 @@ const slugOf = s => norm(s).replace(/ /g, "-").slice(0, 40);
 const words = s => norm(s).split(" ").filter(Boolean);
 const twoWords = s => words(s).length >= 2;
 const sameName = (a, b) => words(a).sort().join(" ") === words(b).sort().join(" ");
+/* nome e cognome già noti: quello segnato apposta, oppure il nome in elenco se ha già il cognome */
+const knownFull = st => !st ? "" : st.full || (twoWords(st.name) ? st.name : "");
 const firstName = st => st ? titleCase(String(st.full || st.name || "").trim().split(/\s+/)[0]) : "";
 const mkEmail = pre => `${(pre || "u").replace(/[^a-z0-9-]/g, "").slice(0, 20) || "u"}-${Date.now().toString(36)}${rnd(4)}@turni-arese.app`;
 function renderLogin(){
@@ -3124,7 +3128,8 @@ async function submitLogin(){
     let inv;
     try { const d = await BK.db.doc("invites/" + code).get(); inv = d.exists ? d.data() : null; } catch { return lgErr("Non riesco a collegarmi: controlla la connessione."); }
     if (!inv || inv.role !== "user" || (inv.exp || 0) < Date.now()) return lgErr("Codice non valido o scaduto: chiedine uno nuovo al responsabile.");
-    const okName = twoWords(inv.name) ? sameName(name, inv.name) : words(name)[0] === words(inv.name)[0];
+    /* bastano nome e cognome anche se sul foglio c'è un secondo nome (Erika Barzon = Erika Claudia Barzon) */
+    const iw = words(inv.name), okName = twoWords(inv.name) ? words(name).every(w => iw.includes(w)) : words(name)[0] === iw[0];
     if (!okName) return lgErr("Nome e cognome non corrispondono a questo codice: scrivili come li ha segnati il responsabile.");
     SES.claiming = true;
     const email = mkEmail(slugOf(inv.name));
@@ -3134,6 +3139,7 @@ async function submitLogin(){
       await BK.db.batch([
         {op: "set", path: "members/" + u.uid, data: {role: "user", staffId: inv.staffId, code, at: new Date().toISOString()}},
         {op: "set", path: "logins/" + slugOf(inv.name), data: {staffId: inv.staffId, email, uid: u.uid}},
+        ...(slugOf(name) !== slugOf(inv.name) ? [{op: "set", path: "logins/" + slugOf(name), data: {staffId: inv.staffId, email, uid: u.uid}}] : []),
         {op: "delete", path: "invites/" + code}]);
     } catch (e) { try { await BK.auth.deleteUser(); } catch {} SES.claiming = false; return lgErr(authMsg(e)); }
     SES.claiming = false; v.pw = v.pw2 = v.code = ""; LG.busy = false; LG.mode = "login";
