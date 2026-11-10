@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>Turni Arese</title>
-<!-- versione 2026.11.10-27 -->
+<!-- versione 2026.11.10-28 -->
 <meta name="description" content="Turni e agenda del reparto Telefonia &amp; Service, MediaWorld Arese">
 <meta name="theme-color" content="#FFFFFF" media="(prefers-color-scheme: light)">
 <meta name="theme-color" content="#0B0F17" media="(prefers-color-scheme: dark)">
@@ -545,11 +545,13 @@ body[data-role="banco"] .me-only{display:none!important}
 .push-ok{color:var(--ok)}
 .push-err{margin:8px 0 0;padding:10px 12px;border-radius:12px;background:var(--now-fill);color:var(--now);font-weight:700;font-size:15px}
 .cu-acc{display:grid;gap:8px;margin-top:14px}
-.cu-bg{display:grid;gap:8px;margin:6px 0 4px}
+.cu-bg{display:grid;gap:8px;margin:16px 0 0;padding-top:14px;border-top:1px solid var(--line-2)}
 /* sfondo personale: fisso dietro a tutto, velato col colore del tema perché i testi restino leggibili */
 :root[data-bg] body{background:transparent}
+/* con lo sfondo, i riquadri che di solito sono «vuoti» diventano pieni: niente testo appoggiato direttamente sull'immagine */
+:root[data-bg] .minical,:root[data-bg] .side-box,:root[data-bg] .step,:root[data-bg] .tips li,:root[data-bg] .results{background:var(--bg)}
 :root[data-bg] body::after{content:"";position:fixed;inset:0;z-index:-2;pointer-events:none;
-  background:linear-gradient(color-mix(in srgb, var(--bg) 45%, transparent), color-mix(in srgb, var(--bg) 70%, transparent)), var(--bgimg) center/cover no-repeat}
+  background:linear-gradient(color-mix(in srgb, var(--bg) var(--veil1, 50%), transparent), color-mix(in srgb, var(--bg) var(--veil2, 74%), transparent)), var(--bgimg) center/cover no-repeat}
 .cu-acc .cu-sw{flex-wrap:wrap;gap:8px}
 .cu-acc .cu-sw button{width:40px;height:40px;border-radius:50%;border:2px solid var(--line);padding:0;font-size:12px;font-weight:700;background:var(--surface);color:var(--ink)}
 .cu-acc .cu-sw button[aria-pressed="true"]{outline:3px solid var(--ink);outline-offset:2px}
@@ -917,7 +919,7 @@ html,body{background:var(--bg);transition:background-color .2s}
    SUNT(data) = [inizio e fine della luce] in minuti locali: alba e tramonto civili (sole 6° sotto l'orizzonte), formula NOAA */
 window.SUNT=function(d,z){z=z||96;var R=Math.PI/180,lat=45.553,lon=9.077,y=d.getFullYear(),m=d.getMonth(),dd=d.getDate(),N=Math.round((Date.UTC(y,m,dd)-Date.UTC(y,0,0))/864e5),lh=lon/15,o=[];
 [6,18].forEach(function(h,i){var t=N+(h-lh)/24,M=.9856*t-3.289,L=(M+1.916*Math.sin(M*R)+.02*Math.sin(2*M*R)+282.634+720)%360,RA=(Math.atan(.91764*Math.tan(L*R))/R+720)%360;RA=(RA+Math.floor(L/90)*90-Math.floor(RA/90)*90)/15;var sd=.39782*Math.sin(L*R),cd=Math.cos(Math.asin(sd)),cH=(Math.cos(z*R)-sd*Math.sin(lat*R))/(cd*Math.cos(lat*R));if(cH>1||cH<-1){o.push(null);return}var H=(i?Math.acos(cH)/R:360-Math.acos(cH)/R)/15,T=H+RA-.06571*t-6.622,U=((T-lh)%24+24)%24,x=new Date(Date.UTC(y,m,dd)+U*36e5);o.push(x.getHours()*60+x.getMinutes())});return o};
-try{var m=localStorage.getItem("ui-mode"),r=document.documentElement,c=null;if(m==="custom"){try{c=JSON.parse(localStorage.getItem("ui-custom")||"null")}catch(e){}}if(c&&c.vars){for(var k in c.vars)r.style.setProperty(k,c.vars[k]);if(c.deco){r.style.setProperty("--deco",'url("'+c.deco+'")');r.dataset.custom="deco"}else r.dataset.custom="1";if(c.dark)r.dataset.ui="dark";var g=localStorage.getItem("ui-bg");if(g){r.style.setProperty("--bgimg",'url("'+g+'")');r.dataset.bg="1"}}else if(m==="dark")r.dataset.ui="dark"}catch(e){}</script>
+try{var m=localStorage.getItem("ui-mode"),r=document.documentElement,c=null;if(m==="custom"){try{c=JSON.parse(localStorage.getItem("ui-custom")||"null")}catch(e){}}if(c&&c.vars){for(var k in c.vars)r.style.setProperty(k,c.vars[k]);if(c.deco){r.style.setProperty("--deco",'url("'+c.deco+'")');r.dataset.custom="deco"}else r.dataset.custom="1";if(c.dark)r.dataset.ui="dark"}else if(m==="dark")r.dataset.ui="dark";var g=localStorage.getItem("ui-bg");if(g){var l=parseFloat(localStorage.getItem("ui-bg-l")||".5"),dk=r.dataset.ui==="dark",cl=dk?l>.45:l<.55;r.style.setProperty("--bgimg",'url("'+g+'")');r.style.setProperty("--veil1",cl?"80%":"50%");r.style.setProperty("--veil2",cl?"90%":"74%");r.dataset.bg="1"}}catch(e){}</script>
 <div class="wrap" id="scr-boot"><div class="boot"><span class="spin"></span>Apro l'app…</div></div>
 <div class="wrap" id="scr-login" hidden></div>
 <div class="wrap" id="scr-set" hidden></div>
@@ -1136,7 +1138,7 @@ function qrSvg(text, color = "#0B1220", bg = "#FFFFFF") {
 if (typeof module !== "undefined") module.exports = { QRGEN, qrSvg };
 
 </script>
-<script src="firebase-config.js?v=2026.11.10-27"></script>
+<script src="firebase-config.js?v=2026.11.10-28"></script>
 <script>
 (() => {
 "use strict";
@@ -2771,8 +2773,12 @@ function applyCustomVars(){
       st.setProperty("--accent-glow", hexOf(a));
     } if (c.deco) st.setProperty("--deco", `url("${c.deco}")`); document.documentElement.dataset.custom = c.deco ? "deco" : "1"; }
   else delete document.documentElement.dataset.custom;
-  let bg = ""; try { bg = c ? localStorage.getItem("ui-bg") || "" : ""; } catch {}
-  if (bg){ st.setProperty("--bgimg", `url("${bg}")`); document.documentElement.dataset.bg = "1"; } else { st.removeProperty("--bgimg"); delete document.documentElement.dataset.bg; }
+  let bg = "", bl = .5; try { bg = localStorage.getItem("ui-bg") || ""; bl = parseFloat(localStorage.getItem("ui-bg-l") || ".5"); } catch {}
+  if (bg){
+    const dk = document.documentElement.dataset.ui === "dark", clash = dk ? bl > .45 : bl < .55;   // immagine chiara su tema scuro o scura su tema chiaro
+    st.setProperty("--bgimg", `url("${bg}")`); st.setProperty("--veil1", clash ? "80%" : "50%"); st.setProperty("--veil2", clash ? "90%" : "74%");
+    document.documentElement.dataset.bg = "1";
+  } else { ["--bgimg", "--veil1", "--veil2"].forEach(k => st.removeProperty(k)); delete document.documentElement.dataset.bg; }
 }
 /* sfondo personale: un'immagine scelta dalla galleria, rimpicciolita e salvata solo su questo telefono */
 async function pickBg(file){
@@ -2781,7 +2787,10 @@ async function pickBg(file){
     const cv = document.createElement("canvas"); cv.width = Math.round(bmp.width * sc); cv.height = Math.round(bmp.height * sc);
     cv.getContext("2d").drawImage(bmp, 0, 0, cv.width, cv.height);
     let url = cv.toDataURL("image/jpeg", .82); if (url.length > 1800000) url = cv.toDataURL("image/jpeg", .6);
-    localStorage.setItem("ui-bg", url); applyTheme(true); toast("Sfondo messo");
+    /* luminosità media dell'immagine: serve a decidere quanto velarla per tenere leggibili i testi */
+    const t = document.createElement("canvas"); t.width = t.height = 24; const tx = t.getContext("2d", {willReadFrequently: true}); tx.drawImage(cv, 0, 0, 24, 24);
+    const d = tx.getImageData(0, 0, 24, 24).data; let L = 0; for (let i = 0; i < d.length; i += 4) L += lumOf([d[i], d[i + 1], d[i + 2]]); L /= d.length / 4;
+    localStorage.setItem("ui-bg", url); localStorage.setItem("ui-bg-l", String(Math.sqrt(L))); applyTheme(true); toast("Sfondo messo");
   } catch { toast("Non riesco a usare questa immagine come sfondo"); }
 }
 function applyTheme(force){
@@ -3235,9 +3244,9 @@ function renderSet(){
       <div class="seg2 wide" role="group" aria-label="Tema"><button data-act="theme" data-to="light" aria-pressed="${getMode() === "light"}">${ICO.sun}Chiaro</button><button data-act="theme" data-to="dark" aria-pressed="${getMode() === "dark"}">${ICO.moon}Scuro</button><button data-act="theme" data-to="custom" aria-pressed="${getMode() === "custom"}">${ICO.cam}Foto</button></div>
       ${getMode() === "custom" && getCustom() ? `<div class="cu-acc"><b>Colore in più</b><div class="cu-sw" role="group" aria-label="Colore in più">
         <button data-act="cu-accent" data-c="" aria-pressed="${!getCustom().accent}" title="Automatico">Auto</button>${(getCustom().cands || []).map(c => `<button data-act="cu-accent" data-c="${c}" aria-pressed="${getCustom().accent === c}" style="background:${c}" aria-label="Usa ${c}"></button>`).join("")}<label class="cu-any" title="Scegli un colore qualsiasi" style="${getCustom().accent && !(getCustom().cands || []).includes(getCustom().accent) ? `background:${getCustom().accent};outline:3px solid var(--ink);outline-offset:2px` : ""}">+<input type="color" id="cuAny" value="${getCustom().accent || "#7ec8f0"}"></label></div>
-        <div class="cu-bg"><b>Sfondo</b><div class="row-act"><label class="btn">${ICO.cam}${lsGet("ui-bg") ? "Cambia sfondo" : "Scegli uno sfondo"}<input type="file" accept="image/*" data-bg-pick hidden></label>${lsGet("ui-bg") ? `<button class="btn ghost" data-act="bg-del">Togli sfondo</button>` : ""}</div><small class="mut">Un'immagine dalla tua galleria dietro a tutta l'app. Resta solo su questo telefono.</small></div>
         <small class="mut">Colori presi dalla foto, anche i dettagli piccoli. Col «+» scegli un colore qualsiasi. Quello scelto colora pulsanti, schede e avvisi.</small></div>` : ""}
       <p class="mut set-note">${getMode() === "custom" ? "Colori e disegni presi dalla tua foto profilo: se la cambi, il tema si aggiorna da solo." : S.avatars[id] ? "Con «Foto» l'app prende i colori più forti e i disegni della tua foto profilo e li usa dappertutto." : "Con «Foto» l'app usa i colori della tua foto profilo: metti una foto, non fare il noioso."}</p>
+      <div class="cu-bg"><b>Sfondo</b><div class="row-act"><label class="btn">${ICO.cam}${lsGet("ui-bg") ? "Cambia sfondo" : "Scegli uno sfondo"}<input type="file" accept="image/*" data-bg-pick hidden></label>${lsGet("ui-bg") ? `<button class="btn ghost" data-act="bg-del">Togli sfondo</button>` : ""}</div><small class="mut">Un'immagine dalla tua galleria dietro a tutta l'app. Resta solo su questo telefono.</small></div>
     </section>
     ${isAdmin() ? `<section class="card"><h2>${ICO.cal}Avviso nuovi turni</h2>
       <p class="mut">Quando salvi dei turni, i colleghi che hanno attivato le notifiche ricevono «Nuovi turni caricati» sul telefono, e tutti lo trovano aprendo la loro area. A te arriva solo se lo attivi qui sotto.</p>
@@ -3639,7 +3648,7 @@ document.addEventListener("click", async e => {
   if (act === "close") return closeSheet();
   /* azioni di tutti (anche dei balordi, che non scrivono in agenda) */
   if (act === "cu-accent"){ const c = getCustom(); if (!c) return; if (el.dataset.c) c.accent = el.dataset.c; else delete c.accent; try { localStorage.setItem(CUSTOM_KEY, JSON.stringify(c)); } catch {} applyTheme(true); return; }
-  if (act === "bg-del"){ try { localStorage.removeItem("ui-bg"); } catch {} applyTheme(true); toast("Sfondo tolto"); return; }
+  if (act === "bg-del"){ try { localStorage.removeItem("ui-bg"); localStorage.removeItem("ui-bg-l"); } catch {} applyTheme(true); toast("Sfondo tolto"); return; }
   if (act === "push-on") return pushOn(el);
   if (act === "push-test"){ try { const reg = await navigator.serviceWorker.ready; await reg.showNotification("Prova ✓", {body: "Se vedi questo messaggio le notifiche funzionano.", icon: "icons/logo-192.png", badge: "icons/logo-badge-96.png", tag: "turni-prova"}); toast("Notifica di prova inviata"); } catch { toast("Non riesco a mostrare la notifica di prova"); } return; }
   if (act === "push-off") return pushOff();
