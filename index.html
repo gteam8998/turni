@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>Turni Arese</title>
-<!-- versione 2026.11.10-11 -->
+<!-- versione 2026.11.10-12 -->
 <meta name="description" content="Turni e agenda del reparto Telefonia &amp; Service, MediaWorld Arese">
 <meta name="theme-color" content="#FFFFFF" media="(prefers-color-scheme: light)">
 <meta name="theme-color" content="#0B0F17" media="(prefers-color-scheme: dark)">
@@ -1103,7 +1103,7 @@ function qrSvg(text, color = "#0B1220", bg = "#FFFFFF") {
 if (typeof module !== "undefined") module.exports = { QRGEN, qrSvg };
 
 </script>
-<script src="firebase-config.js?v=2026.11.10-11"></script>
+<script src="firebase-config.js?v=2026.11.10-12"></script>
 <script>
 (() => {
 "use strict";
@@ -1985,10 +1985,12 @@ function parseClaude(t){
     if (/^\?/.test(line)){ out.dubbi.push(line.replace(/^\?\s*/, "")); continue; }
     let f = line.split("|").map(x => x.trim()); if (f.length < 3 || !(f[0] || f[1])) continue;
     /* formato senza REP (Nome | Cognome | orari | celle): il reparto del giorno lo dicono le celle */
-    if (rng.test(f[2]) || /^r(iposo)?$/i.test(f[2])) f = [f[0], f[1], "", ...f.slice(2)];
+    const off = x => /^(r|f|riposo|ferie)$/i.test(String(x || "").trim());   // R = riposo, F = ferie
+    if (rng.test(f[2]) || off(f[2])) f = [f[0], f[1], "", ...f.slice(2)];
+    f[3] = f[3] || "";
     if (!day){ day = {data: null, rows: []}; out.days.push(day); }
     const da = [], a = [], celle = [];
-    if (!/^r(iposo)?$/i.test(f[3])) f[3].split(/[,;]/).forEach(x => { const m = x.match(rng); if (m){ da.push(m[1]); a.push(m[2]); } });
+    if (!off(f[3])) f[3].split(/[,;]/).forEach(x => { const m = x.match(rng); if (m){ da.push(m[1]); a.push(m[2]); } });
     (f[4] || "").split(/[,;]/).forEach(x => { const m = x.trim().match(new RegExp(`^([A-Za-zÀ-ú]+)\\s+${tm}\\s*[-–—]\\s*${tm}`)); if (m) celle.push([m[1].toUpperCase(), m[2], m[3]]); });
     day.rows.push({nome: f[0], cognome: f[1], rep: (f[2] || "").toUpperCase(), da: da.length ? da : ["R"], a: a.length ? a : ["R"], celle});
   }
