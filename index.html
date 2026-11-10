@@ -4,13 +4,15 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>Turni Arese</title>
-<!-- versione 2026.11.10-18 -->
+<!-- versione 2026.11.10-19 -->
 <meta name="description" content="Turni e agenda del reparto Telefonia &amp; Service, MediaWorld Arese">
 <meta name="theme-color" content="#FFFFFF" media="(prefers-color-scheme: light)">
 <meta name="theme-color" content="#0B0F17" media="(prefers-color-scheme: dark)">
 <link rel="manifest" href="manifest.webmanifest">
-<link rel="icon" type="image/png" href="icons/icon-192.png">
-<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<link rel="icon" type="image/png" sizes="32x32" href="icons/favicon-32.png?v=2">
+<link rel="icon" type="image/png" sizes="48x48" href="icons/favicon-48.png?v=2">
+<link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192.png?v=2">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png?v=2">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="Turni">
@@ -539,6 +541,15 @@ body[data-role="banco"] .me-only{display:none!important}
 .acc-t .code{font-size:16px;color:var(--ink);letter-spacing:.06em}
 .acc-full{margin:4px 0 2px;min-height:42px;padding:6px 12px;font-size:16px;width:100%;max-width:280px;border:1.5px solid var(--line);border-radius:12px;background:var(--bg);color:var(--ink)}
 .acc-full:focus{outline:none;border-color:var(--tel)}
+.cu-prev{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-top:12px}
+.cu-sw{display:flex;gap:6px}.cu-sw i{width:28px;height:28px;border-radius:50%;border:2px solid var(--line);display:block}
+/* disegno del tema personalizzato */
+:root[data-custom="deco"] .hero::after{inset:auto -40px -50px auto;width:260px;height:260px;border-radius:0;background:var(--deco) center/contain no-repeat;opacity:.22}
+:root[data-custom="deco"] body{background:transparent}
+:root[data-custom="deco"] body::before{content:"";position:fixed;right:-60px;bottom:-40px;width:340px;height:340px;background:var(--deco) center/contain no-repeat;opacity:.06;pointer-events:none;z-index:-1;filter:invert(var(--deco-inv,0))}
+:root[data-custom] .hero .btn{background:var(--hero-ink);color:var(--hero);border-color:var(--hero-ink)}
+:root[data-custom] .btn.primary:hover{filter:brightness(1.1);background:var(--primary)}
+.st-act{display:flex;gap:6px;flex-wrap:wrap}.st-hid{grid-column:1/-1;color:var(--ink-3);font-size:13px}
 .prow .fld input,.prow .fld select{width:100%;min-width:0;box-sizing:border-box}
 .dsplit{grid-column:1/-1;margin:0}.dsplit>summary{cursor:pointer;font-weight:700;font-size:15px;padding:4px 0}.dsplit>summary .mut{font-weight:400}
 .dsplit[open]>summary{margin-bottom:6px}
@@ -778,10 +789,10 @@ html,body{background:var(--bg);transition:background-color .2s}
 .b-t em{position:absolute;top:-4px;bottom:-4px;width:2.5px;background:var(--ink);border-radius:2px}
 .b-v{text-align:right;font-weight:700;font-family:var(--f-num)}
 .mates{list-style:none;margin:0;padding:0;display:grid;gap:8px}
-.mates li{display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:2px 12px;align-items:center}
-.mates .av{width:36px;height:36px;font-size:13px;grid-row:span 2}
-.mates b{font-size:16px}
-.mates .num{font-weight:700;font-size:15px;text-align:right;grid-row:span 2}
+.mates li{display:grid;grid-template-columns:auto minmax(0,1fr);gap:1px 12px;align-items:center}
+.mates .av{width:36px;height:36px;font-size:13px;grid-row:span 3}
+.mates b{font-size:16px;overflow-wrap:anywhere}
+.mates .num{font-weight:700;font-size:15px;overflow-wrap:anywhere}
 .mates small{color:var(--ok);font-weight:700;font-size:12px}
 .set-row{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
 .set-row label{font-weight:700}
@@ -891,7 +902,7 @@ html,body{background:var(--bg);transition:background-color .2s}
    SUNT(data) = [inizio e fine della luce] in minuti locali: alba e tramonto civili (sole 6° sotto l'orizzonte), formula NOAA */
 window.SUNT=function(d,z){z=z||96;var R=Math.PI/180,lat=45.553,lon=9.077,y=d.getFullYear(),m=d.getMonth(),dd=d.getDate(),N=Math.round((Date.UTC(y,m,dd)-Date.UTC(y,0,0))/864e5),lh=lon/15,o=[];
 [6,18].forEach(function(h,i){var t=N+(h-lh)/24,M=.9856*t-3.289,L=(M+1.916*Math.sin(M*R)+.02*Math.sin(2*M*R)+282.634+720)%360,RA=(Math.atan(.91764*Math.tan(L*R))/R+720)%360;RA=(RA+Math.floor(L/90)*90-Math.floor(RA/90)*90)/15;var sd=.39782*Math.sin(L*R),cd=Math.cos(Math.asin(sd)),cH=(Math.cos(z*R)-sd*Math.sin(lat*R))/(cd*Math.cos(lat*R));if(cH>1||cH<-1){o.push(null);return}var H=(i?Math.acos(cH)/R:360-Math.acos(cH)/R)/15,T=H+RA-.06571*t-6.622,U=((T-lh)%24+24)%24,x=new Date(Date.UTC(y,m,dd)+U*36e5);o.push(x.getHours()*60+x.getMinutes())});return o};
-try{var m=localStorage.getItem("ui-mode")||"auto",n=new Date(),x=n.getHours()*60+n.getMinutes(),k=SUNT(n);if(m==="dark"||(m==="auto"&&k[0]!=null&&(x>=k[1]||x<k[0])))document.documentElement.dataset.ui="dark"}catch(e){}</script>
+try{var m=localStorage.getItem("ui-mode"),r=document.documentElement,c=null;if(m==="custom"){try{c=JSON.parse(localStorage.getItem("ui-custom")||"null")}catch(e){}}if(c&&c.vars){for(var k in c.vars)r.style.setProperty(k,c.vars[k]);if(c.deco){r.style.setProperty("--deco",'url("'+c.deco+'")');r.dataset.custom="deco"}else r.dataset.custom="1";if(c.dark)r.dataset.ui="dark"}else if(m==="dark")r.dataset.ui="dark"}catch(e){}</script>
 <div class="wrap" id="scr-boot"><div class="boot"><span class="spin"></span>Apro l'app…</div></div>
 <div class="wrap" id="scr-login" hidden></div>
 <div class="wrap" id="scr-set" hidden></div>
@@ -1110,7 +1121,7 @@ function qrSvg(text, color = "#0B1220", bg = "#FFFFFF") {
 if (typeof module !== "undefined") module.exports = { QRGEN, qrSvg };
 
 </script>
-<script src="firebase-config.js?v=2026.11.10-18"></script>
+<script src="firebase-config.js?v=2026.11.10-19"></script>
 <script>
 (() => {
 "use strict";
@@ -1194,7 +1205,7 @@ const ICON = {
   img: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="16" rx="2"/><circle cx="9" cy="10" r="2"/><path d="m21 16-5-5-9 9"/></svg>`
 };
 
-const S = {
+const S = {staffAll: [], 
   sel: todayStr(), cal: null, view: "day", filter: "all", dept: "all",
   staff: [], shifts: {}, appts: [], notes: [], pinned: [],
   db: null, me: null, names: {}, canWrite: false, avatars: {},
@@ -1511,7 +1522,7 @@ const docs = snap => snap.docs.map(d => Object.assign({id: d.id}, d.data()));
 
 function subscribeStatic(){
   S.db.collection("staff").onSnapshot(s => {
-    live(s); S.staff = docs(s).filter(x => x.name);
+    live(s); S.staffAll = docs(s).filter(x => x.name); S.staff = S.staffAll.filter(x => !x.hide);
     if (!uploadActive()) renderShifts();
     if (ROUTE === "me") renderMe(); else if (ROUTE === "set" && !typingIn("#scr-set")) renderSet();
     if (S.staffOpen && !(document.activeElement && document.activeElement.closest && document.activeElement.closest(".stafflist"))) openStaff(document.activeElement && document.activeElement.id === "nsName");
@@ -1633,14 +1644,14 @@ async function copyLastWeek(){
 /* staff editor */
 function openStaff(focusNew){
   S.staffOpen = true;
-  const list = [...S.staff].sort((a, b) => a.name.localeCompare(b.name));
+  const list = [...(S.staffAll || S.staff)].sort((a, b) => !!a.hide - !!b.hide || a.name.localeCompare(b.name));
   openSheet(`${sheetHead("Balordi")}
     <form id="fStaff" novalidate>
       <p style="margin:0;color:var(--ink-2)">Nessuno ha un reparto fisso: il reparto si sceglie su ogni turno; «di solito» è solo un suggerimento calcolato dagli ultimi turni. Gli accessi all'app (codici e password) si gestiscono in Impostazioni.</p>
       <ul class="stafflist">${list.map(s => `<li>
         <input id="sn-${s.id}" value="${esc(s.name)}" aria-label="Nome" data-sid="${s.id}" data-k="name">
         <span class="usual ${usual(s.id) || "none"}">${usual(s.id) ? `<i class="dot ${usual(s.id)}"></i>${esc(usualText(s.id))}${S.usual[s.id].share < 100 ? ` <small>${S.usual[s.id].share}%</small>` : ""}` : "nessun turno recente"}</span>
-        <button type="button" class="btn danger" data-del-staff="${s.id}" data-confirm="Sicuro?">Togli</button></li>`).join("") || `<li style="display:block;color:var(--ink-3)">Ancora nessuno.</li>`}</ul>
+        <span class="st-act"><button type="button" class="btn ghost" data-hide-staff="${s.id}" title="${s.hide ? "Torna visibile in agenda e nelle aree dei colleghi" : "Non compare in agenda né ai colleghi; le letture dei fogli lo saltano"}">${s.hide ? "Mostra" : "Nascondi"}</button><button type="button" class="btn danger" data-del-staff="${s.id}" data-confirm="Sicuro?">Togli</button></span>${s.hide ? `<small class="st-hid">Nascosto: non compare da nessuna parte e i fogli lo saltano</small>` : ""}</li>`).join("") || `<li style="display:block;color:var(--ink-3)">Ancora nessuno.</li>`}</ul>
       <div class="f-row" style="grid-template-columns:minmax(0,1fr) auto;align-items:end">
         <div class="fld"><label for="nsName">Nuovo balordo</label><input id="nsName" placeholder="Nome" maxlength="40"></div>
         <button type="submit" class="btn primary" style="min-height:50px">Aggiungi</button>
@@ -1660,6 +1671,9 @@ function openStaff(focusNew){
         try { await S.db.batch([{op: "update", path: "staff/" + sid, data: up}, ...ops]); if (ops.length) AD.members = null; toast("Aggiornato"); } catch (er) { writeErr(er); }
       });
       root.addEventListener("click", async e => {
+        const hb = e.target.closest("[data-hide-staff]");
+        if (hb){ if (!needDb()) return; const st = (S.staffAll || []).find(x => x.id === hb.dataset.hideStaff); if (!st) return;
+          try { await S.db.doc("staff/" + st.id).update({hide: !st.hide}); toast(st.hide ? `${st.name} di nuovo visibile` : `${st.name} nascosto`); } catch (er) { writeErr(er); } return; }
         const b = e.target.closest("[data-del-staff]"); if (!b) return;
         if (!armed(b) || !needDb()) return;
         try { await S.db.doc("staff/" + b.dataset.delStaff).delete(); b.closest("li").remove(); toast("Balordo tolto"); } catch (er) { writeErr(er); }
@@ -2201,16 +2215,17 @@ const capitalize = s => s.charAt(0).toUpperCase() + s.slice(1);
 const titleCase = s => String(s).toLowerCase().replace(/(^|[\s'-])\S/g, c => c.toUpperCase());
 /* strict = riga di un altro reparto: abbino solo con nome e cognome (o nome del foglio) già noti, mai con il solo nome */
 function matchStaff(full, strict){
+  const ALL = S.staffAll || S.staff;
   const n = norm(full); if (!n) return "";
   const ws = n.split(" ");
   /* nome e cognome scritti dal responsabile: bastano che stiano dentro il nome del foglio (che può avere secondi nomi) */
   const fits = s => { const fw = words(s.full); return fw.length > 1 && fw.every(w => ws.includes(w)); };
-  const byFull = S.staff.filter(fits); if (byFull.length === 1) return byFull[0].id;
+  const byFull = ALL.filter(fits); if (byFull.length === 1) return byFull[0].id;
   const cmp = x => String(x || "").replace(/ /g, ""), nc = cmp(n);   // i vecchi nomi del foglio erano salvati senza spazi
-  let hit = S.staff.find(s => s.sheetName && cmp(s.sheetName) === nc) || S.staff.find(s => norm(s.name) === n);
+  let hit = ALL.find(s => s.sheetName && cmp(s.sheetName) === nc) || ALL.find(s => norm(s.name) === n);
   if (strict) return hit ? hit.id : "";
   /* per nome: solo balordi senza nome completo già noto, o con lo stesso (due Francesco con cognomi diversi non si confondono) */
-  const free = S.staff.filter(s => (!s.sheetName || cmp(s.sheetName) === nc) && !(words(s.full).length > 1 && !fits(s)));
+  const free = ALL.filter(s => (!s.sheetName || cmp(s.sheetName) === nc) && !(words(s.full).length > 1 && !fits(s)));
   if (!hit) { const c = free.filter(s => { const sw = norm(s.name).split(" "); return sw.every(w => ws.includes(w)); }); if (c.length === 1) hit = c[0]; }
   if (!hit) { const c = free.filter(s => { const sn = norm(s.name); return sn.length >= 3 && ws.some(w => w.length >= 3 && w.startsWith(sn)); }); if (c.length === 1) hit = c[0]; }
   return hit ? hit.id : "";
@@ -2240,6 +2255,7 @@ function ingest(results){
         const daBl = sorted(da.map((x, j) => ({s: fixTime(x), e: fixTime(aa[j])})).filter(b => b.s && b.e && toMin(b.e) > toMin(b.s)));
         /* si salvano: chi ha celle TLC/HE, e i balordi già in elenco qualunque sia il reparto di oggi (TV, PE, ...) */
         const match = matchStaff(full, !ours.length && rep !== "TLC" && rep !== "HE");
+        if (match && ((S.staffAll || []).find(x => x.id === match) || {}).hide){ g.excluded.set(k, `${first} (nascosto in elenco)`); return; }
         if (!ours.length && !(match && (segs.length || daBl.length))){
           if ((rep === "TLC" || rep === "HE" || match) && (daBl.length || segs.length) && !g.people.has(k))
             g.excluded.set(k, `${first} (${[...new Set(segs.map(x => x.sig))].join(", ") || "nessuna cella TLC/HE"})`);
@@ -2642,23 +2658,109 @@ const roleLabel = () => isAdmin() ? "responsabile" : isBanco() ? "PC del banco" 
    Chi lo cambia a mano resta sulla sua scelta finché non rimette Auto */
 const sunToday = () => { try { const k = window.SUNT(new Date()); return k[0] != null && k[1] != null ? k : [7 * 60, 19 * 60]; } catch { return [7 * 60, 19 * 60]; } };
 const getTheme = () => document.documentElement.dataset.ui === "dark" ? "dark" : "light";
-function getMode(){ try { const m = localStorage.getItem(THEME_KEY); return m === "light" || m === "dark" ? m : "auto"; } catch { return "auto"; } }
-function wantedTheme(){ const m = getMode(); if (m !== "auto") return m; const d = new Date(), x = d.getHours() * 60 + d.getMinutes(); const [a, b] = sunToday(); return x >= b || x < a ? "dark" : "light"; }
+function getMode(){ try { const m = localStorage.getItem(THEME_KEY); return m === "dark" || m === "custom" && getCustom() ? m : "light"; } catch { return "light"; } }
+function wantedTheme(){ const m = getMode(); if (m === "custom") return getCustom().dark ? "dark" : "light"; return m; }
+
+/* ---------- tema personalizzato: colori e disegno presi da una foto ----------
+   1. riduco la foto a 72x72 e raggruppo i pixel in pochi colori (k-means)
+   2. colore di fondo = il più presente; colore forte = il più saturo e presente fra gli altri; terzo = quello che stacca di più
+   3. «disegno»: i pixel lontani dal colore di fondo diventano una sagoma trasparente (simboli, scritte, loghi),
+      usata in grande e leggera dietro la scheda di oggi e in un angolo della pagina */
+const CUSTOM_KEY = "ui-custom";
+function getCustom(){ try { const j = JSON.parse(localStorage.getItem(CUSTOM_KEY) || "null"); return j && j.vars ? j : null; } catch { return null; } }
+const hexOf = c => "#" + c.map(x => Math.round(Math.max(0, Math.min(255, x))).toString(16).padStart(2, "0")).join("");
+const lumOf = c => { const f = v => { v /= 255; return v <= .03928 ? v / 12.92 : Math.pow((v + .055) / 1.055, 2.4); }; return .2126 * f(c[0]) + .7152 * f(c[1]) + .0722 * f(c[2]); };
+const contrastOf = (a, b) => { const x = lumOf(a), y = lumOf(b); return (Math.max(x, y) + .05) / (Math.min(x, y) + .05); };
+const mixC = (a, b, t) => a.map((v, i) => v + (b[i] - v) * t);
+const satOf = c => { const mx = Math.max(...c), mn = Math.min(...c); return mx ? (mx - mn) / mx : 0; };
+const distC = (a, b) => Math.hypot(a[0] - b[0], (a[1] - b[1]) * 1.2, a[2] - b[2]);
+function kmeans(px, k){
+  let cs = []; for (let i = 0; i < k; i++) cs.push(px[Math.floor((i + .5) * px.length / k)].slice());
+  for (let it = 0; it < 12; it++){
+    const sum = cs.map(() => [0, 0, 0, 0]);
+    for (const p of px){ let bi = 0, bd = 1e9; cs.forEach((c, i) => { const d = distC(p, c); if (d < bd){ bd = d; bi = i; } }); const t = sum[bi]; t[0] += p[0]; t[1] += p[1]; t[2] += p[2]; t[3]++; }
+    cs = cs.map((c, i) => sum[i][3] ? [sum[i][0] / sum[i][3], sum[i][1] / sum[i][3], sum[i][2] / sum[i][3]] : c);
+    cs.n = sum.map(x => x[3]);
+  }
+  return cs.map((c, i) => ({c, n: cs.n[i] / px.length})).filter(x => x.n > .004).sort((a, b) => b.n - a.n);
+}
+async function makeCustom(file){
+  const bmp = await createImageBitmap(file);
+  const N = 72, cv = document.createElement("canvas"); cv.width = cv.height = N;
+  const cx = cv.getContext("2d", {willReadFrequently: true});
+  const sc = Math.max(N / bmp.width, N / bmp.height); cx.drawImage(bmp, (N - bmp.width * sc) / 2, (N - bmp.height * sc) / 2, bmp.width * sc, bmp.height * sc);
+  const d = cx.getImageData(0, 0, N, N).data, px = [];
+  for (let i = 0; i < d.length; i += 4) if (d[i + 3] > 200) px.push([d[i], d[i + 1], d[i + 2]]);
+  const pal = kmeans(px, 6);
+  const base = pal[0].c;
+  /* colore forte: presente e saturo, diverso dal fondo */
+  const score = x => x.n * (0.25 + satOf(x.c)) * (distC(x.c, base) > 60 || x === pal[0] ? 1 : .3);
+  const strong = [...pal].sort((a, b) => score(b) - score(a))[0].c;
+  const other = pal.filter(x => distC(x.c, strong) > 70).sort((a, b) => distC(b.c, strong) * b.n - distC(a.c, strong) * a.n)[0];
+  const second = other ? other.c : (lumOf(strong) > .3 ? [20, 20, 20] : [250, 250, 250]);
+  const avgL = pal.reduce((t, x) => t + lumOf(x.c) * x.n, 0);
+  const dark = avgL < .12;
+  const W = [255, 255, 255], K = [11, 15, 23];
+  const bg = dark ? mixC(K, strong, .10) : mixC(W, strong, .035);
+  const surface = dark ? mixC(K, strong, .18) : mixC(W, strong, .08);
+  const hover = dark ? mixC(K, strong, .26) : mixC(W, strong, .14);
+  const line = dark ? mixC(K, strong, .34) : mixC(W, strong, .22);
+  const line2 = dark ? mixC(K, strong, .24) : mixC(W, strong, .13);
+  const ink = dark ? [238, 242, 248] : mixC(K, strong, .12);
+  /* scheda di oggi: il colore forte; testo bianco o nero, quello che si legge meglio */
+  let hero = strong; if (!dark && lumOf(hero) > .55) hero = mixC(hero, K, .55);
+  const heroInk = contrastOf(hero, W) >= contrastOf(hero, K) ? W : K;
+  /* pulsanti principali: il secondo colore se si legge sul fondo, altrimenti il forte scurito/schiarito */
+  let primary = contrastOf(second, bg) >= 4.5 ? second : strong;
+  for (let i = 0; i < 10 && contrastOf(primary, bg) < 4.5; i++) primary = mixC(primary, dark ? W : K, .25);
+  const onPrimary = contrastOf(primary, W) >= contrastOf(primary, K) ? W : K;
+  let focus = strong; for (let i = 0; i < 10 && contrastOf(focus, bg) < 3; i++) focus = mixC(focus, dark ? W : K, .25);
+  const vars = {"--bg": hexOf(bg), "--canvas": hexOf(bg), "--surface": hexOf(surface), "--hover": hexOf(hover), "--line": hexOf(line), "--line-2": hexOf(line2),
+    "--ink": hexOf(ink), "--primary": hexOf(primary), "--on-primary": hexOf(onPrimary), "--focus": hexOf(focus),
+    "--hero": hexOf(hero), "--hero-ink": hexOf(heroInk), "--hero-2": hexOf(mixC(heroInk, hero, .3)), "--hero-track": heroInk === W ? "rgba(255,255,255,.16)" : "rgba(0,0,0,.12)"};
+  /* sagoma del disegno: 320 px, alpha in base alla distanza dal fondo */
+  const M = 320, c2 = document.createElement("canvas"); c2.width = c2.height = M;
+  const x2 = c2.getContext("2d", {willReadFrequently: true});
+  const s2 = Math.min(M / bmp.width, M / bmp.height); x2.drawImage(bmp, (M - bmp.width * s2) / 2, (M - bmp.height * s2) / 2, bmp.width * s2, bmp.height * s2);
+  const im = x2.getImageData(0, 0, M, M), q = im.data; let on = 0;
+  const tint = heroInk;   // la sagoma si disegna nel colore che sta sopra la scheda
+  for (let i = 0; i < q.length; i += 4){
+    if (q[i + 3] < 10){ q[i + 3] = 0; continue; }
+    const dd = distC([q[i], q[i + 1], q[i + 2]], base), a = Math.max(0, Math.min(1, (dd - 55) / 90));
+    q[i] = tint[0]; q[i + 1] = tint[1]; q[i + 2] = tint[2]; q[i + 3] = Math.round(a * 255); if (a > .5) on++;
+  }
+  x2.putImageData(im, 0, 0);
+  const cover = on / (M * M);
+  const deco = cover > .015 && cover < .7 ? c2.toDataURL("image/png") : "";   // niente disegno se la foto è "piena" (sarebbe solo rumore)
+  return {vars, dark, deco, pal: [...new Set([hero, primary, focus, surface].map(hexOf))], at: Date.now()};
+}
+function applyCustomVars(){
+  const st = document.documentElement.style, c = getMode() === "custom" ? getCustom() : null;
+  ["--bg","--canvas","--surface","--hover","--line","--line-2","--ink","--primary","--on-primary","--focus","--hero","--hero-ink","--hero-2","--hero-track","--deco"].forEach(k => st.removeProperty(k));
+  if (c){ Object.entries(c.vars).forEach(([k, v]) => st.setProperty(k, v)); if (c.deco) st.setProperty("--deco", `url("${c.deco}")`); document.documentElement.dataset.custom = c.deco ? "deco" : "1"; }
+  else delete document.documentElement.dataset.custom;
+}
 function applyTheme(force){
-  const t = wantedTheme(), changed = t !== getTheme();
+  const t = wantedTheme(), changed = t !== getTheme() || force;
   if (t === "dark") document.documentElement.dataset.ui = "dark"; else delete document.documentElement.dataset.ui;
-  document.querySelectorAll('meta[name="theme-color"]').forEach(m => m.setAttribute("content", t === "dark" ? "#0B0F17" : "#FFFFFF"));
+  applyCustomVars();
+  const cu = getMode() === "custom" ? getCustom() : null;
+  document.querySelectorAll('meta[name="theme-color"]').forEach(m => m.setAttribute("content", cu ? cu.vars["--bg"] : t === "dark" ? "#0B0F17" : "#FFFFFF"));
   const b = $("#agTheme");
-  if (b){ b.innerHTML = t === "dark" ? ICO.sun : ICO.moon; const l = (t === "dark" ? "Passa al tema chiaro" : "Passa al tema scuro") + (getMode() === "auto" ? " (ora è automatico)" : ""); b.setAttribute("aria-label", l); b.title = l; }
+  if (b){ b.innerHTML = t === "dark" ? ICO.sun : ICO.moon; const l = (t === "dark" ? "Passa al tema chiaro" : "Passa al tema scuro") + ""; b.setAttribute("aria-label", l); b.title = l; }
   if (!changed && !force) return;
   renderTabbar();
   if (ROUTE === "me") renderMe(); else if (ROUTE === "agenda") render(); else if (ROUTE === "carica") renderUpload(); else if (ROUTE === "set") renderSet(); else if (ROUTE === "login") renderLogin();
 }
-function setMode(m){ try { if (m === "auto") localStorage.removeItem(THEME_KEY); else localStorage.setItem(THEME_KEY, m); } catch {} applyTheme(true); }
+function setMode(m){ try { localStorage.setItem(THEME_KEY, m); } catch {} applyTheme(true); }
+async function pickCustom(file){
+  try { const c = await makeCustom(file); localStorage.setItem(CUSTOM_KEY, JSON.stringify(c)); setMode("custom"); toast("Tema personalizzato pronto"); }
+  catch { toast("Non riesco a leggere questa foto: provane un'altra"); }
+}
 setInterval(() => applyTheme(), 60000);
 document.addEventListener("visibilitychange", () => { if (!document.hidden) applyTheme(); });
 const themeBtn = () => {
-  const d = getTheme() === "dark", l = (d ? "Passa al tema chiaro" : "Passa al tema scuro") + (getMode() === "auto" ? " (ora è automatico)" : "");
+  const d = getTheme() === "dark", l = (d ? "Passa al tema chiaro" : "Passa al tema scuro") + "";
   return `<button class="round" data-act="theme-flip" aria-label="${l}" title="${l}">${d ? ICO.sun : ICO.moon}</button>`;
 };
 const gearBtn = () => `<button class="round desk-only" data-act="nav" data-to="set" aria-label="Impostazioni" title="Impostazioni">${ICO.gear}</button>`;
@@ -2921,7 +3023,8 @@ function renderMe(){
   const ap = myAppts(id);
   const rowsT = (P.shifts[t] && P.shifts[t].rows) || {};
   const overl = (a, b) => a.some(x => b.some(y => toMin(x.s) < toMin(y.e) && toMin(y.s) < toMin(x.e)));
-  const mates = Object.keys(rowsT).filter(k => k !== id && sorted(rowsT[k]).length && staffById(k)).map(k => ({bl: sorted(rowsT[k]), st: staffById(k)})).sort((a, b) => toMin(a.bl[0].s) - toMin(b.bl[0].s));
+  const ours = bl => sorted(bl).filter(b => b.d === "tel" || b.d === "srv");
+  const mates = Object.keys(rowsT).filter(k => k !== id && staffById(k) && ours(rowsT[k]).length).map(k => ({bl: ours(rowsT[k]), st: staffById(k)})).sort((a, b) => toMin(a.bl[0].s) - toMin(b.bl[0].s));
   const wdays = [...Array(7)].map((_, i) => addDays(P.week, i));
   const wTot = wdays.reduce((s, d) => s + mins(myRows(d, id)), 0);
   const wMaxDay = Math.max(9 * 60, ...wdays.map(d => mins(myRows(d, id))));
@@ -3042,8 +3145,10 @@ function renderSet(){
       <div class="prof-t"><b>${esc(st.full || st.name)}</b><small>${esc(capitalize(roleLabel()))}</small>
       <div class="row-act"><label class="btn">${ICO.cam}${S.avatars[id] ? "Cambia foto" : "Aggiungi una foto"}<input type="file" accept="image/*" data-avatar="${id}" hidden></label>${S.avatars[id] ? `<button class="btn ghost" data-act="avatar-del" data-confirm="Sì, togli">Togli</button>` : ""}</div></div></section>` : ""}
     <section class="card"><h2>${ICO.auto}Tema</h2>
-      <div class="seg2 wide" role="group" aria-label="Tema"><button data-act="theme" data-to="auto" aria-pressed="${getMode() === "auto"}">${ICO.auto}Auto</button><button data-act="theme" data-to="light" aria-pressed="${getMode() === "light"}">${ICO.sun}Chiaro</button><button data-act="theme" data-to="dark" aria-pressed="${getMode() === "dark"}">${ICO.moon}Scuro</button></div>
-      <p class="mut set-note">${getMode() === "auto" ? `Automatico: diventa scuro quando fuori fa buio. Oggi scuro dalle ${fmtT(fromMin(sunToday()[1]))}, chiaro dalle ${fmtT(fromMin(sunToday()[0]))}.` : "Scelto a mano. Premi Auto per farlo cambiare da solo con la luce del giorno."}</p>
+      <div class="seg2 wide" role="group" aria-label="Tema"><button data-act="theme" data-to="light" aria-pressed="${getMode() === "light"}">${ICO.sun}Chiaro</button><button data-act="theme" data-to="dark" aria-pressed="${getMode() === "dark"}">${ICO.moon}Scuro</button><button data-act="theme" data-to="custom" aria-pressed="${getMode() === "custom"}">${ICO.cam}Foto</button></div>
+      ${getCustom() ? `<div class="cu-prev"><span class="cu-sw">${getCustom().pal.map(c => `<i style="background:${c}"></i>`).join("")}</span><label class="btn">${ICO.cam}Cambia foto<input type="file" accept="image/*" data-custom-pick hidden></label></div>` : ""}
+      <p class="mut set-note">${getMode() === "custom" ? "Personalizzato: colori e disegni presi dalla tua foto. Vale solo su questo telefono." : "Con «Foto» scegli un'immagine: l'app prende i colori più forti e i disegni e li usa dappertutto."}</p>
+      <input type="file" accept="image/*" id="cuPick" data-custom-pick hidden>
     </section>
     ${isAdmin() ? `<section class="card"><h2>${ICO.cal}Avviso nuovi turni</h2>
       <p class="mut">Quando salvi dei turni, i colleghi che hanno attivato le notifiche ricevono «Nuovi turni caricati» sul telefono, e tutti lo trovano aprendo la loro area. A te arriva solo se lo attivi qui sotto.</p>
@@ -3417,7 +3522,7 @@ document.addEventListener("click", async e => {
   const el = e.target.closest("[data-act]"); if (!el) return;
   const act = el.dataset.act;
   if (act === "nav"){ const to = el.dataset.to; if (location.hash === "#" + to) route(); else location.hash = to; return; }
-  if (act === "theme") return setMode(["auto", "light", "dark"].includes(el.dataset.to) ? el.dataset.to : "auto");
+  if (act === "theme"){ const to = el.dataset.to; if (to === "custom" && !getCustom()){ const f = $("#cuPick"); if (f) f.click(); return; } return setMode(["light", "dark", "custom"].includes(to) ? to : "light"); }
   if (act === "theme-flip") return setMode(getTheme() === "dark" ? "light" : "dark");
   if (act === "lg-mode"){ LG.mode = el.dataset.m; LG.err = ""; renderLogin(); const f = $("#lgName") || $("#lgCode"); f && f.focus(); return; }
   if (act === "lg-eye"){ LG.show = !LG.show; ["lgPw", "lgPw2"].forEach(id => { const f = $("#" + id); if (f) f.type = LG.show ? "text" : "password"; }); document.querySelectorAll('[data-act="lg-eye"]').forEach(b => { b.setAttribute("aria-pressed", LG.show); b.setAttribute("aria-label", (LG.show ? "Nascondi" : "Mostra") + " la password"); }); return; }
@@ -3506,6 +3611,7 @@ document.addEventListener("submit", async e => {
 document.addEventListener("change", async e => {
   const el = e.target;
   if (el.dataset && el.dataset.avatar && el.files && el.files[0]){ const f = el.files[0]; el.value = ""; return openCropper(f, el.dataset.avatar); }
+  if (el.dataset && "customPick" in el.dataset && el.files && el.files[0]){ const f = el.files[0]; el.value = ""; return pickCustom(f); }
   if (el.id === "admImport" && el.files && el.files[0]){ const f = el.files[0]; el.value = ""; return importBackup(f); }
   /* il backup scelto resta anche se il modulo si ridisegna (es. dopo un errore) */
   if (el.id === "lgBackup"){ LG.backup = el.files && el.files[0] || null; return renderLogin(); }

@@ -1,6 +1,6 @@
 /* Service worker: tiene in memoria l'app per aprirla subito, anche con rete scarsa.
    I dati (Firebase) e la lettura delle foto (Gemini) passano sempre da internet. */
-const CACHE = "turni-2026.11.10-18";
+const CACHE = "turni-2026.11.10-19";
 const SHELL = ["./", "manifest.webmanifest", "icons/icon-192.png", "icons/icon-512.png"];
 self.addEventListener("install", e => { e.waitUntil(caches.open(CACHE).then(c => c.addAll(SHELL)).then(() => self.skipWaiting())); });
 self.addEventListener("activate", e => { e.waitUntil(caches.keys().then(ks => Promise.all(ks.filter(k => k !== CACHE).map(k => caches.delete(k)))).then(() => self.clients.claim())); });
@@ -19,7 +19,7 @@ self.addEventListener("fetch", e => {
 self.addEventListener("push", e => {
   let d = {}; try { d = e.data ? e.data.json() : {}; } catch { d = {body: e.data ? e.data.text() : ""}; }
   e.waitUntil(Promise.all([
-    self.registration.showNotification(d.title || "Turni Arese", {body: d.body || "Ci sono turni nuovi", icon: "icons/icon-192.png", badge: "icons/icon-192.png", tag: "turni-nuovi", renotify: true, data: {url: d.url || "./#me"}}),
+    self.registration.showNotification(d.title || "Turni Arese", {body: d.body || "Ci sono turni nuovi", icon: "icons/icon-192.png", badge: "icons/badge-96.png", tag: "turni-nuovi", renotify: true, data: {url: d.url || "./#me"}}),
     self.navigator && self.navigator.setAppBadge ? self.navigator.setAppBadge(1).catch(() => {}) : null
   ]));
 });
