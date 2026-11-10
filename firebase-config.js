@@ -13,5 +13,7 @@ window.TURNI_CONFIG = {
     storageBucket: "turni-arese.firebasestorage.app",
     messagingSenderId: "930667721139",
     appId: "1:930667721139:web:0dffac89462d8545591bc6"
-  }
+  },
+  /* servizio che invia le notifiche "Nuovi turni caricati" (Cloudflare Worker, codice in push-worker.js) */
+  push: "https://turni-push.lulzim-mataj.workers.dev/"
 };

@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>Turni Arese</title>
-<!-- versione 2026.11.10-13 -->
+<!-- versione 2026.11.10-15 -->
 <meta name="description" content="Turni e agenda del reparto Telefonia &amp; Service, MediaWorld Arese">
 <meta name="theme-color" content="#FFFFFF" media="(prefers-color-scheme: light)">
 <meta name="theme-color" content="#0B0F17" media="(prefers-color-scheme: dark)">
@@ -1107,7 +1107,7 @@ function qrSvg(text, color = "#0B1220", bg = "#FFFFFF") {
 if (typeof module !== "undefined") module.exports = { QRGEN, qrSvg };
 
 </script>
-<script src="firebase-config.js?v=2026.11.10-13"></script>
+<script src="firebase-config.js?v=2026.11.10-15"></script>
 <script>
 (() => {
 "use strict";
@@ -2440,6 +2440,7 @@ async function saveUpload(btn){
     /* avviso per i colleghi: sta in shifts/_avviso (senza "date", quindi le ricerche per giorno non lo vedono) */
     if (dates.length) try { await S.db.doc("shifts/_avviso").set({kind: "avviso", at: new Date().toISOString(), from: dates[0], to: dates[dates.length - 1], days: dates.length, by: meId() || ""}); } catch {}
     U.saved = n; U.savedDays = dates.length; U.lastDate = dates[0] || null; U.step = "done"; renderUpload(); window.scrollTo(0, 0);
+    if (dates.length) sendPush(dates[0], dates[dates.length - 1]).then(k => { if (k > 0) toast(k === 1 ? "Notifica inviata a 1 telefono" : `Notifica inviata a ${k} telefoni`); else if (k < 0) toast("Turni salvati, ma la notifica non è partita"); });
   } catch (e) { btn.disabled = false; btn.textContent = "Salva i turni"; writeErr(e); }
 }
 
@@ -2564,7 +2565,8 @@ function makeDemoAuth(){
     signUp: async (email, pw) => { if (st.users[email]) throw err("auth/email-already-in-use"); if (String(pw).length < 6) throw err("auth/weak-password"); st.users[email] = {pw, uid: "u" + Math.random().toString(36).slice(2, 12)}; st.current = email; save(); fire(); return cur(); },
     signOut: async () => { st.current = null; save(); fire(); },
     deleteUser: async () => { if (st.current){ delete st.users[st.current]; st.current = null; save(); fire(); } },
-    updatePassword: async pw => { if (!st.current) throw err("auth/no-user"); st.users[st.current].pw = pw; save(); }
+    updatePassword: async pw => { if (!st.current) throw err("auth/no-user"); st.users[st.current].pw = pw; save(); },
+    token: async () => st.current ? "demo" : ""
   };
 }
 async function initBackend(){
@@ -2587,7 +2589,8 @@ async function initBackend(){
     signUp: async (e, p) => { const r = await AU.createUserWithEmailAndPassword(auth, e, p); return {uid: r.user.uid, email: r.user.email}; },
     signOut: () => AU.signOut(auth),
     deleteUser: async () => { if (auth.currentUser) await AU.deleteUser(auth.currentUser); },
-    updatePassword: async pw => { if (!auth.currentUser) throw {code: "auth/no-user"}; await AU.updatePassword(auth.currentUser, pw); }
+    updatePassword: async pw => { if (!auth.currentUser) throw {code: "auth/no-user"}; await AU.updatePassword(auth.currentUser, pw); },
+    token: async () => auth.currentUser ? auth.currentUser.getIdToken() : ""
   };
 }
 
@@ -2608,6 +2611,7 @@ const sv = p => `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stro
 const ICO = {
   me: sv(`<circle cx="12" cy="8" r="4"/><path d="M4 21c1.2-4.2 4.3-6.5 8-6.5s6.8 2.3 8 6.5"/>`),
   cal: sv(`<rect x="3" y="5" width="18" height="16" rx="2.5"/><path d="M3 10h18M8 3v4M16 3v4"/>`),
+  bell: sv(`<path d="M6 8a6 6 0 0 1 12 0c0 7 3 8 3 8H3s3-1 3-8"/><path d="M10.3 20a1.9 1.9 0 0 0 3.4 0"/>`),
   back: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg>`,
   moon: sv(`<path d="M20 14.5A8 8 0 1 1 9.5 4a6.5 6.5 0 0 0 10.5 10.5z"/>`),
   auto: sv(`<circle cx="12" cy="12" r="8.5"/><path d="M12 3.5v17"/><path d="M12 3.5a8.5 8.5 0 0 1 0 17z" fill="currentColor" stroke="none"/>`),
@@ -2732,6 +2736,82 @@ function avvisoHtml(){
   const rng = a.from === a.to ? `${dateLong(a.from)}` : f.getMonth() === t.getMonth() ? `dal ${f.getDate()} al ${t.getDate()} ${MM[t.getMonth()]}` : `dal ${f.getDate()} ${MM[f.getMonth()]} al ${t.getDate()} ${MM[t.getMonth()]}`;
   return `<section class="avviso" role="status"><span class="avviso-i" aria-hidden="true">${ICO.cal}</span><div><b>Nuovi turni caricati</b><small>${esc(rng)}</small></div><button class="btn" data-act="avviso-ok">Ok</button></section>`;
 }
+/* ---------- notifiche sul telefono (Web Push, inviate dal piccolo servizio su Cloudflare) ---------- */
+const PUSH_URL = (CFG.push || "").trim();
+const unb64u = x => { x = String(x).replace(/-/g, "+").replace(/_/g, "/"); while (x.length % 4) x += "="; return Uint8Array.from(atob(x), c => c.charCodeAt(0)); };
+const b64u = buf => btoa(String.fromCharCode(...new Uint8Array(buf))).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
+const isIOS = () => /iP(hone|ad|od)/.test(navigator.userAgent) || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
+const isStandalone = () => (window.matchMedia && matchMedia("(display-mode: standalone)").matches) || navigator.standalone === true;
+P.push = "";   // on | off | denied | home (iPhone: prima va aggiunta alla Home) | no (non supportate) | "" (non ancora controllato)
+async function pushCheck(){
+  if (!PUSH_URL){ P.push = "no"; return; }
+  if (!("serviceWorker" in navigator) || !("PushManager" in window) || !("Notification" in window)){ P.push = isIOS() && !isStandalone() ? "home" : "no"; return rerenderPush(); }
+  if (Notification.permission === "denied"){ P.push = "denied"; return rerenderPush(); }
+  try { const reg = await navigator.serviceWorker.ready, sub = await reg.pushManager.getSubscription();
+    P.push = sub && Notification.permission === "granted" ? "on" : "off";
+    if (sub && SES.user) S.db.doc("push/" + SES.user.uid).set({sub: JSON.stringify(sub), staffId: meId() || "", at: new Date().toISOString()}).catch(() => {});
+  } catch { P.push = "off"; }
+  rerenderPush();
+}
+function rerenderPush(){ if (ROUTE === "me") renderMe(); else if (ROUTE === "set" && !typingIn("#scr-set")) renderSet(); }
+async function pushOn(){
+  try {
+    const perm = await Notification.requestPermission();
+    if (perm !== "granted"){ P.push = perm === "denied" ? "denied" : "off"; rerenderPush(); return toast(perm === "denied" ? "Notifiche bloccate: riattivale dalle impostazioni del telefono" : "Notifiche non attivate"); }
+    const k = await S.db.doc("shifts/_push").get(), pub = k.exists && k.data().pub;
+    if (!pub){ toast("Le notifiche non sono ancora pronte: chiedi al responsabile"); return; }
+    const reg = await navigator.serviceWorker.ready;
+    let sub = await reg.pushManager.getSubscription();
+    if (sub && sub.options && sub.options.applicationServerKey && b64u(sub.options.applicationServerKey) !== pub){ await sub.unsubscribe(); sub = null; }
+    if (!sub) sub = await reg.pushManager.subscribe({userVisibleOnly: true, applicationServerKey: unb64u(pub)});
+    await S.db.doc("push/" + SES.user.uid).set({sub: JSON.stringify(sub), staffId: meId() || "", at: new Date().toISOString()});
+    if (isAdmin()) lsSet("avvisi-me", "1");
+    P.push = "on"; toast("Notifiche attive"); rerenderPush();
+  } catch (e) { P.push = "off"; rerenderPush(); toast("Non riesco ad attivare le notifiche su questo telefono"); }
+}
+async function pushOff(){
+  try { const reg = await navigator.serviceWorker.ready, sub = await reg.pushManager.getSubscription(); if (sub) await sub.unsubscribe(); } catch {}
+  try { await S.db.doc("push/" + SES.user.uid).delete(); } catch {}
+  if (isAdmin()) lsSet("avvisi-me", "0");
+  P.push = "off"; toast("Notifiche spente"); rerenderPush();
+}
+/* chiave delle notifiche: la crea il telefono del responsabile la prima volta; la parte segreta resta in config (solo lui la legge) */
+async function ensurePushKeys(){
+  if (!PUSH_URL || !S.db || !isAdmin()) return;
+  try {
+    const have = await S.db.doc("config/push").get();
+    if (have.exists && have.data().priv) return;
+    const kp = await crypto.subtle.generateKey({name: "ECDSA", namedCurve: "P-256"}, true, ["sign", "verify"]);
+    const jwk = await crypto.subtle.exportKey("jwk", kp.privateKey), pub = b64u(await crypto.subtle.exportKey("raw", kp.publicKey));
+    await S.db.doc("config/push").set({priv: JSON.stringify(jwk), pub, subject: "https://gteam8998.github.io/turni/"});
+    await S.db.doc("shifts/_push").set({kind: "push", pub});
+  } catch {}
+}
+/* dopo il salvataggio dei turni: notifica a chi l'ha attivata */
+async function sendPush(from, to){
+  if (!PUSH_URL || DEMO) return 0;
+  const f = pd(from), t = pd(to);
+  const rng = from === to ? dateLong(from) : f.getMonth() === t.getMonth() ? `dal ${f.getDate()} al ${t.getDate()} ${MM[t.getMonth()]}` : `dal ${f.getDate()} ${MM[f.getMonth()]} al ${t.getDate()} ${MM[t.getMonth()]}`;
+  try {
+    const r = await fetch(PUSH_URL, {method: "POST", headers: {"Content-Type": "application/json", Authorization: "Bearer " + await BK.auth.token()},
+      body: JSON.stringify({title: "Nuovi turni caricati", body: `Turni ${rng}: apri l'app per vederli`, url: "./#me"})});
+    const j = await r.json().catch(() => ({}));
+    (j.gone || []).forEach(id => S.db.doc("push/" + id).delete().catch(() => {}));
+    return j.sent || 0;
+  } catch { return -1; }
+}
+function pushCardHtml(where){
+  const st = P.push;
+  if (!PUSH_URL || isBanco() || !st || st === "no" || st === "on" && where === "me") return "";
+  if (where === "me" && (lsGet("push-later") > new Date(Date.now() - 7 * 864e5).toISOString() || st === "denied" || isAdmin())) return "";
+  const txt = st === "home" ? "Per ricevere una notifica quando escono i turni nuovi, aggiungi l'app alla schermata Home: tocca Condividi e poi «Aggiungi alla schermata Home». Poi aprila da lì."
+    : st === "denied" ? "Le notifiche sono bloccate per questa app. Riattivale dalle impostazioni del telefono (Notifiche) e torna qui."
+    : st === "on" ? "Ricevi una notifica su questo telefono quando vengono caricati turni nuovi."
+    : "Ricevi una notifica su questo telefono quando vengono caricati turni nuovi.";
+  const btn = st === "off" ? `<button class="btn primary" data-act="push-on">Attiva le notifiche</button>` : st === "on" ? `<button class="btn ghost" data-act="push-off">Spegni le notifiche</button>` : "";
+  const later = where === "me" && st !== "on" ? `<button class="btn ghost" data-act="push-later">Non ora</button>` : "";
+  return `<section class="card push-c"><h2>${ICO.bell}Notifiche${st === "on" ? ` <span class="pill soft">attive</span>` : ""}</h2><p class="mut">${txt}</p>${btn || later ? `<div class="row-act">${btn}${later}</div>` : ""}</section>`;
+}
 function subscribeMe(){
   if (!S.db) return;
   const t = todayStr(), [m0, m1] = calGrid(P.month);
@@ -2840,7 +2920,7 @@ function renderMe(){
     <div class="ph-top">${isAdmin() ? `<button class="btn back ph-back" data-act="nav" data-to="agenda">${ICO.back}Agenda</button>` : ""}<span class="ph-date">${esc(capitalize(dateLong(t)))}</span>${gearBtn()}</div>
     <header class="me-id"><label class="av av-pick ${dCls(todayD[0] || usual(id))}" title="Cambia la foto profilo">${avIn(id, st.name)}<i class="av-cam" aria-hidden="true">${ICO.cam}</i><input type="file" accept="image/*" data-avatar="${id}" aria-label="Cambia la foto profilo"></label>
       <div><small class="me-gr">${greet()}</small><h1>${esc(firstName(st))}</h1></div>${pill}</header>
-    ${avvisoHtml()}
+    ${avvisoHtml()}${pushCardHtml("me")}
     ${heroToday(id)}
     ${ap.length ? `<section class="card"><h2>Appuntamenti da fare<small>${ap.length}</small></h2>
       <ul class="myap">${ap.map(a => `<li><div class="ma">
@@ -2945,8 +3025,9 @@ function renderSet(){
       <p class="mut set-note">${getMode() === "auto" ? `Automatico: diventa scuro quando fuori fa buio. Oggi scuro dalle ${fmtT(fromMin(sunToday()[1]))}, chiaro dalle ${fmtT(fromMin(sunToday()[0]))}.` : "Scelto a mano. Premi Auto per farlo cambiare da solo con la luce del giorno."}</p>
     </section>
     ${isAdmin() ? `<section class="card"><h2>${ICO.cal}Avviso nuovi turni</h2>
-      <p class="mut">Quando salvi dei turni, i colleghi trovano «Nuovi turni caricati» aprendo la loro area.</p>
-      <button class="btn${lsGet("avvisi-me") === "1" ? " primary" : ""}" data-act="avvisi-me" aria-pressed="${lsGet("avvisi-me") === "1"}">${lsGet("avvisi-me") === "1" ? "Lo ricevo anche io: tocca per spegnere" : "Ricevilo anche tu (per provarlo)"}</button></section>` : ""}
+      <p class="mut">Quando salvi dei turni, i colleghi che hanno attivato le notifiche ricevono «Nuovi turni caricati» sul telefono, e tutti lo trovano aprendo la loro area. A te arriva solo se lo attivi qui sotto.</p>
+      ${PUSH_URL && P.push && P.push !== "no" ? "" : `<button class="btn${lsGet("avvisi-me") === "1" ? " primary" : ""}" data-act="avvisi-me" aria-pressed="${lsGet("avvisi-me") === "1"}">${lsGet("avvisi-me") === "1" ? "Lo ricevo anche io: tocca per spegnere" : "Ricevilo anche tu (per provarlo)"}</button>`}</section>` : ""}
+    ${pushCardHtml("set")}
     ${st ? `<section class="card"><h2>${ICO.cal}Ore da contratto</h2>
       <div class="set-row"><label for="meContr">Ore a settimana</label><input id="meContr" inputmode="decimal" maxlength="4" value="${contr || ""}" placeholder="es. 40"></div>
       <p class="mut">Servono per confrontare il monte ore della settimana nella tua area.</p></section>` : ""}
@@ -3267,6 +3348,7 @@ function startData(){
   if (SES.started) return; SES.started = true;
   S.db = BK.db;
   subscribeStatic(); subscribeMe(); subscribeMyAppts(); subscribeAvatars(); loadHist(); subscribeAvviso();
+  if (isAdmin()) ensurePushKeys(); if (!isBanco()) pushCheck();
   if (S.canWrite) subscribeRange();
   if (isAdmin()) S.db.doc("config/ai").onSnapshot(s => { const d = s.exists ? s.data() : {}; AI.key = d.key || ""; AI.model = d.model || ""; AI.models = d.models || null; if (ROUTE === "carica" && U.step === "pick") renderUpload(); }, () => {});
 }
@@ -3347,6 +3429,9 @@ document.addEventListener("click", async e => {
   if (act === "go-agenda"){ location.hash = "agenda"; return; }
   if (act === "go-agenda-day"){ const d = U.lastDate; location.hash = "agenda"; if (d){ S.view = "day"; setSel(d); } return; }
   if (act === "up-read") return readPhotos();
+  if (act === "push-on") return pushOn();
+  if (act === "push-off") return pushOff();
+  if (act === "push-later"){ lsSet("push-later", new Date().toISOString()); return renderMe(); }
   if (act === "avviso-ok"){ if (P.avviso) lsSet("avviso-visto", P.avviso.at); avvisoBadge(); return renderMe(); }
   if (act === "avvisi-me"){ lsSet("avvisi-me", lsGet("avvisi-me") === "1" ? "0" : "1"); avvisoBadge(); return renderSet(); }
   if (act === "up-paste"){

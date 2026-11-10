@@ -72,6 +72,14 @@ service cloud.firestore {
       allow delete: if isAdmin() || request.auth.uid == uid;
     }
 
+    // iscrizioni alle notifiche: ognuno la sua; il responsabile le legge per mandare l'avviso
+    match /push/{uid} {
+      allow get: if signedIn() && (request.auth.uid == uid || isAdmin());
+      allow list: if isAdmin();
+      allow create, update: if isMember() && request.auth.uid == uid && request.resource.data.sub is string && request.resource.data.sub.size() < 4000;
+      allow delete: if isAdmin() || (signedIn() && request.auth.uid == uid);
+    }
+
     // chiave di Gemini: solo il responsabile
     match /config/{docId} { allow read, write: if isAdmin(); }
 
