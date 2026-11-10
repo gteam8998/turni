@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>Turni Arese</title>
-<!-- versione 2026.11.10-21 -->
+<!-- versione 2026.11.10-22 -->
 <meta name="description" content="Turni e agenda del reparto Telefonia &amp; Service, MediaWorld Arese">
 <meta name="theme-color" content="#FFFFFF" media="(prefers-color-scheme: light)">
 <meta name="theme-color" content="#0B0F17" media="(prefers-color-scheme: dark)">
@@ -541,6 +541,7 @@ body[data-role="banco"] .me-only{display:none!important}
 .acc-t .code{font-size:16px;color:var(--ink);letter-spacing:.06em}
 .acc-full{margin:4px 0 2px;min-height:42px;padding:6px 12px;font-size:16px;width:100%;max-width:280px;border:1.5px solid var(--line);border-radius:12px;background:var(--bg);color:var(--ink)}
 .acc-full:focus{outline:none;border-color:var(--tel)}
+.nofoto{display:inline-block;margin-top:4px;font-weight:700;color:var(--focus);cursor:pointer;text-decoration:underline;text-underline-offset:3px}
 .cu-prev{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-top:12px}
 .cu-sw{display:flex;gap:6px}.cu-sw i{width:28px;height:28px;border-radius:50%;border:2px solid var(--line);display:block}
 /* disegno del tema personalizzato */
@@ -1121,7 +1122,7 @@ function qrSvg(text, color = "#0B1220", bg = "#FFFFFF") {
 if (typeof module !== "undefined") module.exports = { QRGEN, qrSvg };
 
 </script>
-<script src="firebase-config.js?v=2026.11.10-21"></script>
+<script src="firebase-config.js?v=2026.11.10-22"></script>
 <script>
 (() => {
 "use strict";
@@ -2775,7 +2776,7 @@ const gearBtn = () => `<button class="round desk-only" data-act="nav" data-to="s
 /* ---------- foto profilo ---------- */
 function subscribeAvatars(){
   S.db.collection("avatars").onSnapshot(s => {
-    S.avatars = {}; s.docs.forEach(d => { const v = d.data(); if (v && typeof v.img === "string" && v.img.startsWith("data:image/")) S.avatars[d.id] = v.img; });
+    S.avatarsLoaded = true; S.avatars = {}; s.docs.forEach(d => { const v = d.data(); if (v && typeof v.img === "string" && v.img.startsWith("data:image/")) S.avatars[d.id] = v.img; });
     const mine = meId() && S.avatars[meId()];
     if (mine && (P.themeAfterAvatar || (getMode() === "custom" && (getCustom() || {}).src !== mine.length + ":" + mine.slice(-24)))){ const first = P.themeAfterAvatar; P.themeAfterAvatar = false; themeFromAvatar(mine, first); }
     if (!mine && getMode() === "custom" && SES.member) setMode("light");
@@ -3153,11 +3154,11 @@ function renderSet(){
     <h1 class="set-h">${ICO.gear}Impostazioni</h1>
     ${st ? `<section class="card prof"><label class="av av-xl av-pick ${dCls(usual(id))}" title="Cambia la foto profilo">${avIn(id, st.name)}<i class="av-cam" aria-hidden="true">${ICO.cam}</i><input type="file" accept="image/*" data-avatar="${id}" aria-label="Cambia la foto profilo"></label>
       <div class="prof-t"><b>${esc(st.full || st.name)}</b><small>${esc(capitalize(roleLabel()))}</small>
-      <div class="row-act"><label class="btn">${ICO.cam}${S.avatars[id] ? "Cambia foto" : "Aggiungi una foto"}<input type="file" accept="image/*" data-avatar="${id}" hidden></label>${S.avatars[id] ? `<button class="btn ghost" data-act="avatar-del" data-confirm="Sì, togli">Togli</button>` : ""}</div></div></section>` : ""}
+      ${S.avatars[id] ? `<div class="row-act"><button class="btn ghost" data-act="avatar-del" data-confirm="Sì, togli">Togli la foto</button></div>` : `<label class="nofoto">Metti una foto, non fare il noioso<input type="file" accept="image/*" data-avatar="${id}" hidden></label>`}</div></section>` : ""}
     <section class="card"><h2>${ICO.auto}Tema</h2>
       <div class="seg2 wide" role="group" aria-label="Tema"><button data-act="theme" data-to="light" aria-pressed="${getMode() === "light"}">${ICO.sun}Chiaro</button><button data-act="theme" data-to="dark" aria-pressed="${getMode() === "dark"}">${ICO.moon}Scuro</button><button data-act="theme" data-to="custom" aria-pressed="${getMode() === "custom"}">${ICO.cam}Foto</button></div>
       ${getMode() === "custom" && getCustom() ? `<div class="cu-prev"><span class="cu-sw">${getCustom().pal.map(c => `<i style="background:${c}"></i>`).join("")}</span></div>` : ""}
-      <p class="mut set-note">${getMode() === "custom" ? "Colori e disegni presi dalla tua foto profilo: se la cambi, il tema si aggiorna da solo." : S.avatars[id] ? "Con «Foto» l'app prende i colori più forti e i disegni della tua foto profilo e li usa dappertutto." : "Con «Foto» l'app usa i colori della tua foto profilo: prima ti chiedo di sceglierne una."}</p>
+      <p class="mut set-note">${getMode() === "custom" ? "Colori e disegni presi dalla tua foto profilo: se la cambi, il tema si aggiorna da solo." : S.avatars[id] ? "Con «Foto» l'app prende i colori più forti e i disegni della tua foto profilo e li usa dappertutto." : "Con «Foto» l'app usa i colori della tua foto profilo: metti una foto, non fare il noioso."}</p>
     </section>
     ${isAdmin() ? `<section class="card"><h2>${ICO.cal}Avviso nuovi turni</h2>
       <p class="mut">Quando salvi dei turni, i colleghi che hanno attivato le notifiche ricevono «Nuovi turni caricati» sul telefono, e tutti lo trovano aprendo la loro area. A te arriva solo se lo attivi qui sotto.</p>
@@ -3534,12 +3535,14 @@ document.addEventListener("click", async e => {
   if (act === "theme"){
     const to = el.dataset.to;
     if (to === "custom"){
-      const img = meId() && S.avatars[meId()];
+      let img = meId() && S.avatars[meId()];
+      /* se le foto non sono ancora arrivate, la chiedo direttamente al database prima di dire che manca */
+      if (!img && meId() && !S.avatarsLoaded) try { const d = await S.db.doc("avatars/" + meId()).get(); const v = d.exists && d.data(); if (v && typeof v.img === "string" && v.img.startsWith("data:image/")){ img = v.img; S.avatars[meId()] = img; } } catch {}
       if (img) return themeFromAvatar(img, true);
       /* niente foto profilo: invito a sceglierne una, poi il tema parte da solo */
       P.themeAfterAvatar = true;
       const inp = document.querySelector("#scr-set input[data-avatar]") || document.querySelector("input[data-avatar]");
-      toast("Prima scegli la tua foto profilo: il tema prende i colori da lì");
+      toast("Metti una foto, non fare il noioso");
       if (inp) inp.click();
       return;
     }
