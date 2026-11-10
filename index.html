@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>Turni Arese</title>
-<!-- versione 2026.11.10-24 -->
+<!-- versione 2026.11.10-25 -->
 <meta name="description" content="Turni e agenda del reparto Telefonia &amp; Service, MediaWorld Arese">
 <meta name="theme-color" content="#FFFFFF" media="(prefers-color-scheme: light)">
 <meta name="theme-color" content="#0B0F17" media="(prefers-color-scheme: dark)">
@@ -542,10 +542,14 @@ body[data-role="banco"] .me-only{display:none!important}
 .acc-full{margin:4px 0 2px;min-height:42px;padding:6px 12px;font-size:16px;width:100%;max-width:280px;border:1.5px solid var(--line);border-radius:12px;background:var(--bg);color:var(--ink)}
 .acc-full:focus{outline:none;border-color:var(--tel)}
 .nofoto{display:inline-block;margin-top:4px;font-weight:700;color:var(--focus);cursor:pointer;text-decoration:underline;text-underline-offset:3px}
+.push-ok{color:var(--ok)}
+.push-err{margin:8px 0 0;padding:10px 12px;border-radius:12px;background:var(--now-fill);color:var(--now);font-weight:700;font-size:15px}
 .cu-acc{display:grid;gap:8px;margin-top:14px}
 .cu-acc .cu-sw{flex-wrap:wrap;gap:8px}
 .cu-acc .cu-sw button{width:40px;height:40px;border-radius:50%;border:2px solid var(--line);padding:0;font-size:12px;font-weight:700;background:var(--surface);color:var(--ink)}
 .cu-acc .cu-sw button[aria-pressed="true"]{outline:3px solid var(--ink);outline-offset:2px}
+.cu-any{position:relative;width:40px;height:40px;border-radius:50%;border:2px dashed var(--line);display:grid;place-items:center;font-weight:700;font-size:20px;color:var(--ink-2);cursor:pointer;overflow:hidden}
+.cu-any input{position:absolute;inset:0;opacity:0;width:100%;height:100%;cursor:pointer;border:0;padding:0}
 :root[data-custom] .hero::before{content:"";position:absolute;inset:-40% -30% auto auto;width:70%;height:90%;background:radial-gradient(circle,var(--accent-glow,transparent),transparent 65%);opacity:.35;pointer-events:none}
 .cu-prev{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-top:12px}
 .cu-sw{display:flex;gap:6px}.cu-sw i{width:28px;height:28px;border-radius:50%;border:2px solid var(--line);display:block}
@@ -1127,7 +1131,7 @@ function qrSvg(text, color = "#0B1220", bg = "#FFFFFF") {
 if (typeof module !== "undefined") module.exports = { QRGEN, qrSvg };
 
 </script>
-<script src="firebase-config.js?v=2026.11.10-24"></script>
+<script src="firebase-config.js?v=2026.11.10-25"></script>
 <script>
 (() => {
 "use strict";
@@ -2703,9 +2707,13 @@ async function makeCustom(file){
   const hsv = c => { const [r, g, b] = c.map(v => v / 255), mx = Math.max(r, g, b), mn = Math.min(r, g, b), d = mx - mn; let h = 0;
     if (d){ h = mx === r ? ((g - b) / d) % 6 : mx === g ? (b - r) / d + 2 : (r - g) / d + 4; h *= 60; if (h < 0) h += 360; } return [h, mx ? d / mx : 0, mx]; };
   const bins = Array.from({length: 18}, () => [0, 0, 0, 0]);
-  for (const p of px){ const [h, sa, v] = hsv(p); if (sa < .35 || v < .35) continue; const t = bins[Math.floor(h / 20) % 18]; t[0] += p[0]; t[1] += p[1]; t[2] += p[2]; t[3]++; }
-  const vivid = bins.filter(b => b[3] / px.length > .002).map(b => ({c: [b[0] / b[3], b[1] / b[3], b[2] / b[3]], n: b[3] / px.length})).sort((a, b) => b.n - a.n);
-  const cands = []; [...pal.filter(x => satOf(x.c) > .2), ...vivid].forEach(x => { if (cands.length < 7 && !cands.some(c => distC(c, x.c) < 45)) cands.push(x.c); });
+  const V = 160, cv3 = document.createElement("canvas"); cv3.width = cv3.height = V;
+  const x3 = cv3.getContext("2d", {willReadFrequently: true}); const s3 = Math.max(V / bmp.width, V / bmp.height);
+  x3.drawImage(bmp, (V - bmp.width * s3) / 2, (V - bmp.height * s3) / 2, bmp.width * s3, bmp.height * s3);
+  const d3 = x3.getImageData(0, 0, V, V).data, px3 = []; for (let i = 0; i < d3.length; i += 4) if (d3[i + 3] > 200) px3.push([d3[i], d3[i + 1], d3[i + 2]]);
+  for (const p of px3){ const [h, sa, v] = hsv(p); if (sa < .35 || v < .35) continue; const t = bins[Math.floor(h / 20) % 18]; t[0] += p[0]; t[1] += p[1]; t[2] += p[2]; t[3]++; }
+  const vivid = bins.filter(b => b[3] >= 12 && b[3] / px3.length > .0006).map(b => ({c: [b[0] / b[3], b[1] / b[3], b[2] / b[3]], n: b[3] / px3.length})).sort((a, b) => b.n - a.n);
+  const cands = []; [...pal.filter(x => satOf(x.c) > .2).slice(0, 4), ...vivid].forEach(x => { if (cands.length < 9 && !cands.some(c => distC(c, x.c) < 45)) cands.push(x.c); });
   /* colore forte: presente e saturo, diverso dal fondo */
   const score = x => x.n * (0.25 + satOf(x.c)) * (distC(x.c, base) > 60 || x === pal[0] ? 1 : .3);
   const strong = [...pal].sort((a, b) => score(b) - score(a))[0].c;
@@ -2798,7 +2806,7 @@ function subscribeAvatars(){
     S.avatarsLoaded = true; S.avatars = {}; s.docs.forEach(d => { const v = d.data(); if (v && typeof v.img === "string" && v.img.startsWith("data:image/")) S.avatars[d.id] = v.img; });
     const mine = meId() && S.avatars[meId()];
     if (mine && (P.themeAfterAvatar || (getMode() === "custom" && (getCustom() || {}).src !== mine.length + ":" + mine.slice(-24)))){ const first = P.themeAfterAvatar; P.themeAfterAvatar = false; themeFromAvatar(mine, first); }
-    if (!mine && getMode() === "custom" && SES.member) setMode("light");
+    if (!mine && meId() && getMode() === "custom" && SES.member) setMode("light");   // solo se so chi sono: prima le foto possono arrivare prima dei nomi
     if (ROUTE === "me") renderMe(); else if (ROUTE === "set" && !typingIn("#scr-set")) renderSet(); else if (ROUTE === "agenda") renderShifts();
   }, () => {});
 }
@@ -2907,20 +2915,36 @@ async function pushCheck(){
   rerenderPush();
 }
 function rerenderPush(){ if (ROUTE === "me") renderMe(); else if (ROUTE === "set" && !typingIn("#scr-set")) renderSet(); }
-async function pushOn(){
+const within = (pr, ms, code) => Promise.race([pr, new Promise((_, rej) => setTimeout(() => rej({code}), ms))]);
+async function pushOn(btn){
+  if (P.pushBusy) return; P.pushBusy = true;
+  const say = t => { if (btn){ btn.disabled = true; btn.textContent = t; } };
+  say("Attivo…");
+  let step = "perm";
   try {
-    const perm = await Notification.requestPermission();
-    if (perm !== "granted"){ P.push = perm === "denied" ? "denied" : "off"; rerenderPush(); return toast(perm === "denied" ? "Notifiche bloccate: riattivale dalle impostazioni del telefono" : "Notifiche non attivate"); }
-    const k = await S.db.doc("shifts/_push").get(), pub = k.exists && k.data().pub;
-    if (!pub){ toast("Le notifiche non sono ancora pronte: chiedi al responsabile"); return; }
-    const reg = await navigator.serviceWorker.ready;
+    const perm = await within(Notification.requestPermission(), 60000, "perm");
+    if (perm !== "granted"){ P.push = perm === "denied" ? "denied" : "off"; P.pushMsg = perm === "denied" ? "Hai detto di no: le notifiche sono bloccate. Riattivale da Impostazioni del telefono › Notifiche › Turni." : "Non hai dato il permesso: riprova e scegli «Consenti»."; return; }
+    step = "key";
+    const k = await within(S.db.doc("shifts/_push").get(), 15000, "key"), pub = k.exists && k.data().pub;
+    if (!pub){ P.pushMsg = "Le notifiche non sono ancora pronte: chiedi al responsabile di aprire l'app una volta."; return; }
+    step = "sw";
+    const reg = await within(navigator.serviceWorker.ready, 10000, "sw");
+    step = "sub";
     let sub = await reg.pushManager.getSubscription();
     if (sub && sub.options && sub.options.applicationServerKey && b64u(sub.options.applicationServerKey) !== pub){ await sub.unsubscribe(); sub = null; }
-    if (!sub) sub = await reg.pushManager.subscribe({userVisibleOnly: true, applicationServerKey: unb64u(pub)});
-    await S.db.doc("push/" + SES.user.uid).set({sub: JSON.stringify(sub), staffId: meId() || "", at: new Date().toISOString()});
+    if (!sub) sub = await within(reg.pushManager.subscribe({userVisibleOnly: true, applicationServerKey: unb64u(pub)}), 20000, "sub");
+    step = "save";
+    await within(S.db.doc("push/" + SES.user.uid).set({sub: JSON.stringify(sub), staffId: meId() || "", at: new Date().toISOString()}), 15000, "save");
     if (isAdmin()) lsSet("avvisi-me", "1");
-    P.push = "on"; toast("Notifiche attive"); rerenderPush();
-  } catch (e) { P.push = "off"; rerenderPush(); toast("Non riesco ad attivare le notifiche su questo telefono"); }
+    P.push = "on"; P.pushMsg = "ok";
+    /* conferma che si vede: una notifica di prova subito sul telefono */
+    try { await reg.showNotification("Notifiche attive ✓", {body: "Ti avviso qui quando escono i turni nuovi.", icon: "icons/logo-192.png", badge: "icons/logo-badge-96.png", tag: "turni-prova"}); } catch {}
+    toast("Notifiche attive su questo telefono");
+  } catch (e) {
+    P.push = Notification.permission === "denied" ? "denied" : "off";
+    P.pushMsg = {perm: "Il telefono non ha risposto alla richiesta: riprova.", key: "Non riesco a collegarmi: controlla la connessione e riprova.", sw: "L'app non è pronta: chiudila del tutto, riaprila dalla Home e riprova.",
+      sub: "Il telefono non ha accettato l'iscrizione: su iPhone serve aprire l'app dalla schermata Home (non da Safari).", save: "Non riesco a salvare l'iscrizione: controlla la connessione e riprova."}[step] || "Non riesco ad attivare le notifiche.";
+  } finally { P.pushBusy = false; if (P.pushMsg && P.pushMsg !== "ok") toast(P.pushMsg); rerenderPush(); }
 }
 async function pushOff(){
   try { const reg = await navigator.serviceWorker.ready, sub = await reg.pushManager.getSubscription(); if (sub) await sub.unsubscribe(); } catch {}
@@ -2955,15 +2979,16 @@ async function sendPush(from, to){
 }
 function pushCardHtml(where){
   const st = P.push;
-  if (!PUSH_URL || isBanco() || !st || st === "no" || st === "on" && where === "me") return "";
+  if (!PUSH_URL || isBanco() || !st || st === "no" || st === "on" && where === "me" && P.pushMsg !== "ok") return "";
   if (where === "me" && (lsGet("push-later") > new Date(Date.now() - 7 * 864e5).toISOString() || st === "denied" || isAdmin())) return "";
   const txt = st === "home" ? "Per ricevere una notifica quando escono i turni nuovi, aggiungi l'app alla schermata Home: tocca Condividi e poi «Aggiungi alla schermata Home». Poi aprila da lì."
     : st === "denied" ? "Le notifiche sono bloccate per questa app. Riattivale dalle impostazioni del telefono (Notifiche) e torna qui."
-    : st === "on" ? "Ricevi una notifica su questo telefono quando vengono caricati turni nuovi."
+    : st === "on" ? `<b class="push-ok">✓ Notifiche attive su questo telefono.</b> Quando vengono caricati turni nuovi ti arriva un avviso, anche con l'app chiusa.`
     : "Ricevi una notifica su questo telefono quando vengono caricati turni nuovi.";
-  const btn = st === "off" ? `<button class="btn primary" data-act="push-on">Attiva le notifiche</button>` : st === "on" ? `<button class="btn ghost" data-act="push-off">Spegni le notifiche</button>` : "";
+  const btn = st === "off" ? `<button class="btn primary" data-act="push-on">Attiva le notifiche</button>` : st === "on" ? `<button class="btn" data-act="push-test">Manda una prova</button><button class="btn ghost" data-act="push-off">Spegni</button>` : "";
+  const err = P.pushMsg && P.pushMsg !== "ok" && st !== "on" ? `<p class="push-err">${esc(P.pushMsg)}</p>` : "";
   const later = where === "me" && st !== "on" ? `<button class="btn ghost" data-act="push-later">Non ora</button>` : "";
-  return `<section class="card push-c"><h2>${ICO.bell}Notifiche${st === "on" ? ` <span class="pill soft">attive</span>` : ""}</h2><p class="mut">${txt}</p>${btn || later ? `<div class="row-act">${btn}${later}</div>` : ""}</section>`;
+  return `<section class="card push-c"><h2>${ICO.bell}Notifiche${st === "on" ? ` <span class="pill soft">attive</span>` : ""}</h2><p class="mut">${txt}</p>${err}${btn || later ? `<div class="row-act">${btn}${later}</div>` : ""}</section>`;
 }
 function subscribeMe(){
   if (!S.db) return;
@@ -3177,8 +3202,8 @@ function renderSet(){
     <section class="card"><h2>${ICO.auto}Tema</h2>
       <div class="seg2 wide" role="group" aria-label="Tema"><button data-act="theme" data-to="light" aria-pressed="${getMode() === "light"}">${ICO.sun}Chiaro</button><button data-act="theme" data-to="dark" aria-pressed="${getMode() === "dark"}">${ICO.moon}Scuro</button><button data-act="theme" data-to="custom" aria-pressed="${getMode() === "custom"}">${ICO.cam}Foto</button></div>
       ${getMode() === "custom" && getCustom() ? `<div class="cu-acc"><b>Colore in più</b><div class="cu-sw" role="group" aria-label="Colore in più">
-        <button data-act="cu-accent" data-c="" aria-pressed="${!getCustom().accent}" title="Automatico">Auto</button>${(getCustom().cands || []).map(c => `<button data-act="cu-accent" data-c="${c}" aria-pressed="${getCustom().accent === c}" style="background:${c}" aria-label="Usa ${c}"></button>`).join("")}</div>
-        <small class="mut">Colori presi dalla foto, anche i dettagli piccoli: quello scelto colora pulsanti, schede e avvisi.</small></div>` : ""}
+        <button data-act="cu-accent" data-c="" aria-pressed="${!getCustom().accent}" title="Automatico">Auto</button>${(getCustom().cands || []).map(c => `<button data-act="cu-accent" data-c="${c}" aria-pressed="${getCustom().accent === c}" style="background:${c}" aria-label="Usa ${c}"></button>`).join("")}<label class="cu-any" title="Scegli un colore qualsiasi" style="${getCustom().accent && !(getCustom().cands || []).includes(getCustom().accent) ? `background:${getCustom().accent};outline:3px solid var(--ink);outline-offset:2px` : ""}">+<input type="color" id="cuAny" value="${getCustom().accent || "#7ec8f0"}"></label></div>
+        <small class="mut">Colori presi dalla foto, anche i dettagli piccoli. Col «+» scegli un colore qualsiasi. Quello scelto colora pulsanti, schede e avvisi.</small></div>` : ""}
       <p class="mut set-note">${getMode() === "custom" ? "Colori e disegni presi dalla tua foto profilo: se la cambi, il tema si aggiorna da solo." : S.avatars[id] ? "Con «Foto» l'app prende i colori più forti e i disegni della tua foto profilo e li usa dappertutto." : "Con «Foto» l'app usa i colori della tua foto profilo: metti una foto, non fare il noioso."}</p>
     </section>
     ${isAdmin() ? `<section class="card"><h2>${ICO.cal}Avviso nuovi turni</h2>
@@ -3579,6 +3604,14 @@ document.addEventListener("click", async e => {
   if (act === "me-wtoday"){ P.week = monday(todayStr()); subscribeMe(); return renderMe(); }
   if (act === "me-mprev" || act === "me-mnext"){ const [y, m] = P.month.split("-").map(Number), d = new Date(y, m - 1 + (act === "me-mnext" ? 1 : -1), 1); P.month = `${d.getFullYear()}-${pad(d.getMonth() + 1)}`; subscribeMe(); return renderMe(); }
   if (act === "close") return closeSheet();
+  /* azioni di tutti (anche dei balordi, che non scrivono in agenda) */
+  if (act === "cu-accent"){ const c = getCustom(); if (!c) return; if (el.dataset.c) c.accent = el.dataset.c; else delete c.accent; try { localStorage.setItem(CUSTOM_KEY, JSON.stringify(c)); } catch {} applyTheme(true); return; }
+  if (act === "push-on") return pushOn(el);
+  if (act === "push-test"){ try { const reg = await navigator.serviceWorker.ready; await reg.showNotification("Prova ✓", {body: "Se vedi questo messaggio le notifiche funzionano.", icon: "icons/logo-192.png", badge: "icons/logo-badge-96.png", tag: "turni-prova"}); toast("Notifica di prova inviata"); } catch { toast("Non riesco a mostrare la notifica di prova"); } return; }
+  if (act === "push-off") return pushOff();
+  if (act === "push-later"){ lsSet("push-later", new Date().toISOString()); return renderMe(); }
+  if (act === "avviso-ok"){ if (P.avviso) lsSet("avviso-visto", P.avviso.at); avvisoBadge(); return renderMe(); }
+  if (act === "avvisi-me"){ lsSet("avvisi-me", lsGet("avvisi-me") === "1" ? "0" : "1"); avvisoBadge(); return renderSet(); }
   if (!S.canWrite) return;
   /* da qui in giù: solo agenda (responsabile e PC del banco) */
   if (act === "day") return setSel(el.dataset.date);
@@ -3601,12 +3634,6 @@ document.addEventListener("click", async e => {
   if (act === "go-agenda"){ location.hash = "agenda"; return; }
   if (act === "go-agenda-day"){ const d = U.lastDate; location.hash = "agenda"; if (d){ S.view = "day"; setSel(d); } return; }
   if (act === "up-read") return readPhotos();
-  if (act === "cu-accent"){ const c = getCustom(); if (!c) return; if (el.dataset.c) c.accent = el.dataset.c; else delete c.accent; try { localStorage.setItem(CUSTOM_KEY, JSON.stringify(c)); } catch {} applyTheme(true); return; }
-  if (act === "push-on") return pushOn();
-  if (act === "push-off") return pushOff();
-  if (act === "push-later"){ lsSet("push-later", new Date().toISOString()); return renderMe(); }
-  if (act === "avviso-ok"){ if (P.avviso) lsSet("avviso-visto", P.avviso.at); avvisoBadge(); return renderMe(); }
-  if (act === "avvisi-me"){ lsSet("avvisi-me", lsGet("avvisi-me") === "1" ? "0" : "1"); avvisoBadge(); return renderSet(); }
   if (act === "up-paste"){
     const t = ($("#upPaste") || {}).value || ""; U.paste = t;
     const out = parseClaude(t);
@@ -3658,6 +3685,7 @@ document.addEventListener("submit", async e => {
 document.addEventListener("change", async e => {
   const el = e.target;
   if (el.dataset && el.dataset.avatar && el.files && el.files[0]){ const f = el.files[0]; el.value = ""; return openCropper(f, el.dataset.avatar); }
+  if (el.id === "cuAny"){ const c = getCustom(); if (!c) return; c.accent = el.value; try { localStorage.setItem(CUSTOM_KEY, JSON.stringify(c)); } catch {} return applyTheme(true); }
   if (el.dataset && "customPick" in el.dataset && el.files && el.files[0]){ const f = el.files[0]; el.value = ""; return pickCustom(f); }
   if (el.id === "admImport" && el.files && el.files[0]){ const f = el.files[0]; el.value = ""; return importBackup(f); }
   /* il backup scelto resta anche se il modulo si ridisegna (es. dopo un errore) */
