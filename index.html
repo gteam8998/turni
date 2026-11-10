@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>Turni Arese</title>
-<!-- versione 2026.11.10-16 -->
+<!-- versione 2026.11.10-18 -->
 <meta name="description" content="Turni e agenda del reparto Telefonia &amp; Service, MediaWorld Arese">
 <meta name="theme-color" content="#FFFFFF" media="(prefers-color-scheme: light)">
 <meta name="theme-color" content="#0B0F17" media="(prefers-color-scheme: dark)">
@@ -174,7 +174,7 @@ button.who:hover{background:var(--hover)}
 .av.tel{background:var(--tel-fill);color:var(--tel-ink);border-color:var(--tel)}
 .av.srv{background:var(--srv-fill);color:var(--srv-ink);border-color:var(--srv)}
 .who-txt{min-width:0;display:grid}
-.who b{font-weight:700;font-size:18px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.who b{font-weight:700;font-size:18px;line-height:1.2;overflow-wrap:anywhere}
 .who small{font-size:14px;color:var(--ink-2);line-height:1.3}
 .who small .hrs{font-weight:700;color:var(--ink)}
 .who small.off{color:var(--ink-3)}
@@ -539,6 +539,9 @@ body[data-role="banco"] .me-only{display:none!important}
 .acc-t .code{font-size:16px;color:var(--ink);letter-spacing:.06em}
 .acc-full{margin:4px 0 2px;min-height:42px;padding:6px 12px;font-size:16px;width:100%;max-width:280px;border:1.5px solid var(--line);border-radius:12px;background:var(--bg);color:var(--ink)}
 .acc-full:focus{outline:none;border-color:var(--tel)}
+.prow .fld input,.prow .fld select{width:100%;min-width:0;box-sizing:border-box}
+.dsplit{grid-column:1/-1;margin:0}.dsplit>summary{cursor:pointer;font-weight:700;font-size:15px;padding:4px 0}.dsplit>summary .mut{font-weight:400}
+.dsplit[open]>summary{margin-bottom:6px}
 .avviso{display:grid;grid-template-columns:auto minmax(0,1fr) auto;align-items:center;gap:12px;margin:0 0 14px;padding:12px 14px;border-radius:16px;background:var(--tel-fill);border:1.5px solid var(--tel);color:var(--tel-ink)}
 .avviso b{display:block;font-size:16px}.avviso small{display:block;opacity:.85}
 .avviso-i{display:grid;place-items:center;width:36px;height:36px;border-radius:50%;background:var(--tel);color:#fff}
@@ -1107,7 +1110,7 @@ function qrSvg(text, color = "#0B1220", bg = "#FFFFFF") {
 if (typeof module !== "undefined") module.exports = { QRGEN, qrSvg };
 
 </script>
-<script src="firebase-config.js?v=2026.11.10-16"></script>
+<script src="firebase-config.js?v=2026.11.10-18"></script>
 <script>
 (() => {
 "use strict";
@@ -2246,7 +2249,8 @@ function ingest(results){
         g.excluded.delete(k);
         const bl = segs.length ? mergeSegs(segs) : daBl;
         const perD = {}; segs.forEach(x => { const d = sigDept(x.sig); perD[d] = (perD[d] || 0) + toMin(x.e) - toMin(x.s); });
-        const dept = Object.keys(perD).sort((a, b) => perD[b] - perD[a])[0] || (rep === "HE" ? "srv" : rep === "TLC" ? "tel" : "alt");
+        const ourD = Object.keys(perD).filter(d => d !== "alt").sort((a, b) => perD[b] - perD[a])[0];
+        const dept = ourD || Object.keys(perD).sort((a, b) => perD[b] - perD[a])[0] || (rep === "HE" ? "srv" : rep === "TLC" ? "tel" : "alt");
         const sigs = [...new Set(segs.map(x => x.sig))];
         const altSig = (segs.find(x => sigDept(x.sig) === "alt") || {}).sig || (dept === "alt" ? rep : "") || "";
         const flags = [], notes = [];
@@ -2254,13 +2258,13 @@ function ingest(results){
           flags.push(`Le colonne Da/A dicono ${daBl.map(fmtR).join(", ")}, le celle colorate ${bl.map(fmtR).join(", ")}: guarda la foto e correggi se serve.`);
         else if (!segs.length) flags.push("Celle colorate non lette: l'orario viene solo dalle colonne Da/A, controllalo.");
         else if (!daBl.length) flags.push("Colonne Da/A non lette: l'orario viene solo dalle celle colorate, controllalo.");
-        if (sigs.length > 1) notes.push(`Reparti di oggi: ${segs.map(x => `${x.sig} ${fmtR(x)}`).join(", ")}`);
+        if (sigs.length > 1) notes.push(`Dal foglio: ${segs.map(x => `${x.sig} ${fmtR(x)}`).join(", ")}. In agenda compare solo la parte ${ours.map(x => x.sig).filter((v, i, a) => a.indexOf(v) === i).join("/") || "TLC/HE"}.`);
         else if (dept === "alt") notes.push(`Oggi è in ${sigs[0] || rep || "un altro reparto"}: nell'agenda di Telefonia e Service non compare, nella sua area sì.`);
-        if (bl.some(b => !/:(00|30)$/.test(b.s) || !/:(00|30)$/.test(b.e))) flags.push("Un orario non cade sulla mezz'ora: controllalo.");
+        if (!(daBl.length && blocksKey(daBl) === blocksKey(bl)) && bl.some(b => !/:(00|30)$/.test(b.s) || !/:(00|30)$/.test(b.e))) flags.push("Un orario non cade sulla mezz'ora: controllalo.");
         if (bl.some(b => toMin(b.s) < 7*60 || toMin(b.e) > 24*60)) flags.push("Orario fuori dall'apertura del negozio: controllalo.");
         const y = Number(row.y);
         g.people.set(k, {key: "p" + (keyN++), include: true, full, first, cognome: titleCase(cognome), rep: sigs.join(" + ") || rep || "?",
-          dept, altSig, segs, matchId: match, newName: first, text: bl.map(fmtR).join(", "), flags, notes, fi, y: Number.isFinite(y) && y >= 0 && y <= 100 ? y : null});
+          dept, altSig, segs, matchId: match, newName: [first, titleCase(cognome)].filter(Boolean).join(" "), text: bl.map(fmtR).join(", "), flags, notes, fi, y: Number.isFinite(y) && y >= 0 && y <= 100 ? y : null});
       });
     });
   });
@@ -2336,7 +2340,7 @@ function personHtml(p, gi){
     <div class="prow">
       <div class="fld"><label for="m-${p.key}">In agenda è</label><select id="m-${p.key}" data-f="matchId">${opts}</select></div>
       ${p.matchId ? "" : `<div class="fld"><label for="n-${p.key}">Nome da usare</label><input id="n-${p.key}" data-f="newName" value="${esc(p.newName)}" maxlength="40"></div>`}
-      <fieldset class="fld dseg"><legend>Reparto di oggi</legend><div class="dseg-b">${[["tel", "Telefonia"], ["srv", "Service"], ["alt", p.altSig ? esc(p.altSig) : "Altro"]].map(([v, l]) => `<label class="ds ${v}"><input type="radio" name="d-${p.key}" value="${v}" data-f="dept" ${p.dept === v ? "checked" : ""}><span>${l}</span></label>`).join("")}</div></fieldset>
+      ${new Set((p.segs || []).map(x => x.sig)).size > 1 && !p.deptTouched ? `<details class="fld dsplit"><summary>Reparto: dal foglio <span class="mut">(cambia)</span></summary>      <fieldset class="dseg"><legend>Reparto di oggi</legend><div class="dseg-b">${[["tel", "Telefonia"], ["srv", "Service"], ["alt", p.altSig ? esc(p.altSig) : "Altro"]].map(([v, l]) => `<label class="ds ${v}"><input type="radio" name="d-${p.key}" value="${v}" data-f="dept" ${p.dept === v ? "checked" : ""}><span>${l}</span></label>`).join("")}</div></fieldset></details>` : `      <fieldset class="fld dseg"><legend>Reparto di oggi</legend><div class="dseg-b">${[["tel", "Telefonia"], ["srv", "Service"], ["alt", p.altSig ? esc(p.altSig) : "Altro"]].map(([v, l]) => `<label class="ds ${v}"><input type="radio" name="d-${p.key}" value="${v}" data-f="dept" ${p.dept === v ? "checked" : ""}><span>${l}</span></label>`).join("")}</div></fieldset>`}
       <div class="fld hours"><label for="t-${p.key}">Orario</label><input id="t-${p.key}" data-f="text" value="${esc(p.text)}" class="${hi.bad ? "bad" : ""}" autocomplete="off"><div class="hint${hi.bad ? " bad" : ""}">${esc(hi.txt)}</div></div>
     </div>
   </div>`;
@@ -2408,12 +2412,14 @@ async function saveUpload(btn){
       if (!sid){
         const name = String(p.newName).trim(), nk = norm(name);
         const ex = created[nk] || (S.staff.find(s => norm(s.name) === nk) || {}).id;
-        sid = ex || (await S.db.collection("staff").add({name, order: S.staff.length + Object.keys(created).length, sheetName: sheet, ...(twoWords(p.full) ? {full: titleCase(p.full)} : {})})).id;
+        sid = ex || (await S.db.collection("staff").add({name, order: S.staff.length + Object.keys(created).length, sheetName: sheet, ...(twoWords(p.full) ? {full: titleCase(p.full)} : {}), ...(p.cognome ? {cognome: p.cognome} : {})})).id;
         created[nk] = sid;
       } else {
         const st = staffById(sid), patch = {};
         if (st && String(st.sheetName || "").replace(/ /g, "") !== sheet.replace(/ /g, "")) patch.sheetName = sheet;
         if (st && !st.full && twoWords(p.full)) patch.full = titleCase(p.full);   // il foglio ci dà nome e cognome: niente da riscrivere per i codici
+        if (st && p.cognome && !st.cognome) patch.cognome = p.cognome;
+        if (st && p.cognome && words(st.name).length === 1) patch.name = `${titleCase(st.name)} ${p.cognome}`;   // nome da usare: nome + cognome (niente omonimi)
         if (Object.keys(patch).length) await S.db.doc("staff/" + sid).update(patch);
       }
       const r = parseDayText(p.text); if (r.skip) continue;
@@ -2735,6 +2741,21 @@ function avvisoHtml(){
   const a = P.avviso, f = pd(a.from), t = pd(a.to);
   const rng = a.from === a.to ? `${dateLong(a.from)}` : f.getMonth() === t.getMonth() ? `dal ${f.getDate()} al ${t.getDate()} ${MM[t.getMonth()]}` : `dal ${f.getDate()} ${MM[f.getMonth()]} al ${t.getDate()} ${MM[t.getMonth()]}`;
   return `<section class="avviso" role="status"><span class="avviso-i" aria-hidden="true">${ICO.cal}</span><div><b>Nuovi turni caricati</b><small>${esc(rng)}</small></div><button class="btn" data-act="avviso-ok">Ok</button></section>`;
+}
+/* nomi in elenco senza cognome: aggiungo il cognome (dal foglio o dal nome completo) per non confondere gli omonimi */
+const PARTICLES = new Set(["de", "di", "da", "del", "della", "dello", "dei", "degli", "la", "lo", "van", "von", "d'"]);
+function surnameOf(full){ const w = String(full || "").trim().split(/\s+/); if (w.length < 2) return ""; let i = w.length - 1; while (i > 1 && PARTICLES.has(w[i - 1].toLowerCase())) i--; return w.slice(i).join(" "); }
+async function fixShortNames(){
+  if (!S.db || !isAdmin()) return;
+  const ops = [];
+  for (const st of S.staff){
+    if (words(st.name).length !== 1) continue;
+    const cog = st.cognome || surnameOf(st.full); if (!cog) continue;
+    const name = `${titleCase(st.name)} ${cog}`;
+    if (S.staff.some(x => x.id !== st.id && norm(x.name) === norm(name))) continue;
+    ops.push({op: "update", path: "staff/" + st.id, data: {name, ...(st.cognome ? {} : {cognome: cog})}});
+  }
+  if (ops.length) try { await S.db.batch(ops); } catch {}
 }
 /* ---------- notifiche sul telefono (Web Push, inviate dal piccolo servizio su Cloudflare) ---------- */
 const PUSH_URL = (CFG.push || "").trim();
@@ -3348,7 +3369,7 @@ function startData(){
   if (SES.started) return; SES.started = true;
   S.db = BK.db;
   subscribeStatic(); subscribeMe(); subscribeMyAppts(); subscribeAvatars(); loadHist(); subscribeAvviso();
-  if (isAdmin()) ensurePushKeys(); if (!isBanco()) pushCheck();
+  if (isAdmin()){ ensurePushKeys(); setTimeout(fixShortNames, 2500); } if (!isBanco()) pushCheck();
   if (S.canWrite) subscribeRange();
   if (isAdmin()) S.db.doc("config/ai").onSnapshot(s => { const d = s.exists ? s.data() : {}; AI.key = d.key || ""; AI.model = d.model || ""; AI.models = d.models || null; if (ROUTE === "carica" && U.step === "pick") renderUpload(); }, () => {});
 }
