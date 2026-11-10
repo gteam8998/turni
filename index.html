@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>Turni Arese</title>
-<!-- versione 2026.11.10-12 -->
+<!-- versione 2026.11.10-13 -->
 <meta name="description" content="Turni e agenda del reparto Telefonia &amp; Service, MediaWorld Arese">
 <meta name="theme-color" content="#FFFFFF" media="(prefers-color-scheme: light)">
 <meta name="theme-color" content="#0B0F17" media="(prefers-color-scheme: dark)">
@@ -539,6 +539,10 @@ body[data-role="banco"] .me-only{display:none!important}
 .acc-t .code{font-size:16px;color:var(--ink);letter-spacing:.06em}
 .acc-full{margin:4px 0 2px;min-height:42px;padding:6px 12px;font-size:16px;width:100%;max-width:280px;border:1.5px solid var(--line);border-radius:12px;background:var(--bg);color:var(--ink)}
 .acc-full:focus{outline:none;border-color:var(--tel)}
+.avviso{display:grid;grid-template-columns:auto minmax(0,1fr) auto;align-items:center;gap:12px;margin:0 0 14px;padding:12px 14px;border-radius:16px;background:var(--tel-fill);border:1.5px solid var(--tel);color:var(--tel-ink)}
+.avviso b{display:block;font-size:16px}.avviso small{display:block;opacity:.85}
+.avviso-i{display:grid;place-items:center;width:36px;height:36px;border-radius:50%;background:var(--tel);color:#fff}
+.avviso-i svg{width:20px;height:20px}
 .paste>summary{cursor:pointer;display:grid;gap:2px;list-style:none;padding:2px 0}
 .paste>summary::-webkit-details-marker{display:none}
 .paste>summary small{color:var(--ink-3);font-weight:400}
@@ -1103,7 +1107,7 @@ function qrSvg(text, color = "#0B1220", bg = "#FFFFFF") {
 if (typeof module !== "undefined") module.exports = { QRGEN, qrSvg };
 
 </script>
-<script src="firebase-config.js?v=2026.11.10-12"></script>
+<script src="firebase-config.js?v=2026.11.10-13"></script>
 <script>
 (() => {
 "use strict";
@@ -2433,6 +2437,8 @@ async function saveUpload(btn){
       const ref = S.db.doc("shifts/" + d), cur = await ref.get();
       if (cur.exists) await ref.update({rows: perDate[d]}); else await ref.set({date: d, rows: perDate[d]});
     }
+    /* avviso per i colleghi: sta in shifts/_avviso (senza "date", quindi le ricerche per giorno non lo vedono) */
+    if (dates.length) try { await S.db.doc("shifts/_avviso").set({kind: "avviso", at: new Date().toISOString(), from: dates[0], to: dates[dates.length - 1], days: dates.length, by: meId() || ""}); } catch {}
     U.saved = n; U.savedDays = dates.length; U.lastDate = dates[0] || null; U.step = "done"; renderUpload(); window.scrollTo(0, 0);
   } catch (e) { btn.disabled = false; btn.textContent = "Salva i turni"; writeErr(e); }
 }
@@ -2706,6 +2712,26 @@ function openCropper(file, sid){
 }
 
 /* ---------- dati dei turni per la mia area ---------- */
+/* avviso "nuovi turni caricati": lo vedono i colleghi (il responsabile solo se lo attiva nelle impostazioni) */
+P.avviso = null; P.avUnsub = null;
+const lsGet = k => { try { return localStorage.getItem(k) || ""; } catch { return ""; } };
+const lsSet = (k, v) => { try { localStorage.setItem(k, v); } catch {} };
+const avvisoForMe = () => !isBanco() && (!isAdmin() || lsGet("avvisi-me") === "1");
+const avvisoNew = () => !!(P.avviso && P.avviso.at && avvisoForMe() && P.avviso.at > lsGet("avviso-visto") && P.avviso.by !== (isAdmin() ? "_" : meId()));
+function avvisoBadge(){ try { if (navigator.setAppBadge){ if (avvisoNew()) navigator.setAppBadge(1); else navigator.clearAppBadge(); } } catch {} }
+function subscribeAvviso(){
+  if (!S.db || P.avUnsub) return;
+  P.avUnsub = S.db.doc("shifts/_avviso").onSnapshot(d => {
+    const was = P.avviso && P.avviso.at; P.avviso = d.exists ? d.data() : null; avvisoBadge();
+    if (P.avviso && P.avviso.at !== was && ROUTE === "me") renderMe();
+  }, () => {});
+}
+function avvisoHtml(){
+  if (!avvisoNew()) return "";
+  const a = P.avviso, f = pd(a.from), t = pd(a.to);
+  const rng = a.from === a.to ? `${dateLong(a.from)}` : f.getMonth() === t.getMonth() ? `dal ${f.getDate()} al ${t.getDate()} ${MM[t.getMonth()]}` : `dal ${f.getDate()} ${MM[f.getMonth()]} al ${t.getDate()} ${MM[t.getMonth()]}`;
+  return `<section class="avviso" role="status"><span class="avviso-i" aria-hidden="true">${ICO.cal}</span><div><b>Nuovi turni caricati</b><small>${esc(rng)}</small></div><button class="btn" data-act="avviso-ok">Ok</button></section>`;
+}
 function subscribeMe(){
   if (!S.db) return;
   const t = todayStr(), [m0, m1] = calGrid(P.month);
@@ -2814,6 +2840,7 @@ function renderMe(){
     <div class="ph-top">${isAdmin() ? `<button class="btn back ph-back" data-act="nav" data-to="agenda">${ICO.back}Agenda</button>` : ""}<span class="ph-date">${esc(capitalize(dateLong(t)))}</span>${gearBtn()}</div>
     <header class="me-id"><label class="av av-pick ${dCls(todayD[0] || usual(id))}" title="Cambia la foto profilo">${avIn(id, st.name)}<i class="av-cam" aria-hidden="true">${ICO.cam}</i><input type="file" accept="image/*" data-avatar="${id}" aria-label="Cambia la foto profilo"></label>
       <div><small class="me-gr">${greet()}</small><h1>${esc(firstName(st))}</h1></div>${pill}</header>
+    ${avvisoHtml()}
     ${heroToday(id)}
     ${ap.length ? `<section class="card"><h2>Appuntamenti da fare<small>${ap.length}</small></h2>
       <ul class="myap">${ap.map(a => `<li><div class="ma">
@@ -2917,6 +2944,9 @@ function renderSet(){
       <div class="seg2 wide" role="group" aria-label="Tema"><button data-act="theme" data-to="auto" aria-pressed="${getMode() === "auto"}">${ICO.auto}Auto</button><button data-act="theme" data-to="light" aria-pressed="${getMode() === "light"}">${ICO.sun}Chiaro</button><button data-act="theme" data-to="dark" aria-pressed="${getMode() === "dark"}">${ICO.moon}Scuro</button></div>
       <p class="mut set-note">${getMode() === "auto" ? `Automatico: diventa scuro quando fuori fa buio. Oggi scuro dalle ${fmtT(fromMin(sunToday()[1]))}, chiaro dalle ${fmtT(fromMin(sunToday()[0]))}.` : "Scelto a mano. Premi Auto per farlo cambiare da solo con la luce del giorno."}</p>
     </section>
+    ${isAdmin() ? `<section class="card"><h2>${ICO.cal}Avviso nuovi turni</h2>
+      <p class="mut">Quando salvi dei turni, i colleghi trovano «Nuovi turni caricati» aprendo la loro area.</p>
+      <button class="btn${lsGet("avvisi-me") === "1" ? " primary" : ""}" data-act="avvisi-me" aria-pressed="${lsGet("avvisi-me") === "1"}">${lsGet("avvisi-me") === "1" ? "Lo ricevo anche io: tocca per spegnere" : "Ricevilo anche tu (per provarlo)"}</button></section>` : ""}
     ${st ? `<section class="card"><h2>${ICO.cal}Ore da contratto</h2>
       <div class="set-row"><label for="meContr">Ore a settimana</label><input id="meContr" inputmode="decimal" maxlength="4" value="${contr || ""}" placeholder="es. 40"></div>
       <p class="mut">Servono per confrontare il monte ore della settimana nella tua area.</p></section>` : ""}
@@ -3236,7 +3266,7 @@ async function onAuth(u){
 function startData(){
   if (SES.started) return; SES.started = true;
   S.db = BK.db;
-  subscribeStatic(); subscribeMe(); subscribeMyAppts(); subscribeAvatars(); loadHist();
+  subscribeStatic(); subscribeMe(); subscribeMyAppts(); subscribeAvatars(); loadHist(); subscribeAvviso();
   if (S.canWrite) subscribeRange();
   if (isAdmin()) S.db.doc("config/ai").onSnapshot(s => { const d = s.exists ? s.data() : {}; AI.key = d.key || ""; AI.model = d.model || ""; AI.models = d.models || null; if (ROUTE === "carica" && U.step === "pick") renderUpload(); }, () => {});
 }
@@ -3317,6 +3347,8 @@ document.addEventListener("click", async e => {
   if (act === "go-agenda"){ location.hash = "agenda"; return; }
   if (act === "go-agenda-day"){ const d = U.lastDate; location.hash = "agenda"; if (d){ S.view = "day"; setSel(d); } return; }
   if (act === "up-read") return readPhotos();
+  if (act === "avviso-ok"){ if (P.avviso) lsSet("avviso-visto", P.avviso.at); avvisoBadge(); return renderMe(); }
+  if (act === "avvisi-me"){ lsSet("avvisi-me", lsGet("avvisi-me") === "1" ? "0" : "1"); avvisoBadge(); return renderSet(); }
   if (act === "up-paste"){
     const t = ($("#upPaste") || {}).value || ""; U.paste = t;
     const out = parseClaude(t);
