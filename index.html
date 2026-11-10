@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>Turni Arese</title>
-<!-- versione 2026.11.10-23 -->
+<!-- versione 2026.11.10-24 -->
 <meta name="description" content="Turni e agenda del reparto Telefonia &amp; Service, MediaWorld Arese">
 <meta name="theme-color" content="#FFFFFF" media="(prefers-color-scheme: light)">
 <meta name="theme-color" content="#0B0F17" media="(prefers-color-scheme: dark)">
@@ -542,6 +542,11 @@ body[data-role="banco"] .me-only{display:none!important}
 .acc-full{margin:4px 0 2px;min-height:42px;padding:6px 12px;font-size:16px;width:100%;max-width:280px;border:1.5px solid var(--line);border-radius:12px;background:var(--bg);color:var(--ink)}
 .acc-full:focus{outline:none;border-color:var(--tel)}
 .nofoto{display:inline-block;margin-top:4px;font-weight:700;color:var(--focus);cursor:pointer;text-decoration:underline;text-underline-offset:3px}
+.cu-acc{display:grid;gap:8px;margin-top:14px}
+.cu-acc .cu-sw{flex-wrap:wrap;gap:8px}
+.cu-acc .cu-sw button{width:40px;height:40px;border-radius:50%;border:2px solid var(--line);padding:0;font-size:12px;font-weight:700;background:var(--surface);color:var(--ink)}
+.cu-acc .cu-sw button[aria-pressed="true"]{outline:3px solid var(--ink);outline-offset:2px}
+:root[data-custom] .hero::before{content:"";position:absolute;inset:-40% -30% auto auto;width:70%;height:90%;background:radial-gradient(circle,var(--accent-glow,transparent),transparent 65%);opacity:.35;pointer-events:none}
 .cu-prev{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-top:12px}
 .cu-sw{display:flex;gap:6px}.cu-sw i{width:28px;height:28px;border-radius:50%;border:2px solid var(--line);display:block}
 /* disegno del tema personalizzato */
@@ -1122,7 +1127,7 @@ function qrSvg(text, color = "#0B1220", bg = "#FFFFFF") {
 if (typeof module !== "undefined") module.exports = { QRGEN, qrSvg };
 
 </script>
-<script src="firebase-config.js?v=2026.11.10-23"></script>
+<script src="firebase-config.js?v=2026.11.10-24"></script>
 <script>
 (() => {
 "use strict";
@@ -2694,6 +2699,13 @@ async function makeCustom(file){
   for (let i = 0; i < d.length; i += 4) if (d[i + 3] > 200) px.push([d[i], d[i + 1], d[i + 2]]);
   const pal = kmeans(px, 6);
   const base = pal[0].c;
+  /* colori vivaci anche se occupano poco (es. occhi azzurri): raggruppo per tinta i pixel saturi e luminosi */
+  const hsv = c => { const [r, g, b] = c.map(v => v / 255), mx = Math.max(r, g, b), mn = Math.min(r, g, b), d = mx - mn; let h = 0;
+    if (d){ h = mx === r ? ((g - b) / d) % 6 : mx === g ? (b - r) / d + 2 : (r - g) / d + 4; h *= 60; if (h < 0) h += 360; } return [h, mx ? d / mx : 0, mx]; };
+  const bins = Array.from({length: 18}, () => [0, 0, 0, 0]);
+  for (const p of px){ const [h, sa, v] = hsv(p); if (sa < .35 || v < .35) continue; const t = bins[Math.floor(h / 20) % 18]; t[0] += p[0]; t[1] += p[1]; t[2] += p[2]; t[3]++; }
+  const vivid = bins.filter(b => b[3] / px.length > .002).map(b => ({c: [b[0] / b[3], b[1] / b[3], b[2] / b[3]], n: b[3] / px.length})).sort((a, b) => b.n - a.n);
+  const cands = []; [...pal.filter(x => satOf(x.c) > .2), ...vivid].forEach(x => { if (cands.length < 7 && !cands.some(c => distC(c, x.c) < 45)) cands.push(x.c); });
   /* colore forte: presente e saturo, diverso dal fondo */
   const score = x => x.n * (0.25 + satOf(x.c)) * (distC(x.c, base) > 60 || x === pal[0] ? 1 : .3);
   const strong = [...pal].sort((a, b) => score(b) - score(a))[0].c;
@@ -2733,12 +2745,18 @@ async function makeCustom(file){
   x2.putImageData(im, 0, 0);
   const cover = on / (M * M);
   const deco = cover > .015 && cover < .7 ? c2.toDataURL("image/png") : "";   // niente disegno se la foto è "piena" (sarebbe solo rumore)
-  return {vars, dark, deco, pal: [...new Set([hero, primary, focus, surface].map(hexOf))], at: Date.now()};
+  return {vars, dark, deco, pal: [...new Set([hero, primary, focus, surface].map(hexOf))], cands: cands.map(hexOf), at: Date.now()};
 }
 function applyCustomVars(){
   const st = document.documentElement.style, c = getMode() === "custom" ? getCustom() : null;
-  ["--bg","--canvas","--surface","--hover","--line","--line-2","--ink","--primary","--on-primary","--focus","--hero","--hero-ink","--hero-2","--hero-track","--deco"].forEach(k => st.removeProperty(k));
-  if (c){ Object.entries(c.vars).forEach(([k, v]) => st.setProperty(k, v)); if (c.deco) st.setProperty("--deco", `url("${c.deco}")`); document.documentElement.dataset.custom = c.deco ? "deco" : "1"; }
+  ["--bg","--canvas","--surface","--hover","--line","--line-2","--ink","--primary","--on-primary","--focus","--hero","--hero-ink","--hero-2","--hero-track","--deco","--accent-glow"].forEach(k => st.removeProperty(k));
+  if (c){ Object.entries(c.vars).forEach(([k, v]) => st.setProperty(k, v));
+    if (c.accent){
+      const hx = h => [1, 3, 5].map(i => parseInt(h.slice(i, i + 2), 16)), bg = hx(c.vars["--bg"]), W = [255, 255, 255], K = [11, 15, 23];
+      let a = hx(c.accent); for (let i = 0; i < 10 && contrastOf(a, bg) < 3; i++) a = mixC(a, c.dark ? W : K, .2);
+      st.setProperty("--primary", hexOf(a)); st.setProperty("--on-primary", hexOf(contrastOf(a, W) >= contrastOf(a, K) ? W : K)); st.setProperty("--focus", hexOf(a));
+      st.setProperty("--accent-glow", hexOf(a));
+    } if (c.deco) st.setProperty("--deco", `url("${c.deco}")`); document.documentElement.dataset.custom = c.deco ? "deco" : "1"; }
   else delete document.documentElement.dataset.custom;
 }
 function applyTheme(force){
@@ -2758,6 +2776,7 @@ async function themeFromAvatar(img, say){
   try {
     const blob = await (await fetch(img)).blob();
     const c = await makeCustom(blob); c.src = img.length + ":" + img.slice(-24);
+    const old = getCustom(); if (old && old.accent) c.accent = old.accent;
     localStorage.setItem(CUSTOM_KEY, JSON.stringify(c)); setMode("custom"); if (say) toast("Tema preso dalla tua foto profilo");
   } catch { toast("Non riesco a leggere la foto profilo"); }
 }
@@ -3157,7 +3176,9 @@ function renderSet(){
       ${S.avatars[id] ? `<div class="row-act"><button class="btn ghost" data-act="avatar-del" data-confirm="Sì, togli">Togli la foto</button></div>` : `<label class="nofoto">Metti una foto, non fare il noioso<input type="file" accept="image/*" data-avatar="${id}" hidden></label>`}</div></section>` : ""}
     <section class="card"><h2>${ICO.auto}Tema</h2>
       <div class="seg2 wide" role="group" aria-label="Tema"><button data-act="theme" data-to="light" aria-pressed="${getMode() === "light"}">${ICO.sun}Chiaro</button><button data-act="theme" data-to="dark" aria-pressed="${getMode() === "dark"}">${ICO.moon}Scuro</button><button data-act="theme" data-to="custom" aria-pressed="${getMode() === "custom"}">${ICO.cam}Foto</button></div>
-      ${getMode() === "custom" && getCustom() ? `<div class="cu-prev"><span class="cu-sw">${getCustom().pal.map(c => `<i style="background:${c}"></i>`).join("")}</span></div>` : ""}
+      ${getMode() === "custom" && getCustom() ? `<div class="cu-acc"><b>Colore in più</b><div class="cu-sw" role="group" aria-label="Colore in più">
+        <button data-act="cu-accent" data-c="" aria-pressed="${!getCustom().accent}" title="Automatico">Auto</button>${(getCustom().cands || []).map(c => `<button data-act="cu-accent" data-c="${c}" aria-pressed="${getCustom().accent === c}" style="background:${c}" aria-label="Usa ${c}"></button>`).join("")}</div>
+        <small class="mut">Colori presi dalla foto, anche i dettagli piccoli: quello scelto colora pulsanti, schede e avvisi.</small></div>` : ""}
       <p class="mut set-note">${getMode() === "custom" ? "Colori e disegni presi dalla tua foto profilo: se la cambi, il tema si aggiorna da solo." : S.avatars[id] ? "Con «Foto» l'app prende i colori più forti e i disegni della tua foto profilo e li usa dappertutto." : "Con «Foto» l'app usa i colori della tua foto profilo: metti una foto, non fare il noioso."}</p>
     </section>
     ${isAdmin() ? `<section class="card"><h2>${ICO.cal}Avviso nuovi turni</h2>
@@ -3580,6 +3601,7 @@ document.addEventListener("click", async e => {
   if (act === "go-agenda"){ location.hash = "agenda"; return; }
   if (act === "go-agenda-day"){ const d = U.lastDate; location.hash = "agenda"; if (d){ S.view = "day"; setSel(d); } return; }
   if (act === "up-read") return readPhotos();
+  if (act === "cu-accent"){ const c = getCustom(); if (!c) return; if (el.dataset.c) c.accent = el.dataset.c; else delete c.accent; try { localStorage.setItem(CUSTOM_KEY, JSON.stringify(c)); } catch {} applyTheme(true); return; }
   if (act === "push-on") return pushOn();
   if (act === "push-off") return pushOff();
   if (act === "push-later"){ lsSet("push-later", new Date().toISOString()); return renderMe(); }
