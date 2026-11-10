@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>Turni Arese</title>
-<!-- versione 2026.11.10-6 -->
+<!-- versione 2026.11.10-7 -->
 <meta name="description" content="Turni e agenda del reparto Telefonia &amp; Service, MediaWorld Arese">
 <meta name="theme-color" content="#FFFFFF" media="(prefers-color-scheme: light)">
 <meta name="theme-color" content="#0B0F17" media="(prefers-color-scheme: dark)">
@@ -1103,7 +1103,7 @@ function qrSvg(text, color = "#0B1220", bg = "#FFFFFF") {
 if (typeof module !== "undefined") module.exports = { QRGEN, qrSvg };
 
 </script>
-<script src="firebase-config.js?v=2026.11.10-6"></script>
+<script src="firebase-config.js?v=2026.11.10-7"></script>
 <script>
 (() => {
 "use strict";
@@ -1815,7 +1815,7 @@ function renderUpload(){
     </div>` : ""}
   </section>`;
   if (U.step === "pick") h += `<details class="step paste"${U.pasteOpen ? " open" : ""}><summary><b>Incolla la lettura di Claude</b><small>Mandi la foto a Claude, copi la sua risposta e la incolli qui</small></summary>
-    <textarea id="upPaste" rows="7" spellcheck="false" autocapitalize="off" placeholder="TURNI 2026-11-01&#10;Nome | Cognome | REP | 09:00-13:00 | TLC 09:00-13:00">${esc(U.paste || "")}</textarea>
+    <textarea id="upPaste" rows="7" spellcheck="false" autocapitalize="off" placeholder="TURNI 2026-11-01&#10;Nome | Cognome | 09:00-13:00 | TLC 09:00-13:00">${esc(U.paste || "")}</textarea>
     <button class="btn primary big" data-act="up-paste" style="width:100%">Controlla i turni incollati</button></details>`;
   if (!n && U.step === "pick") h += `<ul class="tips" aria-label="Per una foto che si legge bene"><li><b>Dritta</b>Dall'alto, senza storcere il foglio</li><li><b>Tutta</b>Nomi, Da/A e la griglia oraria</li><li><b>Luce</b>Niente riflessi né ombre sopra</li><li><b>Una per foglio</b>Di solito sono due al giorno</li></ul>`;
   if (n && U.step === "pick") h += `<button class="btn primary big" data-act="up-read" style="width:100%">Leggi i turni ${n === 1 ? "dalla foto" : `dalle ${n} foto`}</button>${n > 4 ? `<p class="tip">Ci vuole circa mezzo minuto per foto: ${n} foto ≈ ${Math.max(1, Math.round(n * 0.5))} minuti. Tieni l'app aperta.</p>` : ""}`;
@@ -1929,9 +1929,9 @@ A volte il foglio copre PIÙ GIORNI (settimana o mese): applica le stesse regole
 ${n > 1 ? `Ti mando ${n} immagini dello STESSO foglio: la 1ª è il foglio intero; ${desc}. Leggi i dettagli dalle strisce ingrandite e usa la 1ª per la data e per la posizione "y". Ogni persona va scritta UNA sola volta anche se compare in due strisce.` : ""}
 
 COMPITO: il foglio ha tutto il negozio, ma a me servono SOLO queste righe (le altre ignorale del tutto, non scriverle):
-1) le righe con REP = TLC oppure REP = HE (anche se sono di riposo);
-2) le righe di altri reparti che hanno almeno una cella TLC o HE nella griglia;
-${names && names.length ? `3) le righe di queste persone, in qualunque reparto siano oggi: ${names.join("; ")}.` : ""}
+1) le righe che hanno almeno una cella TLC o HE nella griglia;
+${names && names.length ? `2) le righe di queste persone, in qualunque reparto siano oggi (anche se di riposo): ${names.join("; ")}.` : ""}
+La colonna REP non serve: il reparto del giorno lo dicono SOLO le sigle nelle celle colorate.
 Scorri tutta la tabella dall'alto in basso per non perderne nessuna: di solito sono tra 5 e 15 righe.
 Rispondi solo con il JSON richiesto:
 - giorni: un elemento per ogni giorno del foglio, con "data" in formato AAAA-MM-GG (null se non leggibile) e "righe".
@@ -1961,8 +1961,8 @@ function salvageJSON(t){
 }
 /* Lettura fatta da Claude, incollata nell'app. Formato a righe:
    TURNI 2026-11-01            (data del foglio; si può ripetere per più giorni)
-   Nome | Cognome | REP | 09:00-13:00, 13:30-15:30 | TLC 09:00-13:00, TLC 13:30-15:30
-   Nome | Cognome | REP | R                       (riposo)
+   Nome | Cognome | 09:00-13:00, 13:30-15:30 | TLC 09:00-13:00, TLC 13:30-15:30
+   Nome | Cognome | R                             (riposo; va bene anche il vecchio formato con il REP)
    ? dubbio da controllare
    Va bene anche il JSON della lettura. */
 function parseClaude(t){
@@ -1977,12 +1977,14 @@ function parseClaude(t){
     const line = raw.replace(/^[\s*•-]+(?=\S)/, "").trim(); if (!line) continue;
     if (/^turni\b/i.test(line) || (/^(giorno|data)\b/i.test(line) && iso(line))){ day = {data: iso(line), rows: []}; out.days.push(day); continue; }
     if (/^\?/.test(line)){ out.dubbi.push(line.replace(/^\?\s*/, "")); continue; }
-    const f = line.split("|").map(x => x.trim()); if (f.length < 4 || !(f[0] || f[1])) continue;
+    let f = line.split("|").map(x => x.trim()); if (f.length < 3 || !(f[0] || f[1])) continue;
+    /* formato senza REP (Nome | Cognome | orari | celle): il reparto del giorno lo dicono le celle */
+    if (rng.test(f[2]) || /^r(iposo)?$/i.test(f[2])) f = [f[0], f[1], "", ...f.slice(2)];
     if (!day){ day = {data: null, rows: []}; out.days.push(day); }
     const da = [], a = [], celle = [];
     if (!/^r(iposo)?$/i.test(f[3])) f[3].split(/[,;]/).forEach(x => { const m = x.match(rng); if (m){ da.push(m[1]); a.push(m[2]); } });
     (f[4] || "").split(/[,;]/).forEach(x => { const m = x.trim().match(new RegExp(`^([A-Za-zÀ-ú]+)\\s+${tm}\\s*[-–—]\\s*${tm}`)); if (m) celle.push([m[1].toUpperCase(), m[2], m[3]]); });
-    day.rows.push({nome: f[0], cognome: f[1], rep: f[2].toUpperCase(), da: da.length ? da : ["R"], a: a.length ? a : ["R"], celle});
+    day.rows.push({nome: f[0], cognome: f[1], rep: (f[2] || "").toUpperCase(), da: da.length ? da : ["R"], a: a.length ? a : ["R"], celle});
   }
   out.days = out.days.filter(d => d.rows.length);
   return out;
