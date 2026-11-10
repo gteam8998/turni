@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>Turni Arese</title>
-<!-- versione 2026.11.10-22 -->
+<!-- versione 2026.11.10-23 -->
 <meta name="description" content="Turni e agenda del reparto Telefonia &amp; Service, MediaWorld Arese">
 <meta name="theme-color" content="#FFFFFF" media="(prefers-color-scheme: light)">
 <meta name="theme-color" content="#0B0F17" media="(prefers-color-scheme: dark)">
@@ -1122,7 +1122,7 @@ function qrSvg(text, color = "#0B1220", bg = "#FFFFFF") {
 if (typeof module !== "undefined") module.exports = { QRGEN, qrSvg };
 
 </script>
-<script src="firebase-config.js?v=2026.11.10-22"></script>
+<script src="firebase-config.js?v=2026.11.10-23"></script>
 <script>
 (() => {
 "use strict";
@@ -3673,7 +3673,16 @@ route();
 let dayNow = todayStr();
 setInterval(() => { if (SES.member && todayStr() !== dayNow){ dayNow = todayStr(); subscribeMe(); subscribeMyAppts(); }
   if (ROUTE === "agenda"){ renderHeader(); if (S.sel === todayStr() && S.view === "day") renderShifts(); } else if (ROUTE === "me") renderMe(); }, 60000);
-if ("serviceWorker" in navigator && location.protocol === "https:") navigator.serviceWorker.register("sw.js").catch(() => {});
+if ("serviceWorker" in navigator && location.protocol === "https:"){
+  /* aggiornamenti: controllo a ogni apertura; se c'è una versione nuova la attivo e ricarico una volta */
+  navigator.serviceWorker.register("sw.js", {updateViaCache: "none"}).then(reg => {
+    const chk = () => reg.update().catch(() => {});
+    document.addEventListener("visibilitychange", () => { if (!document.hidden) chk(); });
+    setInterval(chk, 30 * 60000);
+  }).catch(() => {});
+  let reloaded = false, had = !!navigator.serviceWorker.controller;
+  navigator.serviceWorker.addEventListener("controllerchange", () => { if (!had){ had = true; return; } if (reloaded || uploadActive()) return; reloaded = true; location.reload(); });
+}
 
 (async () => {
   try { await initBackend(); }
