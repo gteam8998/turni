@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>Turni Arese</title>
-<!-- versione 2026.11.10-7 -->
+<!-- versione 2026.11.10-8 -->
 <meta name="description" content="Turni e agenda del reparto Telefonia &amp; Service, MediaWorld Arese">
 <meta name="theme-color" content="#FFFFFF" media="(prefers-color-scheme: light)">
 <meta name="theme-color" content="#0B0F17" media="(prefers-color-scheme: dark)">
@@ -1103,7 +1103,7 @@ function qrSvg(text, color = "#0B1220", bg = "#FFFFFF") {
 if (typeof module !== "undefined") module.exports = { QRGEN, qrSvg };
 
 </script>
-<script src="firebase-config.js?v=2026.11.10-7"></script>
+<script src="firebase-config.js?v=2026.11.10-8"></script>
 <script>
 (() => {
 "use strict";
@@ -2558,7 +2558,8 @@ async function initBackend(){
   const [A, AU, F] = await Promise.all([import(base + "firebase-app.js"), import(base + "firebase-auth.js"), import(base + "firebase-firestore.js")]);
   const app = A.initializeApp(CFG.firebase);
   let fs;
-  try { fs = F.initializeFirestore(app, {localCache: F.persistentLocalCache({tabManager: F.persistentMultipleTabManager()})}); }
+  /* cache in memoria: con la cache sul dispositivo condivisa tra schede e app installata le letture a volte restavano appese */
+  try { fs = F.initializeFirestore(app, {localCache: F.memoryLocalCache()}); }
   catch { fs = F.getFirestore(app); }
   BK.db = makeFirestoreDb(F, fs);
   const auth = AU.getAuth(app);
@@ -2837,12 +2838,13 @@ function renderMe(){
 /* ---------- impostazioni (ingranaggio) ---------- */
 const AD = {members: null, invites: null, logins: null, loading: false, showKey: false, test: "", fresh: {}};
 async function loadAdminData(){
-  if (AD.loading || !S.db || !isAdmin()) return; AD.loading = true;
+  if (AD.loading || !S.db || !isAdmin()) return; AD.loading = true; AD.loadErr = false;
+  /* le tre letture insieme, con un tempo massimo: niente rotellina infinita */
+  const within = (pr, ms) => Promise.race([pr, new Promise((_, rej) => setTimeout(() => rej(new Error("timeout")), ms))]);
   try {
-    AD.members = docs(await S.db.collection("members").get());
-    AD.invites = docs(await S.db.collection("invites").get());
-    AD.logins = docs(await S.db.collection("logins").get());
-  } catch { AD.members = AD.members || []; AD.invites = AD.invites || []; AD.logins = AD.logins || []; }
+    const [m, i, l] = await within(Promise.all(["members", "invites", "logins"].map(c => S.db.collection(c).get())), 15000);
+    AD.members = docs(m); AD.invites = docs(i); AD.logins = docs(l);
+  } catch { AD.loadErr = true; }
   AD.loading = false; if (ROUTE === "set") renderSet();
 }
 const rnd = n => { let s = ""; const a = new Uint32Array(n); crypto.getRandomValues(a); a.forEach(x => s += (x % 10)); return s; };
@@ -2852,7 +2854,8 @@ function renderSet(){
   const id = meId(), st = id ? staffById(id) : null, contr = st ? Number(st.contratto) || 0 : 0;
   let adm = "";
   if (isAdmin()){
-    if (AD.members === null){ adm = `<section class="card"><div class="reading"><span class="spin"></span>Carico gli accessi…</div></section>`; loadAdminData(); }
+    if (AD.members === null && AD.loadErr && !AD.loading) adm = `<section class="card"><p class="mut" style="margin:0 0 10px">Non riesco a caricare gli accessi: controlla la connessione.</p><button class="btn" data-act="adm-reload">Riprova</button></section>`;
+    else if (AD.members === null){ adm = `<section class="card"><div class="reading"><span class="spin"></span>Carico gli accessi…</div></section>`; loadAdminData(); }
     else {
       const now = Date.now();
       const act = sid => AD.members.some(m => m.staffId === sid);
@@ -2951,6 +2954,7 @@ async function adminAct(act, el){
       await S.db.batch([...old.map(i => ({op: "delete", path: "invites/" + i.id})), {op: "set", path: "invites/" + code, data: {role: "banco", at: new Date().toISOString(), exp: 4102444800000}}]);
       AD.members = null; return renderSet();
     }
+    if (act === "adm-reload"){ AD.loadErr = false; renderSet(); return; }
     if (act === "adm-banco-off"){ if (!armed(el)) return; await S.db.batch((AD.members || []).filter(m => m.role === "banco").map(m => ({op: "delete", path: "members/" + m.id}))); AD.members = null; toast("PC scollegati"); return renderSet(); }
     if (act === "adm-showkey"){ AD.showKey = !AD.showKey; const k = $("#aiKey"); if (k){ AI.draft = k.value; } return renderSet(); }
     if (act === "adm-copylink"){ try { await navigator.clipboard.writeText(APP_URL); toast("Link copiato"); } catch { toast(APP_URL); } return; }
