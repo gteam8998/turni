@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>Turni Arese</title>
-<!-- versione 2026.11.10-25 -->
+<!-- versione 2026.11.10-26 -->
 <meta name="description" content="Turni e agenda del reparto Telefonia &amp; Service, MediaWorld Arese">
 <meta name="theme-color" content="#FFFFFF" media="(prefers-color-scheme: light)">
 <meta name="theme-color" content="#0B0F17" media="(prefers-color-scheme: dark)">
@@ -1131,7 +1131,7 @@ function qrSvg(text, color = "#0B1220", bg = "#FFFFFF") {
 if (typeof module !== "undefined") module.exports = { QRGEN, qrSvg };
 
 </script>
-<script src="firebase-config.js?v=2026.11.10-25"></script>
+<script src="firebase-config.js?v=2026.11.10-26"></script>
 <script>
 (() => {
 "use strict";
@@ -2794,6 +2794,21 @@ async function pickCustom(file){
 }
 setInterval(() => applyTheme(), 60000);
 document.addEventListener("visibilitychange", () => { if (!document.hidden) applyTheme(); });
+/* rientro nell'app: il telefono spesso non chiude davvero l'app, la «congela». Se sei stato fuori almeno 30 secondi
+   riparto da oggi: settimana e mese correnti nella tua area, giorno di oggi in agenda (le letture a metà non si toccano) */
+let hiddenAt = 0;
+function backToToday(){
+  const t = todayStr();
+  P.week = monday(t); P.month = t.slice(0, 7);
+  if (SES.member) subscribeMe();
+  if (S.sel !== t){ S.sel = t; S.cal = t.slice(0, 7); if (S.db && S.canWrite) subscribeRange(); }
+  if (ROUTE === "me") renderMe(); else if (ROUTE === "agenda") render();
+}
+document.addEventListener("visibilitychange", () => {
+  if (document.hidden){ hiddenAt = Date.now(); return; }
+  if (hiddenAt && Date.now() - hiddenAt >= 30000) backToToday();
+});
+window.addEventListener("pageshow", e => { if (e.persisted) backToToday(); });
 const themeBtn = () => {
   const d = getTheme() === "dark", l = (d ? "Passa al tema chiaro" : "Passa al tema scuro") + "";
   return `<button class="round" data-act="theme-flip" aria-label="${l}" title="${l}">${d ? ICO.sun : ICO.moon}</button>`;
