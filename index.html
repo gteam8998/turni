@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>Turni Arese</title>
-<!-- versione 2026.11.10-31 -->
+<!-- versione 2026.11.11-32 -->
 <meta name="description" content="Turni e agenda del reparto Telefonia &amp; Service, MediaWorld Arese">
 <meta name="theme-color" content="#FFFFFF" media="(prefers-color-scheme: light)">
 <meta name="theme-color" content="#0B0F17" media="(prefers-color-scheme: dark)">
@@ -19,7 +19,13 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&family=Atkinson+Hyperlegible+Mono:wght@500;700&family=Lexend:wght@500;600;700&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&family=Atkinson+Hyperlegible+Mono:wght@500;700&family=Lexend:wght@500;600;700&display=swap" media="print" onload="this.media='all'">
+<!-- Firebase: lo scarico mentre la pagina si apre (stessa versione di FB_VER) -->
+<link rel="preconnect" href="https://www.gstatic.com" crossorigin>
+<link rel="preconnect" href="https://firestore.googleapis.com" crossorigin>
+<link rel="modulepreload" href="https://www.gstatic.com/firebasejs/12.19.0/firebase-app.js" crossorigin>
+<link rel="modulepreload" href="https://www.gstatic.com/firebasejs/12.19.0/firebase-auth.js" crossorigin>
+<link rel="modulepreload" href="https://www.gstatic.com/firebasejs/12.19.0/firebase-firestore.js" crossorigin>
 <style>
 /* Layout: agenda da negozio stile calendario online — barra in alto con la data grande, colonna sinistra (nuovo, foto turni, mini-calendario, QR), area principale con "Chi lavora" a tutta larghezza e sotto appuntamenti + note. Tema chiaro di base (si legge bene sotto le luci del negozio); tema scuro a scelta, ricordato per dispositivo. */
 :root{
@@ -1142,7 +1148,7 @@ function qrSvg(text, color = "#0B1220", bg = "#FFFFFF") {
 if (typeof module !== "undefined") module.exports = { QRGEN, qrSvg };
 
 </script>
-<script src="firebase-config.js?v=2026.11.10-31"></script>
+<script src="firebase-config.js?v=2026.11.11-32"></script>
 <script>
 (() => {
 "use strict";
@@ -1543,7 +1549,8 @@ const docs = snap => snap.docs.map(d => Object.assign({id: d.id}, d.data()));
 
 function subscribeStatic(){
   S.db.collection("staff").onSnapshot(s => {
-    live(s); S.staffAll = docs(s).filter(x => x.name); S.staff = S.staffAll.filter(x => !x.hide);
+    live(s); if (s.metadata.fromCache && !s.docs.length) return;
+    S.staffAll = docs(s).filter(x => x.name); S.staff = S.staffAll.filter(x => !x.hide); saveSnap();
     if (!uploadActive()) renderShifts();
     if (ROUTE === "me") renderMe(); else if (ROUTE === "set" && !typingIn("#scr-set")) renderSet();
     if (S.staffOpen && !(document.activeElement && document.activeElement.closest && document.activeElement.closest(".stafflist"))) openStaff(document.activeElement && document.activeElement.id === "nsName");
@@ -1689,7 +1696,7 @@ function openStaff(focusNew){
           up.full = titleCase(v);
           try { (await S.db.collection("invites").where("staffId", "==", sid).get()).docs.forEach(d => ops.push({op: "update", path: "invites/" + d.id, data: {name: up.full}})); } catch {}
         }
-        try { await S.db.batch([{op: "update", path: "staff/" + sid, data: up}, ...ops]); if (ops.length) AD.members = null; toast("Aggiornato"); } catch (er) { writeErr(er); }
+        try { await S.db.batch([{op: "update", path: "staff/" + sid, data: up}, ...ops]); toast("Aggiornato"); } catch (er) { writeErr(er); }
       });
       root.addEventListener("click", async e => {
         const hb = e.target.closest("[data-hide-staff]");
@@ -2544,7 +2551,9 @@ function makeFirestoreDb(F, fs){
         if (o.op === "set") b.set(ref, o.data); else if (o.op === "update") b.update(ref, flatten(o.data)); else if (o.op === "delete") b.delete(ref);
       }
       await b.commit();
-    }
+    },
+    /* dopo tanto tempo in background il telefono può lasciare appeso il collegamento: lo riapro */
+    reconnect: async () => { try { await F.disableNetwork(fs); } catch {} try { await F.enableNetwork(fs); } catch {} }
   };
 }
 /* modalità prova: tutto resta su questo dispositivo (serve per provare l'app prima di collegare Firebase) */
@@ -2558,6 +2567,8 @@ function makeDemoDb(){
   const get = p => store[p];
   const L = new Set();
   const notify = () => setTimeout(() => L.forEach(l => l()), 0);
+  /* un'altra scheda ha cambiato i dati di prova: aggiorno anche questa */
+  addEventListener("storage", e => { if (e.key === KEY){ try { store = JSON.parse(e.newValue || "{}"); } catch {} notify(); } });
   const meta = {fromCache: false, hasPendingWrites: false};
   const mk = (p, v) => ({id: p.split("/").pop(), exists: v !== undefined, data: () => v === undefined ? undefined : JSON.parse(JSON.stringify(v)), metadata: meta});
   const test = (v, [f, op, x]) => { const a = v[f];
@@ -2837,6 +2848,7 @@ function backToToday(){
 document.addEventListener("visibilitychange", () => {
   if (document.hidden){ hiddenAt = Date.now(); return; }
   if (hiddenAt && Date.now() - hiddenAt >= 30000) backToToday();
+  if (hiddenAt && Date.now() - hiddenAt >= 60000 && S.db && S.db.reconnect && !uploadActive()) S.db.reconnect();
 });
 window.addEventListener("pageshow", e => { if (e.persisted) backToToday(); });
 const themeBtn = () => {
@@ -2848,10 +2860,11 @@ const gearBtn = () => `<button class="round desk-only" data-act="nav" data-to="s
 /* ---------- foto profilo ---------- */
 function subscribeAvatars(){
   S.db.collection("avatars").onSnapshot(s => {
+    if (s.metadata.fromCache && !s.docs.length) return;
     S.avatarsLoaded = true; S.avatars = {}; s.docs.forEach(d => { const v = d.data(); if (v && typeof v.img === "string" && v.img.startsWith("data:image/")) S.avatars[d.id] = v.img; });
     const mine = meId() && S.avatars[meId()];
     if (mine && (P.themeAfterAvatar || (getMode() === "custom" && (getCustom() || {}).src !== mine.length + ":" + mine.slice(-24)))){ const first = P.themeAfterAvatar; P.themeAfterAvatar = false; themeFromAvatar(mine, first); }
-    if (!mine && meId() && getMode() === "custom" && SES.member) setMode("light");   // solo se so chi sono: prima le foto possono arrivare prima dei nomi
+    if (!mine && meId() && getMode() === "custom" && SES.member && !(s.metadata && s.metadata.fromCache)) setMode("light");   // solo se so chi sono: prima le foto possono arrivare prima dei nomi
     if (ROUTE === "me") renderMe(); else if (ROUTE === "set" && !typingIn("#scr-set")) renderSet(); else if (ROUTE === "agenda") renderShifts();
   }, () => {});
 }
@@ -3043,7 +3056,8 @@ function subscribeMe(){
   if (key === P.key) return;
   P.key = key; if (P.unsub) P.unsub();
   P.unsub = S.db.collection("shifts").where("date", ">=", a).where("date", "<=", b).onSnapshot(s => {
-    P.shifts = {}; s.docs.forEach(d => P.shifts[d.id] = d.data()); computeUsual();
+    if (s.metadata.fromCache && !s.docs.length) return;
+    P.shifts = {}; s.docs.forEach(d => P.shifts[d.id] = d.data()); computeUsual(); if (!s.metadata.fromCache) saveSnap();
     if (ROUTE === "me") renderMe();
   }, () => {});
 }
@@ -3177,16 +3191,27 @@ function renderMe(){
 
 /* ---------- impostazioni (ingranaggio) ---------- */
 const AD = {members: null, invites: null, logins: null, loading: false, showKey: false, test: "", fresh: {}};
-async function loadAdminData(){
-  if (AD.loading || !S.db || !isAdmin()) return; AD.loading = true; AD.loadErr = false;
-  /* le tre letture insieme, con un tempo massimo: niente rotellina infinita */
-  const within = (pr, ms) => Promise.race([pr, new Promise((_, rej) => setTimeout(() => rej(new Error("timeout")), ms))]);
-  try {
-    const [m, i, l] = await within(Promise.all(["members", "invites", "logins"].map(c => S.db.collection(c).get())), 15000);
-    AD.members = docs(m); AD.invites = docs(i); AD.logins = docs(l);
-  } catch { AD.loadErr = true; }
-  AD.loading = false; if (ROUTE === "set") renderSet();
+/* accessi, codici e nomi: sempre in diretta, così vedi subito quando un collega entra */
+function loadAdminData(){
+  if (AD.subs || !S.db || !isAdmin()) return; AD.loadErr = false;
+  const got = {}, fail = () => { if (AD.members !== null) return; clearTimeout(tm); AD.loadErr = true; stopAdmin(); if (ROUTE === "set") renderSet(); };
+  const tm = setTimeout(fail, 15000);
+  AD.subs = ["members", "invites", "logins"].map(c => S.db.collection(c).onSnapshot(s => {
+    if (!got[c] && s.metadata.fromCache) return;          // aspetto la prima risposta del server
+    const prev = c === "members" && AD.members; got[c] = docs(s);
+    if (!got.members || !got.invites || !got.logins) return;
+    clearTimeout(tm);
+    if (prev){ const old = new Set(prev.map(m => m.id));
+      got.members.filter(m => !old.has(m.id)).forEach(m => { const st = m.staffId && staffById(m.staffId);
+        toast(m.role === "banco" ? "✓ PC del banco collegato" : `✓ ${st ? firstName(st) : "Un collega"} ha fatto l'accesso`); }); }
+    AD.members = got.members; AD.invites = got.invites; AD.logins = got.logins; AD.loadErr = false;
+    refreshSet();
+  }, fail));
 }
+function stopAdmin(){ (AD.subs || []).forEach(u => { try { u(); } catch {} }); AD.subs = null; }
+/* ridisegno le impostazioni, ma non mentre stai scrivendo in un campo: lo faccio appena esci */
+function refreshSet(){ if (ROUTE !== "set") return; if (typingIn("#scr-set")){ AD.pending = true; return; } AD.pending = false; renderSet(); }
+document.addEventListener("focusout", () => setTimeout(() => { if (AD.pending) refreshSet(); }, 0));
 const rnd = n => { let s = ""; const a = new Uint32Array(n); crypto.getRandomValues(a); a.forEach(x => s += (x % 10)); return s; };
 const fmtExp = ms => { const d = new Date(ms); return `${d.getDate()} ${MM[d.getMonth()].slice(0, 3)}`; };
 function renderSet(){
@@ -3286,7 +3311,7 @@ async function adminAct(act, el){
       await S.db.batch([...old.map(i => ({op: "delete", path: "invites/" + i.id})),
         {op: "update", path: "staff/" + sid, data: {full}},
         {op: "set", path: "invites/" + code, data: {role: "user", staffId: sid, name: full, exp: Date.now() + 14 * 864e5, at: new Date().toISOString()}}]);
-      AD.members = null; toast(`Codice per ${full}: ${code}`); return renderSet();
+      toast(`Codice per ${full}: ${code}`); return renderSet();
     }
     if (act === "adm-reset"){
       if (!armed(el)) return;
@@ -3295,16 +3320,16 @@ async function adminAct(act, el){
       let code; for (let i = 0; i < 5; i++){ code = rnd(6); if (!(await S.db.doc("invites/" + code).get()).exists) break; }
       await S.db.batch([...ms.map(m => ({op: "delete", path: "members/" + m.id})), ...ls.map(l => ({op: "delete", path: "logins/" + l.id})),
         {op: "set", path: "invites/" + code, data: {role: "user", staffId: sid, name: st.full || st.name, exp: Date.now() + 14 * 864e5, at: new Date().toISOString()}}]);
-      AD.members = null; toast(`Accesso di ${st.full || st.name} azzerato. Nuovo codice: ${code}`); return renderSet();
+      toast(`Accesso di ${st.full || st.name} azzerato. Nuovo codice: ${code}`); return renderSet();
     }
     if (act === "adm-banco"){
       const old = (AD.invites || []).filter(i => i.role === "banco");
       let code; for (let i = 0; i < 5; i++){ code = rnd(6); if (!(await S.db.doc("invites/" + code).get()).exists) break; }
       await S.db.batch([...old.map(i => ({op: "delete", path: "invites/" + i.id})), {op: "set", path: "invites/" + code, data: {role: "banco", at: new Date().toISOString(), exp: 4102444800000}}]);
-      AD.members = null; return renderSet();
+      return renderSet();
     }
-    if (act === "adm-reload"){ AD.loadErr = false; renderSet(); return; }
-    if (act === "adm-banco-off"){ if (!armed(el)) return; await S.db.batch((AD.members || []).filter(m => m.role === "banco").map(m => ({op: "delete", path: "members/" + m.id}))); AD.members = null; toast("PC scollegati"); return renderSet(); }
+    if (act === "adm-reload"){ AD.loadErr = false; stopAdmin(); loadAdminData(); renderSet(); return; }
+    if (act === "adm-banco-off"){ if (!armed(el)) return; await S.db.batch((AD.members || []).filter(m => m.role === "banco").map(m => ({op: "delete", path: "members/" + m.id}))); toast("PC scollegati"); return renderSet(); }
     if (act === "adm-showkey"){ AD.showKey = !AD.showKey; const k = $("#aiKey"); if (k){ AI.draft = k.value; } return renderSet(); }
     if (act === "adm-copylink"){ try { await navigator.clipboard.writeText(APP_URL); toast("Link copiato"); } catch { toast(APP_URL); } return; }
     if (act === "adm-export"){
@@ -3551,8 +3576,11 @@ async function submitLogin(){
 async function onAuth(u){
   if (SES.claiming) return;
   SES.user = u;
-  if (!u){ SES.member = null; SES.staffId = ""; document.body.dataset.role = ""; SES.ready = true; return route(); }
-  /* chi sono: provo dalla cache o dal server; se la connessione è lenta all'avvio riprovo qualche volta */
+  if (!u){ if (SES.setupP) await SES.setupP; SES.member = null; SES.staffId = ""; document.body.dataset.role = ""; SES.ready = true; return route(); }
+  /* se questo telefono sa già chi sei, apro subito e controllo in background */
+  const known = lsJson("turni-me-" + u.uid);
+  if (known && known.role){ startSession(u, known); verifyMember(u); return; }
+  /* prima volta su questo telefono: chiedo chi sei (se la connessione è lenta riprovo qualche volta) */
   let m = null;
   for (let i = 0; i < 4 && !m; i++){
     const ref = BK.db.doc("members/" + u.uid);
@@ -3562,20 +3590,54 @@ async function onAuth(u){
   if (m && !m.exists && m.metadata && m.metadata.fromCache){ try { m = await BK.db.doc("members/" + u.uid).getServer(); } catch {} }
   if (!m){ SES.member = null; SES.ready = true; LG.err = "Non riesco a collegarmi: controlla la connessione e riprova."; return route(); }
   if (!m.exists){ try { await BK.auth.signOut(); } catch {} SES.member = null; SES.ready = true; LG.err = "Questo accesso non è più attivo: chiedi un nuovo codice al responsabile."; LG.mode = "first"; return route(); }
-  SES.member = Object.assign({uid: u.uid}, m.data());
+  startSession(u, m.data());
+}
+const lsJson = k => { try { return JSON.parse(localStorage.getItem(k) || "null"); } catch { return null; } };
+const lsPut = (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)); return true; } catch { return false; } };
+function startSession(u, data){
+  SES.member = Object.assign({uid: u.uid}, data);
+  lsPut("turni-me-" + u.uid, {role: data.role, staffId: data.staffId || ""});
   SES.staffId = SES.member.staffId || "";
   S.me = isBanco() ? "banco" : SES.staffId;
   S.canWrite = isAdmin() || isBanco();
   document.body.dataset.role = SES.member.role;
   startData();
   if (SES.memberUnsub) SES.memberUnsub();
-  SES.memberUnsub = S.db.doc("members/" + u.uid).onSnapshot(s => { if (!s.exists && SES.member && !(s.metadata && s.metadata.fromCache)){ toast("Il tuo accesso è stato azzerato."); logout(); } }, () => {});
+  SES.memberUnsub = S.db.doc("members/" + u.uid).onSnapshot(s => {
+    if (!SES.member || (s.metadata && s.metadata.fromCache)) return;
+    if (!s.exists){ try { localStorage.removeItem("turni-me-" + u.uid); localStorage.removeItem("turni-snap-" + u.uid); } catch {} toast("Il tuo accesso è stato azzerato."); return setTimeout(logout, 1500); }
+    const d = s.data();
+    /* ruolo o nome cambiati dal responsabile: riapro con quelli nuovi */
+    if (d.role !== SES.member.role || (d.staffId || "") !== SES.staffId){ lsPut("turni-me-" + u.uid, {role: d.role, staffId: d.staffId || ""}); if (!uploadActive()) location.reload(); }
+  }, () => {});
   SES.ready = true; LG.err = ""; route();
+}
+/* controllo dal server il membro aperto dalla memoria del telefono (se la rete c'è) */
+async function verifyMember(u){
+  try { const m = await BK.db.doc("members/" + u.uid).getServer();
+    if (!m.exists){ try { localStorage.removeItem("turni-me-" + u.uid); localStorage.removeItem("turni-snap-" + u.uid); } catch {} try { await BK.auth.signOut(); } catch {} location.reload(); }
+  } catch {}
+}
+/* ultima copia di nomi e turni della mia area: la mostro subito all'apertura, poi arrivano quelli aggiornati */
+function loadSnap(){
+  const sn = SES.user && lsJson("turni-snap-" + SES.user.uid); if (!sn) return;
+  if (Array.isArray(sn.staff) && !S.staffAll.length){ S.staffAll = sn.staff; S.staff = sn.staff.filter(x => !x.hide); }
+  if (sn.shifts && !Object.keys(P.shifts).length) P.shifts = sn.shifts;
+  if (sn.av && sn.av.id && !S.avatars[sn.av.id]) S.avatars[sn.av.id] = sn.av.img;
+  try { computeUsual(); } catch {}
+}
+let snapT = null;
+function saveSnap(){
+  if (!SES.user || isBanco()) return; clearTimeout(snapT);
+  snapT = setTimeout(() => { const id = meId(), av = id && S.avatars[id];
+    if (!lsPut("turni-snap-" + SES.user.uid, {staff: S.staffAll, shifts: P.shifts, av: av ? {id, img: av} : null})) lsPut("turni-snap-" + SES.user.uid, {staff: S.staffAll, shifts: {}, av: null});
+  }, 1500);
 }
 function startData(){
   if (SES.started) return; SES.started = true;
   S.db = BK.db;
-  subscribeStatic(); subscribeMe(); subscribeMyAppts(); subscribeAvatars(); loadHist(); subscribeAvviso();
+  loadSnap(); subscribeStatic(); subscribeMe(); subscribeMyAppts(); subscribeAvatars(); subscribeAvviso(); setTimeout(loadHist, 4000);
+  if (isAdmin()) loadAdminData();
   if (isAdmin()){ ensurePushKeys(); setTimeout(fixShortNames, 2500); } if (!isBanco()) pushCheck();
   if (S.canWrite) subscribeRange();
   if (isAdmin()) S.db.doc("config/ai").onSnapshot(s => { const d = s.exists ? s.data() : {}; AI.key = d.key || ""; AI.model = d.model || ""; AI.models = d.models || null; if (ROUTE === "carica" && U.step === "pick") renderUpload(); }, () => {});
@@ -3788,7 +3850,8 @@ if ("serviceWorker" in navigator && location.protocol === "https:"){
     $("#scr-boot").innerHTML = `<div class="boot"><b>Non riesco ad aprire l'app</b><span>Controlla la connessione e riprova.</span><button class="btn primary" onclick="location.reload()">Riprova</button></div>`;
     return;
   }
-  try { const st = await BK.db.doc("setup/state").get(); SES.setupDone = st.exists; } catch { SES.setupDone = true; }
+  /* lo stato della prima configurazione serve solo alla schermata di accesso: lo chiedo in parallelo */
+  SES.setupP = BK.db.doc("setup/state").get().then(st => { SES.setupDone = st.exists; }, () => { SES.setupDone = true; });
   BK.auth.onChange(u => onAuth(u));
 })();
 })();

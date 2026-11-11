@@ -1,16 +1,36 @@
 /* Service worker: tiene in memoria l'app per aprirla subito, anche con rete scarsa.
    I dati (Firebase) e la lettura delle foto (Gemini) passano sempre da internet. */
-const CACHE = "turni-2026.11.10-31";
+const CACHE = "turni-2026.11.11-32";
+const LIBS = "turni-libs-1";              // non cambia a ogni versione: le librerie restano
 const SHELL = ["./", "manifest.webmanifest", "icons/logo-192.png", "icons/logo-512.png"];
 self.addEventListener("install", e => { e.waitUntil(caches.open(CACHE).then(c => c.addAll(SHELL)).then(() => self.skipWaiting())); });
-self.addEventListener("activate", e => { e.waitUntil(caches.keys().then(ks => Promise.all(ks.filter(k => k !== CACHE).map(k => caches.delete(k)))).then(() => self.clients.claim())); });
+self.addEventListener("activate", e => { e.waitUntil(caches.keys().then(ks => Promise.all(ks.filter(k => k !== CACHE && k !== LIBS).map(k => caches.delete(k)))).then(() => self.clients.claim())); });
 self.addEventListener("fetch", e => {
   const u = new URL(e.request.url);
-  if (e.request.method !== "GET" || u.origin !== location.origin) return;            // Firebase, Gemini, font: sempre rete
+  if (e.request.method !== "GET") return;
+  /* librerie di Firebase (versione fissa nell'indirizzo) e font: le tengo sul telefono, così l'app si apre senza riscaricarle */
+  if (u.origin !== location.origin){
+    const keep = (u.hostname === "www.gstatic.com" && u.pathname.startsWith("/firebasejs/")) || u.hostname === "fonts.gstatic.com" || u.hostname === "fonts.googleapis.com";
+    if (!keep) return;                                                                  // dati di Firebase, Gemini, notifiche: sempre rete
+    const net = c => fetch(e.request).then(r => { if (r.ok || r.type === "opaque") c.put(e.request, r.clone()); return r; });
+    e.respondWith(caches.open(LIBS).then(c => c.match(e.request).then(hit => {
+      if (!hit) return net(c);
+      if (u.hostname === "fonts.googleapis.com") net(c).catch(() => {});                // il foglio dei font lo aggiorno dietro le quinte
+      return hit;
+    })));
+    return;
+  }
   if (e.request.mode === "navigate" || u.pathname.endsWith("firebase-config.js") || u.pathname.endsWith("manifest.webmanifest")){     // pagina, configurazione e manifest: sempre dalla rete
     /* cache: "no-cache" = chiedo sempre a GitHub se c'è una versione nuova (senza, il telefono teneva la vecchia fino a 10 minuti) */
-    e.respondWith(fetch(e.request, {cache: "no-cache"}).then(r => { if (r.ok){ const c = r.clone(); caches.open(CACHE).then(x => x.put(e.request.mode === "navigate" ? "./" : e.request, c)); } return r; })
-      .catch(() => caches.match(e.request.mode === "navigate" ? "./" : e.request, {ignoreSearch: true})));
+    const key = e.request.mode === "navigate" ? "./" : e.request;
+    const net = fetch(e.request, {cache: "no-cache"}).then(r => { if (r.ok){ const c = r.clone(); e.waitUntil(caches.open(CACHE).then(x => x.put(key, c))); } return r; });
+    const old = () => caches.match(key, {ignoreSearch: true});
+    /* con rete lenta non resto ad aspettare: dopo 2,5 secondi apro la copia sul telefono (le versioni nuove arrivano comunque con l'aggiornamento automatico) */
+    e.respondWith(new Promise(res => {
+      let done = false; const go = r => { if (!done && r){ done = true; res(r); } };
+      const t = setTimeout(() => old().then(go), 2500);
+      net.then(r => { clearTimeout(t); go(r); }).catch(() => { clearTimeout(t); old().then(r => r ? go(r) : go(Response.error())); });
+    }));
     return;
   }
   e.respondWith(caches.match(e.request).then(hit => hit || fetch(e.request).then(r => { if (r.ok){ const c = r.clone(); caches.open(CACHE).then(x => x.put(e.request, c)); } return r; })));
