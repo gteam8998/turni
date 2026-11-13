@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>Turni Arese</title>
-<!-- versione 2026.11.13-33 -->
+<!-- versione 2026.11.13-34 -->
 <meta name="description" content="Turni e agenda del reparto Telefonia &amp; Service, MediaWorld Arese">
 <meta name="theme-color" content="#FFFFFF" media="(prefers-color-scheme: light)">
 <meta name="theme-color" content="#0B0F17" media="(prefers-color-scheme: dark)">
@@ -867,6 +867,10 @@ html,body{background:var(--bg);transition:background-color .2s}
 .hero.silver{box-shadow:0 0 0 2.5px var(--silver),0 0 0 7px var(--silver-glow),0 18px 40px -18px rgba(14,21,38,.55)}
 .hero{grid-template-columns:minmax(0,1fr)}
 .hero-big{font-size:clamp(30px,10.4vw,40px)}
+:root{--h-mat:#F5C451;--h-pom:#FF8FB3;--h-ser:#A9A3FF}
+.hfi{display:inline-grid;place-items:center;width:.62em;height:.62em;margin-right:.18em;vertical-align:.02em}
+.hfi svg{width:100%;height:100%}
+.hfi.mat{color:var(--h-mat)}.hfi.pom{color:var(--h-pom)}.hfi.ser{color:var(--h-ser)}
 .hero-k{flex-wrap:wrap;row-gap:6px}
 .hero-k .chip-st{white-space:nowrap}
 /* "Prossimo turno": scheda da toccare */
@@ -1211,7 +1215,7 @@ function qrSvg(text, color = "#0B1220", bg = "#FFFFFF") {
 if (typeof module !== "undefined") module.exports = { QRGEN, qrSvg };
 
 </script>
-<script src="firebase-config.js?v=2026.11.13-33"></script>
+<script src="firebase-config.js?v=2026.11.13-34"></script>
 <script>
 (() => {
 "use strict";
@@ -2825,7 +2829,8 @@ async function makeCustom(file){
   let focus = strong; for (let i = 0; i < 10 && contrastOf(focus, bg) < 3; i++) focus = mixC(focus, dark ? W : K, .25);
   const vars = {"--bg": hexOf(bg), "--canvas": hexOf(bg), "--surface": hexOf(surface), "--hover": hexOf(hover), "--line": hexOf(line), "--line-2": hexOf(line2),
     "--ink": hexOf(ink), "--primary": hexOf(primary), "--on-primary": hexOf(onPrimary), "--focus": hexOf(focus),
-    "--hero": hexOf(hero), "--hero-ink": hexOf(heroInk), "--hero-2": hexOf(mixC(heroInk, hero, .3)), "--hero-track": heroInk === W ? "rgba(255,255,255,.16)" : "rgba(0,0,0,.12)"};
+    "--hero": hexOf(hero), "--hero-ink": hexOf(heroInk), "--hero-2": hexOf(mixC(heroInk, hero, .3)), "--hero-track": heroInk === W ? "rgba(255,255,255,.16)" : "rgba(0,0,0,.12)",
+    "--h-mat": heroInk === W ? "#F5C451" : "#9A6412", "--h-pom": heroInk === W ? "#FF8FB3" : "#B02A5B", "--h-ser": heroInk === W ? "#A9A3FF" : "#4338B8"};
   /* sagoma del disegno: 320 px, alpha in base alla distanza dal fondo */
   const M = 320, c2 = document.createElement("canvas"); c2.width = c2.height = M;
   const x2 = c2.getContext("2d", {willReadFrequently: true});
@@ -2844,8 +2849,10 @@ async function makeCustom(file){
 }
 function applyCustomVars(){
   const st = document.documentElement.style, c = getMode() === "custom" ? getCustom() : null;
-  ["--bg","--canvas","--surface","--hover","--line","--line-2","--ink","--primary","--on-primary","--focus","--hero","--hero-ink","--hero-2","--hero-track","--deco","--accent-glow"].forEach(k => st.removeProperty(k));
+  ["--bg","--canvas","--surface","--hover","--line","--line-2","--ink","--primary","--on-primary","--focus","--hero","--hero-ink","--hero-2","--hero-track","--h-mat","--h-pom","--h-ser","--deco","--accent-glow"].forEach(k => st.removeProperty(k));
   if (c){ Object.entries(c.vars).forEach(([k, v]) => st.setProperty(k, v));
+    /* temi salvati prima delle icone mattino/pomeriggio/sera: su una scheda chiara servono icone più scure */
+    if (!c.vars["--h-mat"] && /^#(0|1)/i.test(c.vars["--hero-ink"] || "")){ st.setProperty("--h-mat", "#9A6412"); st.setProperty("--h-pom", "#B02A5B"); st.setProperty("--h-ser", "#4338B8"); }
     if (c.accent){
       const hx = h => [1, 3, 5].map(i => parseInt(h.slice(i, i + 2), 16)), bg = hx(c.vars["--bg"]), W = [255, 255, 255], K = [11, 15, 23];
       let a = hx(c.accent); for (let i = 0; i < 10 && contrastOf(a, bg) < 3; i++) a = mixC(a, c.dark ? W : K, .2);
@@ -3215,7 +3222,7 @@ function heroDay(id, d){
       else if (nxt) chip = `<i style="background:#F5C451;box-shadow:0 0 0 4px rgba(245,196,81,.2)"></i>In pausa fino alle ${fmtT(nxt.s)}`;
       else if (nm >= e1) chip = "Turno finito";
     } else chip = esc(relGap(d));
-    big = bl.map(b => `<span class="nb">${fmtR(b)}</span>`).join(` <span class="and">e</span> `);
+    big = bl.map(b => { const f = (fasceOf([b]) || {main: "mat"}).main; return `<span class="nb"><i class="hfi ${f}" title="${fascia(f).lbl}" aria-label="${fascia(f).di}">${FICO[f]}</i>${fmtR(b)}</span>`; }).join(` <span class="and">e</span> `);
     const pz = pauseText(bl);
     meta = `${deptsLabel(bl, id)} · ${hm(mins(bl))} di lavoro${pz.length ? ` · pausa ${pz.join(", ")}` : ""}`;
     const a = Math.min(8 * 60, Math.floor(s0 / 60) * 60), z = Math.max(22 * 60, Math.ceil(e1 / 60) * 60), W = z - a;
@@ -3293,7 +3300,7 @@ function renderMe(){
     ${avvisoHtml()}${pushCardHtml("me")}
     ${dnav}
     ${heroDay(id, d)}
-    ${nxCard}
+    ${isT ? nxCard : ""}
     ${ap.length ? `<section class="card"><h2>Appuntamenti da fare<small>${ap.length}</small></h2>
       <ul class="myap">${ap.map(a => `<li><div class="ma">
           <span class="ma-w"><b>${esc(relDay(a.date))}</b><span>${a.time ? esc(fmtClock(a.time)) : "senza ora"}</span></span>
