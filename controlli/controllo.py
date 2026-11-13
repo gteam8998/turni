@@ -65,6 +65,12 @@ def seed(today):
         d = (today + datetime.timedelta(days=k + 1)).isoformat()
         db[f"appts/p{k}"] = {"date": d, "time": t, "kind": kind, "model": "iPhone 15 Pro Max 256 GB Titanio Naturale" if k == 0 else "Galaxy A55",
                              "part": "Schermo", "gb": 128, "price": 89.9, "name": "Cliente di prova con nome lungo", "status": "attesa"}
+    now = datetime.datetime.now(datetime.timezone.utc).replace(microsecond=0, tzinfo=None)
+    db["news/novita-prova"] = {"kind": "novita", "title": "Novità: apri il tuo prossimo turno ✨", "body": "Tocca «Prossimo turno» nella tua area: vedi quel giorno come se fosse oggi.\n\n‹ › frecce per scorrere i giorni\n«Torna a oggi» per rientrare", "at": now.isoformat() + "Z", "by": "adm"}
+    db["news/t-prova"] = {"kind": "turni", "title": "Nuovi turni caricati", "body": "Turni dal 16 al 22 novembre: li trovi nella tua area.", "at": (now - datetime.timedelta(days=1)).isoformat() + "Z", "by": "adm"}
+    db["shifts/_push"] = {"kind": "push", "pub": "", "admin": "Giulio"}
+    db["feedback/f-prova"] = {"uid": "u-usr", "staffId": "usr", "name": "Maria Antonietta Bellavista Castiglioni", "kind": "errore", "text": "Nella settimana non vedo il sabato quando ho il turno spezzato, mi sembra che manchi una riga. Succede solo a me?", "at": (now - datetime.timedelta(hours=2)).isoformat() + "Z"}
+    db["feedback/f-prova2"] = {"uid": "u-usr", "staffId": "usr", "name": "Maria Antonietta Bellavista Castiglioni", "kind": "idea", "text": "Sarebbe utile poter scambiare un turno con un collega.", "at": (now - datetime.timedelta(days=2)).isoformat() + "Z", "reply": "Bella idea, ci lavoro!", "replyAt": (now - datetime.timedelta(days=1)).isoformat() + "Z"}
     return db, users
 
 # ---------- server locale ----------
@@ -157,13 +163,13 @@ def main():
 
     who = {"collega": "u-usr@prova.test", "responsabile": "u-adm@prova.test", "banco": "u-pc@prova.test", "accesso": None}
     piani = [  # (chi, larghezza, altezza, tema, schermate)
-        ("collega", 320, 640, "light", ["me", "me-prossimo", "me-frecce", "set"]),
+        ("collega", 320, 640, "light", ["me", "me-prossimo", "me-frecce", "msg", "set"]),
         ("collega", 390, 844, "light", ["me", "me-prossimo", "me-frecce", "me-passato", "set"]),
-        ("collega", 390, 844, "dark", ["me", "me-prossimo", "set"]),
+        ("collega", 390, 844, "dark", ["me", "me-prossimo", "msg", "set"]),
         ("collega", 390, 844, "sfondo", ["me", "me-prossimo"]),
-        ("responsabile", 390, 844, "light", ["me", "agenda", "carica", "set"]),
+        ("responsabile", 390, 844, "light", ["me", "agenda", "carica", "msg", "set"]),
         ("responsabile", 768, 1024, "dark", ["me", "agenda", "set"]),
-        ("responsabile", 1366, 860, "light", ["agenda", "me", "me-prossimo", "carica", "set"]),
+        ("responsabile", 1366, 860, "light", ["agenda", "me", "me-prossimo", "carica", "msg", "set"]),
         ("banco", 1366, 860, "dark", ["agenda", "set"]),
         ("accesso", 320, 640, "light", ["login"]),
         ("accesso", 390, 844, "dark", ["login"]),

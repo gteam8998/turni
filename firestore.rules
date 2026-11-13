@@ -74,11 +74,27 @@ service cloud.firestore {
 
     // iscrizioni alle notifiche: ognuno la sua; il responsabile le legge per mandare l'avviso
     match /push/{uid} {
-      allow get: if signedIn() && (request.auth.uid == uid || isAdmin());
+      // il telefono del responsabile lo possono leggere tutti: serve per avvisarlo quando gli scrivono
+      allow get: if signedIn() && (request.auth.uid == uid || isAdmin() || (isMember() && uid == get(setupPath()).data.admin));
       allow list: if isAdmin();
       allow create, update: if isMember() && request.auth.uid == uid && request.resource.data.sub is string && request.resource.data.sub.size() < 4000;
       allow delete: if isAdmin() || (signedIn() && request.auth.uid == uid);
     }
+
+    // pagina Messaggi: novità e avvisi dei turni li scrive il responsabile, li leggono tutti
+    match /news/{id} { allow read: if isMember(); allow write: if isAdmin(); }
+    // idee e segnalazioni per il responsabile: i colleghi le scrivono, solo lui le legge
+    match /feedback/{id} {
+      allow create: if isMember() && request.resource.data.uid == request.auth.uid
+        && request.resource.data.keys().hasOnly(['uid', 'staffId', 'name', 'kind', 'text', 'at'])
+        && request.resource.data.kind in ['idea', 'errore']
+        && request.resource.data.text is string && request.resource.data.text.size() > 0 && request.resource.data.text.size() <= 1500;
+      allow read, update: if isAdmin();
+      allow delete: if isAdmin() || (signedIn() && resource.data.uid == request.auth.uid);
+    }
+
+    // chiave delle notifiche verso il responsabile: funziona solo con il suo telefono, la usano i colleghi per avvisarlo
+    match /config/pushAdmin { allow read: if isMember(); }
 
     // chiave di Gemini: solo il responsabile
     match /config/{docId} { allow read, write: if isAdmin(); }

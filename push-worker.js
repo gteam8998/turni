@@ -6,6 +6,8 @@
   2. con quel gettone leggo da Firestore la chiave delle notifiche (config/push) e l'elenco dei telefoni iscritti (push/…):
      Firestore li dà solo al responsabile, quindi nessun altro può usare questo servizio
   3. mando a ogni telefono la notifica, cifrata come chiede lo standard Web Push (RFC 8291 + VAPID RFC 8292)
+  Modo "admin" (un collega scrive al responsabile): con il gettone del collega controllo che sia nell'elenco,
+  leggo il telefono del responsabile e la sua chiave dedicata (config/pushAdmin): funziona solo verso di lui.
 */
 const PROJECT = "turni-arese";
 const ORIGINS = ["https://gteam8998.github.io"];
@@ -69,6 +71,8 @@ function cors(req){
   return {"Access-Control-Allow-Origin": ORIGINS.includes(o) ? o : ORIGINS[0], "Access-Control-Allow-Methods": "POST, OPTIONS",
     "Access-Control-Allow-Headers": "Content-Type, Authorization", "Access-Control-Max-Age": "86400", Vary: "Origin"};
 }
+const uidOf = token => { try { const p = token.split(".")[1]; return JSON.parse(atob(p.replace(/-/g, "+").replace(/_/g, "/").padEnd(Math.ceil(p.length / 4) * 4, "="))).user_id || ""; } catch { return ""; } };
+const keyOf = doc => ({jwk: JSON.parse(fsStr(doc, "priv") || "null"), pub: fsStr(doc, "pub"), subject: fsStr(doc, "subject") || "https://gteam8998.github.io/turni/"});
 const json = (req, obj, status = 200) => new Response(JSON.stringify(obj), {status, headers: {...cors(req), "Content-Type": "application/json"}});
 
 export default {
@@ -79,14 +83,27 @@ export default {
     if (!token) return json(req, {error: "no_token"}, 401);
     let msg = {}; try { msg = await req.json(); } catch {}
     const title = String(msg.title || "Turni Arese").slice(0, 80), text = String(msg.body || "").slice(0, 200), url = String(msg.url || "./").slice(0, 200);
+    const tag = String(msg.tag || "").replace(/[^a-z0-9-]/gi, "").slice(0, 40);
+    const payload = JSON.stringify({title, body: text, url, ...(tag ? {tag} : {})});
     try {
-      const conf = await fsGet("config/push", token);
-      const cfg = {jwk: JSON.parse(fsStr(conf, "priv") || "null"), pub: fsStr(conf, "pub"), subject: fsStr(conf, "subject") || "https://gteam8998.github.io/turni/"};
+      if (msg.mode === "admin"){
+        const uid = uidOf(token); if (!uid) return json(req, {error: "no_token"}, 401);
+        const me = await fsGet("members/" + uid, token);            // solo chi è nell'elenco
+        if (!me || !me.fields) return json(req, {error: "forbidden"}, 403);
+        const admin = fsStr(await fsGet("setup/state", token), "admin"); if (!admin || admin === uid) return json(req, {sent: 0, total: 0});
+        const cfg = keyOf(await fsGet("config/pushAdmin", token)); if (!cfg.jwk || !cfg.pub) return json(req, {error: "no_keys"}, 400);
+        let sub; try { sub = JSON.parse(fsStr(await fsGet("push/" + admin, token), "sub")); } catch { return json(req, {sent: 0, total: 0}); }
+        const st = await sendOne(sub, payload, cfg);
+        return json(req, {sent: st >= 200 && st < 300 ? 1 : 0, total: 1});
+      }
+      const cfg = keyOf(await fsGet("config/push", token));
       if (!cfg.jwk || !cfg.pub) return json(req, {error: "no_keys"}, 400);
+      let adm = null; try { adm = keyOf(await fsGet("config/pushAdmin", token)); } catch {}
       const list = await fsGet("push?pageSize=300", token);
-      const subs = (list.documents || []).map(d => { try { return {id: d.name.split("/").pop(), sub: JSON.parse(fsStr(d, "sub"))}; } catch { return null; } }).filter(x => x && x.sub && x.sub.endpoint);
-      const payload = JSON.stringify({title, body: text, url});
-      const res = await Promise.all(subs.map(async s => { try { return {id: s.id, status: await sendOne(s.sub, payload, cfg)}; } catch (e) { return {id: s.id, status: 0}; } }));
+      /* il telefono del responsabile ha la sua chiave: riceve gli avvisi per tutti solo se l'ha chiesto ("all") */
+      const subs = (list.documents || []).map(d => { try { return {id: d.name.split("/").pop(), sub: JSON.parse(fsStr(d, "sub")), adm: fsStr(d, "key") === "admin", all: fsStr(d, "all") === "1"}; } catch { return null; } })
+        .filter(x => x && x.sub && x.sub.endpoint && (!x.adm || (x.all && adm && adm.jwk)));
+      const res = await Promise.all(subs.map(async s => { try { return {id: s.id, status: await sendOne(s.sub, payload, s.adm ? adm : cfg)}; } catch (e) { return {id: s.id, status: 0}; } }));
       return json(req, {sent: res.filter(r => r.status >= 200 && r.status < 300).length, total: subs.length, gone: res.filter(r => r.status === 404 || r.status === 410).map(r => r.id), results: res});
     } catch (e) {
       return json(req, {error: e && e.status === 403 ? "forbidden" : "failed"}, e && e.status === 403 ? 403 : 502);
