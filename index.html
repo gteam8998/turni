@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>Turni Arese</title>
-<!-- versione 2026.11.13-38 -->
+<!-- versione 2026.11.13-39 -->
 <meta name="description" content="Turni e agenda del reparto Telefonia &amp; Service, MediaWorld Arese">
 <meta name="theme-color" content="#FFFFFF" media="(prefers-color-scheme: light)">
 <meta name="theme-color" content="#0B0F17" media="(prefers-color-scheme: dark)">
@@ -973,7 +973,14 @@ html,body{background:var(--bg);transition:background-color .2s}
 .msg-h .mut{margin-top:2px}
 .msg-list,.fb-list{list-style:none;margin:0;padding:0;display:grid;gap:10px}
 .msg-it{display:grid;grid-template-columns:auto minmax(0,1fr);gap:12px;padding:14px;border-radius:18px;background:var(--bg);border:1.5px solid var(--line-2)}
-.msg-it.nw{border-color:#FF2D20;box-shadow:0 0 0 3px rgba(255,45,32,.12)}
+.msg-it,.fb-it{position:relative}
+.msg-it.nw,.fb-it.nw{border-color:#FF2D20;box-shadow:inset 6px 0 0 #FF2D20,0 0 0 3px rgba(255,45,32,.14);padding-left:20px}
+.msg-x{position:absolute;top:8px;right:8px;width:28px;height:28px;border-radius:50%;border:0;display:grid;place-items:center;background:color-mix(in srgb,var(--ink) 8%,transparent);color:var(--ink-3);cursor:pointer;z-index:1;font:700 12px var(--f-body)}
+.msg-x svg{width:14px;height:14px}
+.msg-x:hover{background:color-mix(in srgb,var(--ink) 14%,transparent);color:var(--ink)}
+.msg-x.armed{width:auto;padding:0 12px;border-radius:999px;background:#FF2D20;color:#fff}
+.msg-c b{padding-right:30px}
+.fb-top{padding-right:34px}
 .msg-i{width:40px;height:40px;border-radius:12px;display:grid;place-items:center;color:#fff;background:var(--tel)}
 .msg-it.k-novita .msg-i{background:linear-gradient(135deg,#7C5CFF,#FF5AA5)}
 .msg-i svg{width:22px;height:22px}
@@ -995,7 +1002,7 @@ html,body{background:var(--bg);transition:background-color .2s}
 .fb-kind svg{width:18px;height:18px}
 .fb-h{margin:6px 0 0;font-family:var(--f-head);font-size:16px;font-weight:600}
 .fb-it{display:grid;gap:8px;padding:14px;border-radius:18px;background:var(--bg);border:1.5px solid var(--line-2)}
-.fb-it.nw{border-color:#FF2D20;box-shadow:0 0 0 3px rgba(255,45,32,.12)}
+
 .fb-top{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
 .fb-top .av{width:30px;height:30px;font-size:12px}
 .fb-top b{font-size:15px}
@@ -1302,7 +1309,7 @@ function qrSvg(text, color = "#0B1220", bg = "#FFFFFF") {
 if (typeof module !== "undefined") module.exports = { QRGEN, qrSvg };
 
 </script>
-<script src="firebase-config.js?v=2026.11.13-38"></script>
+<script src="firebase-config.js?v=2026.11.13-39"></script>
 <script>
 (() => {
 "use strict";
@@ -3146,11 +3153,15 @@ const NEWS_DRAFT = {id: "novita-prossimo-turno", title: "Novità: apri il tuo pr
   body: "Tocca «Prossimo turno» nella tua area: vedi quel giorno come se fosse oggi, con chi è in turno con te.\n\n‹ › frecce per scorrere i giorni\n«Torna a oggi» per rientrare\n☀️ mattina · 🌇 pomeriggio · 🌙 sera accanto agli orari\nNuova pagina Messaggi: scrivi qui idee o errori dell'app"};
 const msgKey = () => "msg-read-" + (SES.user ? SES.user.uid : "");
 function msgReadAt(){ let v = lsGet(msgKey()); if (!v){ v = new Date(Date.now() - 14 * 864e5).toISOString(); lsSet(msgKey(), v); } return v; }
+const hidKey = () => "msg-hidden-" + (SES.user ? SES.user.uid : "");
+const msgHidden = () => { try { return new Set(JSON.parse(lsGet(hidKey()) || "[]")); } catch { return new Set(); } };
+function msgHide(id){ const h = msgHidden(); h.add(id); lsSet(hidKey(), JSON.stringify([...h].slice(-300))); }
 function msgItems(){
-  const list = M.news.filter(n => n && n.at && (n.kind !== "turni" || avvisoForMe()));
+  const hid = msgHidden();
+  const list = M.news.filter(n => n && n.at && !hid.has(n.id) && (n.kind !== "turni" || avvisoForMe()));
   /* avviso dei turni salvato dalle versioni di prima (senza messaggio) */
-  if (P.avviso && P.avviso.at && avvisoForMe() && !list.some(n => n.kind === "turni" && n.at >= P.avviso.at))
-    list.push({id: "_avviso", kind: "turni", title: "Nuovi turni caricati", body: "Turni " + rngText(P.avviso.from, P.avviso.to) + ": li trovi nella tua area.", at: P.avviso.at, by: P.avviso.by});
+  if (P.avviso && P.avviso.at && avvisoForMe() && !hid.has("_avviso:" + P.avviso.at) && !M.news.some(n => n.kind === "turni" && n.at >= P.avviso.at))
+    list.push({id: "_avviso:" + P.avviso.at, kind: "turni", title: "Nuovi turni caricati", body: "Turni " + rngText(P.avviso.from, P.avviso.to) + ": li trovi nella tua area.", at: P.avviso.at, by: P.avviso.by});
   return list.sort((a, b) => b.at.localeCompare(a.at)).slice(0, 40);
 }
 function msgUnread(){
@@ -3177,7 +3188,9 @@ function msgChanged(){
   msgBadge();
   if (ROUTE !== "msg") return;
   lsSet(msgKey(), new Date().toISOString());          // sto guardando la pagina: è tutto letto
-  if (!typingIn("#scr-msg")) renderMsg(); else M.pending = true;
+  /* non ridisegno mentre scrivi o mentre una x aspetta la conferma: lo faccio appena finisci */
+  if (!typingIn("#scr-msg") && !$("#scr-msg .armed")) renderMsg();
+  else { M.pending = true; setTimeout(() => { if (M.pending && ROUTE === "msg" && !typingIn("#scr-msg") && !$("#scr-msg .armed")){ M.pending = false; renderMsg(); } }, 4300); }
 }
 document.addEventListener("focusout", () => setTimeout(() => { if (M.pending && ROUTE === "msg" && !typingIn("#scr-msg")){ M.pending = false; renderMsg(); } }, 0));
 function openMsg(){ M.seen = msgReadAt(); lsSet(msgKey(), new Date().toISOString()); msgBadge(); renderMsg(); }
@@ -3194,7 +3207,8 @@ function renderMsg(){
   const seen = M.seen || msgReadAt(), me = meId(), items = msgItems();
   const draftOpen = isAdmin() && !M.news.some(n => n.id === NEWS_DRAFT.id);
   const newsHtml = items.length ? `<ul class="msg-list">${items.map(n => { const nw = n.at > seen && n.by !== me;
-      return `<li class="msg-it ${n.kind === "turni" ? "k-turni" : "k-novita"}${nw ? " nw" : ""}"><span class="msg-i" aria-hidden="true">${n.kind === "turni" ? ICO.cal : ICO.spark}</span>
+      const real = !String(n.id).startsWith("_avviso"), all = isAdmin() && real;
+      return `<li class="msg-it ${n.kind === "turni" ? "k-turni" : "k-novita"}${nw ? " nw" : ""}"><button class="msg-x" data-act="msg-del" data-id="${esc(n.id)}" data-all="${all ? 1 : ""}"${all ? ` data-confirm="Togli per tutti?"` : ""} aria-label="${all ? "Cancella per tutti" : "Cancella"}" title="${all ? "Cancella per tutti" : "Cancella"}">${ICON.close}</button><span class="msg-i" aria-hidden="true">${n.kind === "turni" ? ICO.cal : ICO.spark}</span>
         <div class="msg-c"><b>${esc(n.title || "")}${nw ? `<em class="msg-new">Nuovo</em>` : ""}</b><p>${msgBody(n.body)}</p><small>${esc(whenText(n.at))}</small></div></li>`; }).join("")}</ul>`
     : `<p class="mut msg-empty">Ancora niente: appena arriva una novità la trovi qui.</p>`;
   const comp = isAdmin() ? `<section class="card msg-comp"><h2>${ICO.send}Scrivi a tutti</h2>
@@ -3211,7 +3225,7 @@ function renderMsg(){
         <button class="btn ask-send" data-act="fb-send">${ICO.send}Invia ${esc(toBoss)}</button></div>` : ""}
       ${M.fbOk ? `<p class="ask-ok">✓ Inviato ${esc(toBoss)}, grazie!</p>` : ""}</section>` : "";
   const fbItem = f => { const nw = f.at > seen && f.uid !== SES.user.uid;
-    return `<li class="fb-it${nw ? " nw" : ""}"><div class="fb-top"><span class="av ${dCls(usual(f.staffId))}">${avIn(f.staffId, f.name || "?")}</span><b>${esc(f.name || "Un collega")}</b><span class="kind-tag ${f.kind === "errore" ? "k-err" : "k-idea"}">${f.kind === "errore" ? ICO.bug + "Errore" : ICO.idea + "Idea"}</span><small>${esc(whenText(f.at))}</small>${nw ? `<em class="msg-new">Nuovo</em>` : ""}</div>
+    return `<li class="fb-it${nw ? " nw" : ""}"><button class="msg-x" data-act="fb-del" data-id="${esc(f.id)}" data-confirm="Cancellare?" aria-label="Cancella" title="Cancella">${ICON.close}</button><div class="fb-top"><span class="av ${dCls(usual(f.staffId))}">${avIn(f.staffId, f.name || "?")}</span><b>${esc(f.name || "Un collega")}</b><span class="kind-tag ${f.kind === "errore" ? "k-err" : "k-idea"}">${f.kind === "errore" ? ICO.bug + "Errore" : ICO.idea + "Idea"}</span><small>${esc(whenText(f.at))}</small>${nw ? `<em class="msg-new">Nuovo</em>` : ""}</div>
       <p class="fb-t">${msgBody(f.text)}</p></li>`; };
   const fb = isAdmin() ? `<section class="card"><h2>${ICO.users}Dai colleghi<small>${M.fb.length || ""}</small></h2>
       ${M.fb.length ? `<ul class="fb-list">${M.fb.map(fbItem).join("")}</ul>` : `<p class="mut">Le idee e gli errori che ti mandano i colleghi arrivano qui.</p>`}</section>` : "";
@@ -4079,6 +4093,12 @@ document.addEventListener("click", async e => {
   if (act === "push-later"){ lsSet("push-later", new Date().toISOString()); return renderMe(); }
   if (act === "news-send") return newsSend(el);
   if (act === "fb-send") return fbSend(el);
+  if (act === "msg-del"){
+    const id = el.dataset.id;
+    if (el.dataset.all){ if (!armed(el)) return; try { await S.db.doc("news/" + id).delete(); toast("Messaggio cancellato per tutti"); } catch { toast("Non riesco a cancellarlo"); } return; }
+    msgHide(id); msgBadge(); renderMsg(); toast("Messaggio cancellato"); return;
+  }
+  if (act === "fb-del"){ if (!armed(el)) return; try { await S.db.doc("feedback/" + el.dataset.id).delete(); toast("Cancellato"); } catch { toast("Non riesco a cancellarlo"); } return; }
   if (act === "ask-open"){ M.open = !M.open; M.fbOk = false; renderMsg(); if (M.open){ const t = $("#fbText"); if (t) t.focus(); } return; }
   if (act === "fb-kind"){ M.kind = el.dataset.k === "errore" ? "errore" : "idea"; const t = $("#fbText"), v = t ? t.value : ""; renderMsg(); const n = $("#fbText"); if (n){ n.value = v; n.focus(); } return; }
   if (act === "avviso-ok"){ if (P.avviso) lsSet("avviso-visto", P.avviso.at); avvisoBadge(); return renderMe(); }
