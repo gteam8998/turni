@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>Turni Arese</title>
-<!-- versione 2026.11.13-41 -->
+<!-- versione 2026.11.13-42 -->
 <meta name="description" content="Turni e agenda del reparto Telefonia &amp; Service, MediaWorld Arese">
 <meta name="theme-color" content="#FFFFFF" media="(prefers-color-scheme: light)">
 <meta name="theme-color" content="#0B0F17" media="(prefers-color-scheme: dark)">
@@ -938,6 +938,7 @@ html,body{background:var(--bg);transition:background-color .2s}
 @keyframes in-l{from{opacity:.2;transform:translateX(-22px)}}
 @media (prefers-reduced-motion:reduce){.next-c.live::after,.next-c.live .go svg,.in-r,.in-l,.today-fab{animation:none}.next-c.live::after{opacity:.6}}
 /* ---------- messaggi ---------- */
+@media (max-width:759px){ .msg-top{display:none} }
 .comp-h{display:flex;align-items:center;gap:10px;width:100%;border:0;background:none;padding:0;font:600 18px var(--f-head);color:var(--ink);cursor:pointer;text-align:left}
 .comp-h span{display:flex;align-items:center;gap:8px}
 .comp-h span svg{width:20px;height:20px}
@@ -1325,7 +1326,7 @@ function qrSvg(text, color = "#0B1220", bg = "#FFFFFF") {
 if (typeof module !== "undefined") module.exports = { QRGEN, qrSvg };
 
 </script>
-<script src="firebase-config.js?v=2026.11.13-41"></script>
+<script src="firebase-config.js?v=2026.11.13-42"></script>
 <script>
 (() => {
 "use strict";
@@ -3246,7 +3247,7 @@ function renderMsg(){
   const fb = isAdmin() ? `<section class="card"><h2>${ICO.users}Dai colleghi<small>${M.fb.length || ""}</small></h2>
       ${M.fb.length ? `<ul class="fb-list">${M.fb.map(fbItem).join("")}</ul>` : `<p class="mut">Le idee e gli errori che ti mandano i colleghi arrivano qui.</p>`}</section>` : "";
   el.innerHTML = `<div class="ph">
-    <div class="ph-top">${isAdmin() ? `<button class="btn back ph-back desk-only" data-act="nav" data-to="agenda">${ICO.back}Agenda</button>` : `<button class="btn back ph-back desk-only" data-act="nav" data-to="me">${ICO.back}La mia area</button>`}<span class="ph-date">Messaggi</span>${gearBtn()}</div>
+    <div class="ph-top msg-top">${isAdmin() ? `<button class="btn back ph-back desk-only" data-act="nav" data-to="agenda">${ICO.back}Agenda</button>` : `<button class="btn back ph-back desk-only" data-act="nav" data-to="me">${ICO.back}La mia area</button>`}<span class="ph-date"></span>${gearBtn()}</div>
     <header class="msg-h"><h1>Messaggi</h1><p class="mut">Qua trovi le novità, tra nuove funzioni e turni nuovi caricati.</p></header>
     ${ask}${comp}${fb}
     <section class="msg-news" aria-label="Novità">${newsHtml}</section>
