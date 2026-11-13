@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>Turni Arese</title>
-<!-- versione 2026.11.13-39 -->
+<!-- versione 2026.11.13-40 -->
 <meta name="description" content="Turni e agenda del reparto Telefonia &amp; Service, MediaWorld Arese">
 <meta name="theme-color" content="#FFFFFF" media="(prefers-color-scheme: light)">
 <meta name="theme-color" content="#0B0F17" media="(prefers-color-scheme: dark)">
@@ -979,13 +979,19 @@ html,body{background:var(--bg);transition:background-color .2s}
 .msg-x svg{width:14px;height:14px}
 .msg-x:hover{background:color-mix(in srgb,var(--ink) 14%,transparent);color:var(--ink)}
 .msg-x.armed{width:auto;padding:0 12px;border-radius:999px;background:#FF2D20;color:#fff}
-.msg-c b{padding-right:30px}
-.fb-top{padding-right:34px}
+.msg-c b{display:block}
+.msg-meta{display:flex;align-items:center;gap:8px;flex-wrap:wrap;min-height:22px;padding-right:34px}
+.msg-meta small{color:var(--ink-3);font-size:13px;font-weight:700}
+.msg-it{align-items:start}
+.fb-top{display:grid;grid-template-columns:auto minmax(0,1fr);align-items:center;gap:10px;padding-right:34px}
+.fb-who{display:grid;gap:4px;min-width:0}
+.fb-who b{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:15px}
+.fb-top .av{width:36px;height:36px;font-size:13px}
 .msg-i{width:40px;height:40px;border-radius:12px;display:grid;place-items:center;color:#fff;background:var(--tel)}
 .msg-it.k-novita .msg-i{background:linear-gradient(135deg,#7C5CFF,#FF5AA5)}
 .msg-i svg{width:22px;height:22px}
 .msg-c{display:grid;gap:4px;min-width:0}
-.msg-c b{font-size:16px;line-height:1.3;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.msg-c b{font-size:16px;line-height:1.3}
 .msg-c p{margin:0;color:var(--ink-2);font-size:15px;line-height:1.45;overflow-wrap:anywhere}
 .msg-c small,.fb-it small{color:var(--ink-3);font-size:13px;font-weight:700}
 .msg-new{font-style:normal;font-size:11px;font-weight:800;letter-spacing:.04em;text-transform:uppercase;padding:2px 8px;border-radius:999px;background:#FF2D20;color:#fff}
@@ -1003,10 +1009,10 @@ html,body{background:var(--bg);transition:background-color .2s}
 .fb-h{margin:6px 0 0;font-family:var(--f-head);font-size:16px;font-weight:600}
 .fb-it{display:grid;gap:8px;padding:14px;border-radius:18px;background:var(--bg);border:1.5px solid var(--line-2)}
 
-.fb-top{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
-.fb-top .av{width:30px;height:30px;font-size:12px}
-.fb-top b{font-size:15px}
-.fb-top small{margin-left:auto}
+
+
+
+
 .kind-tag{display:inline-flex;align-items:center;gap:4px;font-size:12px;font-weight:800;padding:2px 9px 2px 7px;border-radius:999px}
 .kind-tag svg{width:14px;height:14px}
 .kind-tag.k-idea{background:var(--mat-fill);color:var(--mat)}
@@ -1309,7 +1315,7 @@ function qrSvg(text, color = "#0B1220", bg = "#FFFFFF") {
 if (typeof module !== "undefined") module.exports = { QRGEN, qrSvg };
 
 </script>
-<script src="firebase-config.js?v=2026.11.13-39"></script>
+<script src="firebase-config.js?v=2026.11.13-40"></script>
 <script>
 (() => {
 "use strict";
@@ -3209,7 +3215,7 @@ function renderMsg(){
   const newsHtml = items.length ? `<ul class="msg-list">${items.map(n => { const nw = n.at > seen && n.by !== me;
       const real = !String(n.id).startsWith("_avviso"), all = isAdmin() && real;
       return `<li class="msg-it ${n.kind === "turni" ? "k-turni" : "k-novita"}${nw ? " nw" : ""}"><button class="msg-x" data-act="msg-del" data-id="${esc(n.id)}" data-all="${all ? 1 : ""}"${all ? ` data-confirm="Togli per tutti?"` : ""} aria-label="${all ? "Cancella per tutti" : "Cancella"}" title="${all ? "Cancella per tutti" : "Cancella"}">${ICON.close}</button><span class="msg-i" aria-hidden="true">${n.kind === "turni" ? ICO.cal : ICO.spark}</span>
-        <div class="msg-c"><b>${esc(n.title || "")}${nw ? `<em class="msg-new">Nuovo</em>` : ""}</b><p>${msgBody(n.body)}</p><small>${esc(whenText(n.at))}</small></div></li>`; }).join("")}</ul>`
+        <div class="msg-c"><div class="msg-meta">${nw ? `<em class="msg-new">Nuovo</em>` : ""}<small>${esc(whenText(n.at))}</small></div><b>${esc(n.title || "")}</b><p>${msgBody(n.body)}</p></div></li>`; }).join("")}</ul>`
     : `<p class="mut msg-empty">Ancora niente: appena arriva una novità la trovi qui.</p>`;
   const comp = isAdmin() ? `<section class="card msg-comp"><h2>${ICO.send}Scrivi a tutti</h2>
       <input id="nTitle" maxlength="80" value="${esc(draftOpen ? NEWS_DRAFT.title : "")}" placeholder="Titolo" aria-label="Titolo">
@@ -3225,7 +3231,7 @@ function renderMsg(){
         <button class="btn ask-send" data-act="fb-send">${ICO.send}Invia ${esc(toBoss)}</button></div>` : ""}
       ${M.fbOk ? `<p class="ask-ok">✓ Inviato ${esc(toBoss)}, grazie!</p>` : ""}</section>` : "";
   const fbItem = f => { const nw = f.at > seen && f.uid !== SES.user.uid;
-    return `<li class="fb-it${nw ? " nw" : ""}"><button class="msg-x" data-act="fb-del" data-id="${esc(f.id)}" data-confirm="Cancellare?" aria-label="Cancella" title="Cancella">${ICON.close}</button><div class="fb-top"><span class="av ${dCls(usual(f.staffId))}">${avIn(f.staffId, f.name || "?")}</span><b>${esc(f.name || "Un collega")}</b><span class="kind-tag ${f.kind === "errore" ? "k-err" : "k-idea"}">${f.kind === "errore" ? ICO.bug + "Errore" : ICO.idea + "Idea"}</span><small>${esc(whenText(f.at))}</small>${nw ? `<em class="msg-new">Nuovo</em>` : ""}</div>
+    return `<li class="fb-it${nw ? " nw" : ""}"><button class="msg-x" data-act="fb-del" data-id="${esc(f.id)}" data-confirm="Cancellare?" aria-label="Cancella" title="Cancella">${ICON.close}</button><div class="fb-top"><span class="av ${dCls(usual(f.staffId))}">${avIn(f.staffId, f.name || "?")}</span><div class="fb-who"><b>${esc(f.name || "Un collega")}</b><div class="msg-meta">${nw ? `<em class="msg-new">Nuovo</em>` : ""}<span class="kind-tag ${f.kind === "errore" ? "k-err" : "k-idea"}">${f.kind === "errore" ? ICO.bug + "Errore" : ICO.idea + "Idea"}</span><small>${esc(whenText(f.at))}</small></div></div></div>
       <p class="fb-t">${msgBody(f.text)}</p></li>`; };
   const fb = isAdmin() ? `<section class="card"><h2>${ICO.users}Dai colleghi<small>${M.fb.length || ""}</small></h2>
       ${M.fb.length ? `<ul class="fb-list">${M.fb.map(fbItem).join("")}</ul>` : `<p class="mut">Le idee e gli errori che ti mandano i colleghi arrivano qui.</p>`}</section>` : "";
