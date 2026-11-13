@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>Turni Arese</title>
-<!-- versione 2026.11.13-34 -->
+<!-- versione 2026.11.13-35 -->
 <meta name="description" content="Turni e agenda del reparto Telefonia &amp; Service, MediaWorld Arese">
 <meta name="theme-color" content="#FFFFFF" media="(prefers-color-scheme: light)">
 <meta name="theme-color" content="#0B0F17" media="(prefers-color-scheme: dark)">
@@ -873,13 +873,17 @@ html,body{background:var(--bg);transition:background-color .2s}
 .hfi.mat{color:var(--h-mat)}.hfi.pom{color:var(--h-pom)}.hfi.ser{color:var(--h-ser)}
 .hero-k{flex-wrap:wrap;row-gap:6px}
 .hero-k .chip-st{white-space:nowrap}
+/* etichette che si riconoscono al volo: OGGI rossa, Prossimo turno grigio acciaio */
+.hk-l.is-today{display:inline-flex;align-items:center;gap:7px;padding:5px 13px 5px 10px;border-radius:999px;background:#D92D20;color:#fff;letter-spacing:.12em;box-shadow:0 0 0 4px rgba(217,45,32,.22)}
+.hk-l.is-today::before{content:"";width:8px;height:8px;border-radius:50%;background:#fff}
 /* "Prossimo turno": scheda da toccare */
 .next-c{width:100%;text-align:left;font:inherit;color:var(--ink);cursor:pointer;-webkit-tap-highlight-color:transparent;transition:transform .15s ease}
 .next-c:hover{background:var(--hover)}
 .next-c:active{transform:scale(.985)}
 .next-c:focus-visible{outline:3px solid var(--focus);outline-offset:6px}
 .next-c .nc-h{display:flex;align-items:center;gap:10px}
-.next-c .nc-t{font-family:var(--f-head);font-size:18px;font-weight:600;display:flex;align-items:baseline;gap:8px;flex-wrap:wrap;min-width:0}
+.next-c .nc-t{font-family:var(--f-head);font-size:16px;font-weight:600;display:flex;align-items:center;gap:8px;flex-wrap:wrap;min-width:0;padding:5px 14px 5px 12px;border-radius:999px;background:#4E5A6B;color:#fff}
+:root[data-ui="dark"] .next-c .nc-t{background:#C2CBD7;color:#0B1220}
 .next-c .nc-t small{font-family:var(--f-body);font-size:14px;font-weight:700;color:var(--ink-3)}
 .next-c .go{margin-left:auto;flex:none;display:inline-flex;align-items:center;gap:2px;font-size:14px;font-weight:700;padding:6px 8px 6px 14px;border-radius:999px;background:var(--ink);color:var(--bg)}
 .next-c .go svg{width:18px;height:18px}
@@ -1215,7 +1219,7 @@ function qrSvg(text, color = "#0B1220", bg = "#FFFFFF") {
 if (typeof module !== "undefined") module.exports = { QRGEN, qrSvg };
 
 </script>
-<script src="firebase-config.js?v=2026.11.13-34"></script>
+<script src="firebase-config.js?v=2026.11.13-35"></script>
 <script>
 (() => {
 "use strict";
@@ -3234,7 +3238,7 @@ function heroDay(id, d){
   else { chip = isT ? "Non ancora caricati" : esc(relGap(d)); big = "—"; meta = isT ? "I turni di oggi non sono ancora stati caricati." : "I turni di quel giorno non sono ancora stati caricati."; }
   const x = pd(d), k = isT ? "Oggi" : `${GS[x.getDay()]} ${x.getDate()} ${MM[x.getMonth()]}`;
   return `<section class="hero me-hero ${dCls(dept)}${isT ? "" : " silver"}${P.anim ? " in-" + P.anim : ""}" aria-label="Il tuo turno di ${isT ? "oggi" : esc(dateLong(d))}">
-      <div class="hero-k"><span>${k}</span><span class="chip-st">${chip}</span></div>
+      <div class="hero-k"><span class="hk-l${isT ? " is-today" : ""}">${k}</span><span class="chip-st">${chip}</span></div>
       <div class="hero-big">${big}</div>
       <div class="hero-meta">${esc(meta)}</div>${line}
     </section>`;
