@@ -234,6 +234,19 @@ def main():
         md.append(f"- {it.get('tipo')} [{it.get('schermata', it.get('dove', ''))}] {it.get('dove', '') if it.get('schermata') else ''} {('«' + it['testo'] + '»') if it.get('testo') else ''} {it.get('dettaglio', '')} {('×' + str(it['volte'])) if it.get('volte', 1) > 1 else ''}")
     open(os.path.join(out, "report.md"), "w").write("\n".join(md) + "\n")
     print("\n".join(md[:5])); print(f"Report: {os.path.join(out, 'report.md')}")
+    try:  # provini: tutte le schermate rimpicciolite in due fogli, per guardarle in un colpo d'occhio
+        from PIL import Image
+        tel = [f for f in report["schermate"] if "-1366-" not in f and "-768-" not in f]; pc = [f for f in report["schermate"] if f not in tel]
+        for nome, fs, w in (("provini-telefono.png", tel, 390), ("provini-pc.png", pc, 1366)):
+            if not fs: continue
+            ims = [Image.open(f) for f in fs]; H = 1500 if w == 390 else 1100; per = 6 if w == 390 else 3
+            ims = [i.crop((0, 0, i.width, min(i.height, H))) for i in ims]
+            cols = min(per, len(ims)); rows = (len(ims) + cols - 1) // cols
+            sheet = Image.new("RGB", (cols * (w + 20), rows * (H + 20)), "white")
+            for k, i in enumerate(ims): sheet.paste(i, ((k % cols) * (w + 20), (k // cols) * (H + 20)))
+            sc = 0.5 if w == 390 else 0.35; sheet = sheet.resize((int(sheet.width * sc), int(sheet.height * sc)))
+            sheet.save(os.path.join(out, nome)); print("Provini:", os.path.join(out, nome))
+    except Exception as e: print("provini non creati:", e)
     shutil.rmtree(tmp, ignore_errors=True)
 
 if __name__ == "__main__":
