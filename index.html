@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>Turni Arese</title>
-<!-- versione 2026.11.13-36 -->
+<!-- versione 2026.11.13-37 -->
 <meta name="description" content="Turni e agenda del reparto Telefonia &amp; Service, MediaWorld Arese">
 <meta name="theme-color" content="#FFFFFF" media="(prefers-color-scheme: light)">
 <meta name="theme-color" content="#0B0F17" media="(prefers-color-scheme: dark)">
@@ -85,8 +85,11 @@ svg{flex:none}
 .brand p{margin:0;font-size:14px;color:var(--ink-3);font-weight:700}
 .daynav{display:flex;align-items:center;gap:6px;flex:1 1 420px;min-width:0}
 .daynav h2{font-family:var(--f-head);font-weight:600;font-size:24px;margin:0 0 0 8px;letter-spacing:-.01em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.daynav h2{display:flex;align-items:center;gap:0;min-width:0}
+.daynav h2 .bd-t{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.daynav h2 .today-pill{flex:none}
 .today-pill{font-family:var(--f-body);font-size:13px;font-weight:700;background:var(--now);color:#fff;border-radius:999px;padding:2px 10px;margin-left:8px;vertical-align:4px;letter-spacing:.04em}
-.search{position:relative;flex:0 1 360px;min-width:220px}
+.search{position:relative;flex:0 1 300px;min-width:200px}
 .search input{width:100%;height:46px;border:1.5px solid var(--line);border-radius:999px;background:var(--surface);padding:0 16px 0 44px;font-size:16px}
 .search input:focus{background:var(--bg);border-color:var(--tel);outline:none}
 .search svg{position:absolute;left:15px;top:13px;width:20px;height:20px;color:var(--ink-3)}
@@ -478,6 +481,8 @@ button.chip.rest:hover{background:var(--hover)}
   .nowtag{top:2px;font-size:12px}
   .daynav{flex-wrap:wrap}
   .daynav h2{font-size:21px;flex:1 1 100%;margin:4px 0 0;white-space:normal}
+  .daynav h2{flex-wrap:wrap}
+  .daynav h2 .bd-t{white-space:normal}
 
   .appt{grid-template-columns:minmax(0,1fr)}
   .a-time{font-size:20px}
@@ -894,7 +899,7 @@ html,body{background:var(--bg);transition:background-color .2s}
 @keyframes nc-glow{50%{opacity:1}}
 @keyframes nc-nudge{0%,30%,100%{transform:none}45%{transform:translateX(3px)}60%{transform:none}}
 /* barra con le frecce */
-.daynav{position:sticky;top:calc(8px + env(safe-area-inset-top,0px));z-index:20;display:grid;grid-template-columns:auto minmax(0,1fr) auto;align-items:center;gap:8px;padding:7px;border-radius:999px;background:var(--bg);border:1.5px solid var(--line)}
+.me-dnav{position:sticky;top:calc(8px + env(safe-area-inset-top,0px));z-index:20;display:grid;grid-template-columns:auto minmax(0,1fr) auto;align-items:center;gap:8px;padding:7px;border-radius:999px;background:var(--bg);border:1.5px solid var(--line)}
 .dn-arr{width:48px;height:48px;border-radius:50%;border:0;display:grid;place-items:center;background:var(--ink);color:var(--bg);box-shadow:0 6px 16px -6px rgba(0,0,0,.45);cursor:pointer;-webkit-tap-highlight-color:transparent;transition:transform .12s ease}
 .dn-arr svg{width:26px;height:26px}
 .dn-arr.flip svg{transform:rotate(180deg)}
@@ -1220,7 +1225,7 @@ function qrSvg(text, color = "#0B1220", bg = "#FFFFFF") {
 if (typeof module !== "undefined") module.exports = { QRGEN, qrSvg };
 
 </script>
-<script src="firebase-config.js?v=2026.11.13-36"></script>
+<script src="firebase-config.js?v=2026.11.13-37"></script>
 <script>
 (() => {
 "use strict";
@@ -1402,7 +1407,7 @@ function renderHeader(){
   $("#markMon").textContent = MM[t.getMonth()].slice(0,3).toUpperCase();
   $("#markDay").textContent = t.getDate();
   const d = pd(S.sel);
-  $("#bigDate").innerHTML = `${esc(GG[d.getDay()])} ${d.getDate()} ${esc(MM[d.getMonth()])} ${d.getFullYear()}${S.sel === todayStr() ? `<span class="today-pill">OGGI</span>` : ""}`;
+  $("#bigDate").innerHTML = `<span class="bd-t">${esc(GG[d.getDay()])} ${d.getDate()} ${esc(MM[d.getMonth()])}${d.getFullYear() !== new Date().getFullYear() ? " " + d.getFullYear() : ""}</span>${S.sel === todayStr() ? `<span class="today-pill">OGGI</span>` : ""}`;
 }
 function calGrid(ym){
   const [y, m] = ym.split("-").map(Number);
@@ -2932,7 +2937,7 @@ function exitBrowse(scroll){
 /* porta in vista la scheda del giorno (sotto la barra con le frecce) */
 function showDay(){
   requestAnimationFrame(() => {
-    const h = $("#scr-me .me-hero"), nav = $("#scr-me .daynav"); if (!h) return;
+    const h = $("#scr-me .me-hero"), nav = $("#scr-me .me-dnav"); if (!h) return;
     const top = h.getBoundingClientRect().top, room = (nav ? nav.offsetHeight : 0) + 24;
     if (top < room || top > innerHeight * .55) window.scrollTo({top: Math.max(0, scrollY + top - room), behavior: matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth"});
   });
@@ -3282,7 +3287,7 @@ function renderMe(){
   const cmp = !contr ? "Puoi impostare le ore da contratto nelle impostazioni" : wTot === contr * 60 ? `In linea con il contratto (${contr} h)` : wTot > contr * 60 ? `${hm(wTot - contr * 60)} in più del contratto (${contr} h)` : `${hm(contr * 60 - wTot)} in meno del contratto (${contr} h)`;
   const col = d => d === "alt" ? "ink-3" : d;
   /* frecce per scorrere i giorni (solo dopo aver aperto un altro giorno) */
-  const dnav = P.browse ? `<nav class="daynav${isT ? "" : " silver"}" aria-label="Scorri i giorni">
+  const dnav = P.browse ? `<nav class="me-dnav${isT ? "" : " silver"}" aria-label="Scorri i giorni">
       <button class="dn-arr" data-act="me-dprev" aria-label="Giorno prima">${ICO.back}</button>
       <div class="dn-c" aria-live="polite"><b>${esc(capitalize(dateLong(d)))}</b>${isT ? `<small><i class="dn-dot"></i>Oggi</small>` : ""}</div>
       <button class="dn-arr flip" data-act="me-dnext" aria-label="Giorno dopo">${ICO.back}</button>
@@ -3853,7 +3858,7 @@ document.addEventListener("click", async e => {
   if (act && act.startsWith("adm-")) return adminAct(act, el);
   if (act === "me-wprev" || act === "me-wnext"){ P.week = addDays(P.week, act === "me-wnext" ? 7 : -7); subscribeMe(); return renderMe(); }
   if (act === "me-wtoday"){ P.week = monday(todayStr()); subscribeMe(); return renderMe(); }
-  if (act === "me-day"){ const d = el.dataset.d; if (!d) return; const first = !P.browse; goDay(d); if (first || !el.closest(".daynav")) showDay(); return; }
+  if (act === "me-day"){ const d = el.dataset.d; if (!d) return; const first = !P.browse; goDay(d); if (first || !el.closest(".me-dnav")) showDay(); return; }
   if (act === "me-dprev" || act === "me-dnext") return dayStep(act === "me-dnext" ? 1 : -1);
   if (act === "me-today") return exitBrowse(true);
   if (act === "me-mprev" || act === "me-mnext"){ const [y, m] = P.month.split("-").map(Number), d = new Date(y, m - 1 + (act === "me-mnext" ? 1 : -1), 1); P.month = `${d.getFullYear()}-${pad(d.getMonth() + 1)}`; subscribeMe(); return renderMe(); }

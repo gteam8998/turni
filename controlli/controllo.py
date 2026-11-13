@@ -197,12 +197,12 @@ def main():
                 try:
                     if sc in ("me-prossimo", "me-frecce", "me-passato"):
                         pg.click("#scr-me .next-c"); pg.wait_for_timeout(500)
-                        if not pg.locator("#scr-me .daynav").count(): report["problemi"].append({"tipo": "frecce dei giorni non comparse", "dove": tag})
+                        if not pg.locator("#scr-me .me-dnav").count(): report["problemi"].append({"tipo": "frecce dei giorni non comparse", "dove": tag})
                         if not pg.locator("#scr-me .today-fab").count(): report["problemi"].append({"tipo": "tasto Torna a oggi mancante", "dove": tag})
                     if sc == "me-frecce":
-                        for _ in range(3): pg.click("#scr-me .daynav [data-act=me-dnext]"); pg.wait_for_timeout(250)
+                        for _ in range(3): pg.click("#scr-me .me-dnav [data-act=me-dnext]"); pg.wait_for_timeout(250)
                     if sc == "me-passato":
-                        for _ in range(4): pg.click("#scr-me .daynav [data-act=me-dprev]"); pg.wait_for_timeout(250)
+                        for _ in range(4): pg.click("#scr-me .me-dnav [data-act=me-dprev]"); pg.wait_for_timeout(250)
                     pg.evaluate("() => window.scrollTo(0, 0)"); pg.wait_for_timeout(200)
                 except Exception as e:
                     report["problemi"].append({"tipo": "azione non riuscita", "dove": f"{tag} {sc}", "dettaglio": str(e)[:200]})
