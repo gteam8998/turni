@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>Turni Arese</title>
-<!-- versione 2026.11.13-35 -->
+<!-- versione 2026.11.13-36 -->
 <meta name="description" content="Turni e agenda del reparto Telefonia &amp; Service, MediaWorld Arese">
 <meta name="theme-color" content="#FFFFFF" media="(prefers-color-scheme: light)">
 <meta name="theme-color" content="#0B0F17" media="(prefers-color-scheme: dark)">
@@ -874,7 +874,7 @@ html,body{background:var(--bg);transition:background-color .2s}
 .hero-k{flex-wrap:wrap;row-gap:6px}
 .hero-k .chip-st{white-space:nowrap}
 /* etichette che si riconoscono al volo: OGGI rossa, Prossimo turno grigio acciaio */
-.hk-l.is-today{display:inline-flex;align-items:center;gap:7px;padding:5px 13px 5px 10px;border-radius:999px;background:#D92D20;color:#fff;letter-spacing:.12em;box-shadow:0 0 0 4px rgba(217,45,32,.22)}
+.hk-l.is-today{display:inline-flex;align-items:center;gap:7px;padding:5px 13px 5px 10px;border-radius:999px;background:#D92D20;color:#fff;letter-spacing:.12em;box-shadow:0 0 0 4px rgba(217,45,32,.22),0 0 18px 2px rgba(255,90,78,.45)}
 .hk-l.is-today::before{content:"";width:8px;height:8px;border-radius:50%;background:#fff}
 /* "Prossimo turno": scheda da toccare */
 .next-c{width:100%;text-align:left;font:inherit;color:var(--ink);cursor:pointer;-webkit-tap-highlight-color:transparent;transition:transform .15s ease}
@@ -920,11 +920,12 @@ html,body{background:var(--bg);transition:background-color .2s}
 .strip .sd{font:inherit;cursor:pointer;-webkit-tap-highlight-color:transparent}
 .strip .sd:hover{background:var(--hover)}
 .strip .sd:focus-visible{outline:3px solid var(--focus);outline-offset:2px}
-.strip .sd.vw{background:var(--bg);box-shadow:0 0 0 2px var(--silver),0 0 0 5px var(--silver-glow)}
+.strip .sd.vw .dn{background:#D92D20;color:#fff;box-shadow:0 0 0 4px rgba(217,45,32,.22),0 0 16px 2px rgba(255,90,78,.5)}
+.ph.browsing .sd.today:not(.vw) .dn{background:none;color:var(--now);box-shadow:inset 0 0 0 2px var(--now)}
 .daylist li[data-act]{cursor:pointer;border-radius:12px}
 .daylist li[data-act]:hover{background:var(--hover)}
-.daylist li.is-view{background:color-mix(in srgb,var(--silver) 16%,transparent);box-shadow:inset 3px 0 0 var(--silver)}
-.daylist li.is-view .d{color:var(--ink)}
+.daylist li.is-view{background:var(--now-fill);box-shadow:inset 3px 0 0 var(--now)}
+.daylist li.is-view .d{color:var(--now)}
 /* cambio giorno: la scheda scorre dal lato giusto */
 .in-r{animation:in-r .22s ease}.in-l{animation:in-l .22s ease}
 @keyframes in-r{from{opacity:.2;transform:translateX(22px)}}
@@ -1219,7 +1220,7 @@ function qrSvg(text, color = "#0B1220", bg = "#FFFFFF") {
 if (typeof module !== "undefined") module.exports = { QRGEN, qrSvg };
 
 </script>
-<script src="firebase-config.js?v=2026.11.13-35"></script>
+<script src="firebase-config.js?v=2026.11.13-36"></script>
 <script>
 (() => {
 "use strict";
@@ -3236,9 +3237,9 @@ function heroDay(id, d){
       <span class="tk" style="left:0">${a / 60}</span><span class="tk" style="left:50%">${(a + W / 2) / 60 | 0}</span><span class="tk l" style="left:100%">${z / 60}</span></div>`;
   } else if (known(d)){ chip = isT ? "Riposo" : esc(relGap(d)); big = "Riposo"; meta = isT ? "Oggi non sei in turno. Goditela." : g > 0 ? "Quel giorno non sei in turno." : "Quel giorno eri a riposo."; }
   else { chip = isT ? "Non ancora caricati" : esc(relGap(d)); big = "—"; meta = isT ? "I turni di oggi non sono ancora stati caricati." : "I turni di quel giorno non sono ancora stati caricati."; }
-  const x = pd(d), k = isT ? "Oggi" : `${GS[x.getDay()]} ${x.getDate()} ${MM[x.getMonth()]}`;
+  const k = isT ? "Oggi" : bl.length ? "Il tuo turno" : "Il tuo giorno";
   return `<section class="hero me-hero ${dCls(dept)}${isT ? "" : " silver"}${P.anim ? " in-" + P.anim : ""}" aria-label="Il tuo turno di ${isT ? "oggi" : esc(dateLong(d))}">
-      <div class="hero-k"><span class="hk-l${isT ? " is-today" : ""}">${k}</span><span class="chip-st">${chip}</span></div>
+      <div class="hero-k"><span class="hk-l is-today">${k}</span>${isT ? `<span class="chip-st">${chip}</span>` : ""}</div>
       <div class="hero-big">${big}</div>
       <div class="hero-meta">${esc(meta)}</div>${line}
     </section>`;
@@ -3257,7 +3258,7 @@ function renderMe(){
   const d = viewDay(), isT = d === t, dayBl = sorted(myRows(d, id)), nx = nextShift(id, d);
   const today = dayBl;  // il giorno guardato (oggi se non sto sfogliando)
   const todayD = deptsOf(dayBl, id), dept = todayD[0] || usual(id) || "tel";
-  const pill = dayBl.length ? `<span class="pill ${dCls(todayD[0])}">${esc(relShort(d))} ${esc(deptsLabel(dayBl, id).split(" e ")[0])}</span>`
+  const pill = !isT ? "" : dayBl.length ? `<span class="pill ${dCls(todayD[0])}">${esc(relShort(d))} ${esc(deptsLabel(dayBl, id).split(" e ")[0])}</span>`
     : !isT && known(d) ? `<span class="pill soft">${esc(relShort(d))} riposo</span>`
     : usual(id) ? `<span class="pill soft">${esc(capitalize(usualText(id)))}</span>` : "";
   const ap = myAppts(id, isT ? null : d);
@@ -3283,7 +3284,7 @@ function renderMe(){
   /* frecce per scorrere i giorni (solo dopo aver aperto un altro giorno) */
   const dnav = P.browse ? `<nav class="daynav${isT ? "" : " silver"}" aria-label="Scorri i giorni">
       <button class="dn-arr" data-act="me-dprev" aria-label="Giorno prima">${ICO.back}</button>
-      <div class="dn-c" aria-live="polite"><b>${esc(capitalize(dateLong(d)))}</b><small>${isT ? `<i class="dn-dot"></i>Oggi` : esc(relGap(d))}</small></div>
+      <div class="dn-c" aria-live="polite"><b>${esc(capitalize(dateLong(d)))}</b>${isT ? `<small><i class="dn-dot"></i>Oggi</small>` : ""}</div>
       <button class="dn-arr flip" data-act="me-dnext" aria-label="Giorno dopo">${ICO.back}</button>
     </nav>` : "";
   /* "Prossimo turno": si tocca e apre quel giorno */
@@ -3307,7 +3308,7 @@ function renderMe(){
     ${isT ? nxCard : ""}
     ${ap.length ? `<section class="card"><h2>Appuntamenti da fare<small>${ap.length}</small></h2>
       <ul class="myap">${ap.map(a => `<li><div class="ma">
-          <span class="ma-w"><b>${esc(relDay(a.date))}</b><span>${a.time ? esc(fmtClock(a.time)) : "senza ora"}</span></span>
+          <span class="ma-w">${isT ? `<b>${esc(relDay(a.date))}</b><span>${a.time ? esc(fmtClock(a.time)) : "senza ora"}</span>` : `<b>${a.time ? esc(fmtClock(a.time)) : "Senza ora"}</b>`}</span>
           <span class="ma-m"><span class="ma-t"><span class="kind ${a.kind}">${a.kind === "dati" ? "Dati" : "Riparazione"}</span></span>
             <b>${esc(a.model)}</b><small>${a.kind === "dati" ? esc(a.gb) + " GB" : esc(a.part)}${typeof a.price === "number" ? " · " + money(a.price) : ""}${a.name ? " · " + esc(a.name) : ""}</small></span></div></li>`).join("")}</ul>
       <p class="mut">${isT ? "Sono quelli del Service che cadono nel tuo turno." : "Quelli del Service che cadono nel tuo turno di quel giorno."}</p></section>` : ""}
@@ -3320,12 +3321,12 @@ function renderMe(){
         <div><span>Monte ore della settimana</span><b>${hm(wTot)}</b><span>${esc(cmp)}</span></div></div>
       ${P.week !== monday(t) && !P.browse ? `<button class="btn ghost" data-act="me-wtoday">Torna a questa settimana</button>` : ""}
     </section>
-    <section class="card">
+    ${isT ? `<section class="card">
       <div class="me-nav"><button class="icon-btn" data-act="me-mprev" aria-label="Mese prima">${ICO.back}</button><h2>${esc(capitalize(MM[m - 1]))} ${y}</h2><button class="icon-btn flip" data-act="me-mnext" aria-label="Mese dopo">${ICO.back}</button></div>
       ${mLoaded ? `<div class="stats"><div><b>${hm(mTot)}</b><span>ore nel mese</span></div><div><b>${mWorked}</b><span>giorni di lavoro</span></div></div>
       <ul class="bars">${weeks.map(w => { const a = pd(w.w), b = pd(addDays(w.w, 6)); return `<li><span class="b-l">${a.getDate()}–${b.getDate()} ${MM[b.getMonth()].slice(0, 3)}</span><span class="b-t"><i style="width:${Math.round(w.min / wMax * 100)}%;background:var(--${col(dept)})"></i>${contr ? `<em style="left:${Math.round(contr * 60 / wMax * 100)}%"></em>` : ""}</span><span class="b-v">${w.min ? hm(w.min) : "–"}</span></li>`; }).join("")}</ul>
       <p class="mut">Le ore contano solo i turni già caricati${contr ? ". La tacca indica le ore da contratto" : ""}.</p>` : `<p class="mut">I turni di questo mese non sono ancora stati caricati.</p>`}
-    </section>
+    </section>` : ""}
     <p class="foot">In caso di dubbio fa fede il foglio orari appeso in negozio.</p>
   </div>
   ${P.browse && !isT ? `<button type="button" class="today-fab" data-act="me-today">${ICO.today}Torna a oggi</button>` : ""}`;
