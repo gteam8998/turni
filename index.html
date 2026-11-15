@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>Turni Arese</title>
-<!-- versione 2026.11.15-43 -->
+<!-- versione 2026.11.15-44 -->
 <meta name="description" content="Turni e agenda del reparto Telefonia &amp; Service, MediaWorld Arese">
 <meta name="theme-color" content="#FFFFFF" media="(prefers-color-scheme: light)">
 <meta name="theme-color" content="#0B0F17" media="(prefers-color-scheme: dark)">
@@ -329,8 +329,14 @@ button.who:hover{background:var(--hover)}
 .actions{display:flex;gap:10px;justify-content:flex-end;flex-wrap:wrap;padding-top:6px}
 .actions .left{margin-right:auto}
 .stafflist{list-style:none;margin:0;padding:0;display:grid;gap:8px}
-.stafflist li{display:grid;grid-template-columns:minmax(0,1fr) 140px auto;gap:8px;align-items:center}
-.stafflist li > :nth-child(4){grid-column:1/-1;justify-self:start;min-height:40px}
+/* nome sempre su una riga intera; sotto «di solito» e i pulsanti, che vanno a capo da soli se lo schermo è stretto */
+.stafflist li{display:flex;flex-wrap:wrap;gap:6px 10px;align-items:center;padding:10px 0;border-bottom:1px solid var(--line)}
+.stafflist li > input{flex:1 1 100%}
+.stafflist .usual{flex:1 1 120px;min-width:0}
+.stafflist .st-act{flex:0 0 auto;flex-wrap:nowrap;margin-left:auto}
+.stafflist .st-hid{flex:1 1 100%}
+@media (min-width:700px){.stafflist li{flex-wrap:nowrap}.stafflist li > input{flex:1 1 auto;width:auto}.stafflist .usual{flex:0 1 120px}}
+
 .stafflist .pw-none{font-size:13px;color:var(--ink-3);padding-left:4px}
 .stafflist input,.stafflist select{height:46px;border:1.5px solid var(--line);border-radius:10px;background:var(--surface);padding:0 12px;min-width:0;width:100%}
 .qr-big{display:grid;justify-items:center;gap:14px;text-align:center}
@@ -1326,7 +1332,7 @@ function qrSvg(text, color = "#0B1220", bg = "#FFFFFF") {
 if (typeof module !== "undefined") module.exports = { QRGEN, qrSvg };
 
 </script>
-<script src="firebase-config.js?v=2026.11.15-43"></script>
+<script src="firebase-config.js?v=2026.11.15-44"></script>
 <script>
 (() => {
 "use strict";

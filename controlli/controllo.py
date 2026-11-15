@@ -164,11 +164,12 @@ def main():
     who = {"collega": "u-usr@prova.test", "responsabile": "u-adm@prova.test", "banco": "u-pc@prova.test", "accesso": None}
     piani = [  # (chi, larghezza, altezza, tema, schermate)
         ("collega", 320, 640, "light", ["me", "me-prossimo", "me-frecce", "msg", "set"]),
+        ("responsabile", 320, 640, "dark", ["agenda-balordi"]),
         ("collega", 390, 844, "light", ["me", "me-prossimo", "me-frecce", "me-passato", "set"]),
         ("collega", 390, 844, "dark", ["me", "me-prossimo", "msg", "set"]),
         ("collega", 390, 844, "sfondo", ["me", "me-prossimo"]),
-        ("responsabile", 390, 844, "light", ["me", "agenda", "carica", "msg", "set"]),
-        ("responsabile", 768, 1024, "dark", ["me", "agenda", "set"]),
+        ("responsabile", 390, 844, "light", ["me", "agenda", "agenda-balordi", "carica", "msg", "set"]),
+        ("responsabile", 768, 1024, "dark", ["me", "agenda", "agenda-balordi", "set"]),
         ("responsabile", 1366, 860, "light", ["agenda", "me", "me-prossimo", "carica", "msg", "set"]),
         ("banco", 1366, 860, "dark", ["agenda", "set"]),
         ("accesso", 320, 640, "light", ["login"]),
@@ -209,6 +210,10 @@ def main():
                         for _ in range(3): pg.click("#scr-me .me-dnav [data-act=me-dnext]"); pg.wait_for_timeout(250)
                     if sc == "me-passato":
                         for _ in range(4): pg.click("#scr-me .me-dnav [data-act=me-dprev]"); pg.wait_for_timeout(250)
+                    if sc == "agenda-balordi":   # elenco dei balordi: i campi del nome devono restare leggibili
+                        pg.click("[data-act=staff]"); pg.wait_for_selector(".stafflist", timeout=4000); pg.wait_for_timeout(400)
+                        narrow = pg.evaluate("() => [...document.querySelectorAll('.stafflist input')].filter(i => i.getBoundingClientRect().width < 140).map(i => i.value)")
+                        if narrow: report["problemi"].append({"tipo": "campo del nome troppo stretto", "dove": tag + " balordi", "dettaglio": ", ".join(narrow[:5])})
                     pg.evaluate("() => window.scrollTo(0, 0)"); pg.wait_for_timeout(200)
                 except Exception as e:
                     report["problemi"].append({"tipo": "azione non riuscita", "dove": f"{tag} {sc}", "dettaglio": str(e)[:200]})
