@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>Turni Arese</title>
-<!-- versione 2026.11.15-46 -->
+<!-- versione 2026.11.15-47 -->
 <meta name="description" content="Turni e agenda del reparto Telefonia &amp; Service, MediaWorld Arese">
 <meta name="theme-color" content="#FFFFFF" media="(prefers-color-scheme: light)">
 <meta name="theme-color" content="#0B0F17" media="(prefers-color-scheme: dark)">
@@ -1334,7 +1334,7 @@ function qrSvg(text, color = "#0B1220", bg = "#FFFFFF") {
 if (typeof module !== "undefined") module.exports = { QRGEN, qrSvg };
 
 </script>
-<script src="firebase-config.js?v=2026.11.15-46"></script>
+<script src="firebase-config.js?v=2026.11.15-47"></script>
 <script>
 (() => {
 "use strict";
@@ -2640,7 +2640,7 @@ function reviewHtml(){
   const nInc = U.groups.reduce((n, g) => n + g.people.filter(p => p.include).length, 0);
   return h + `</section>
     <div class="savebar"><p id="saveInfo">${saveLabel(nInc)}</p>
-      ${total ? `<label class="up-notify"><input type="checkbox" id="upNotify" ${U.notify === false ? "" : "checked"}> Avvisa i colleghi</label>` : ""}
+      ${total ? `<label class="up-notify"><input type="checkbox" id="upNotify" ${U.notify === false ? "" : "checked"}> Avvisa i colleghi</label>` : `<span class="up-notify">Nessun avviso ai colleghi: sono solo turni messi da parte</span>`}
       <button class="btn" data-act="up-reset">Ricomincia</button>
       <button class="btn primary big" data-act="up-save" data-confirm="Conferma: salva i turni">Salva i turni</button></div>`;
 }
@@ -3745,7 +3745,7 @@ function renderSet(){
       </form></section>` : ""}
     ${adm}
     <section class="card"><button class="btn out" data-act="logout">${ICO.out}${isBanco() ? "Scollega questo PC" : "Esci dalla mia area"}</button></section>
-    <p class="foot">Turni Arese${BK.mode === "demo" ? " · modalità prova: i dati restano su questo dispositivo" : ""}</p>
+    <p class="foot">Turni Arese · versione ${esc(((document.querySelector('script[src*="firebase-config.js"]') || {}).src || "").split("v=")[1] || "?")}${BK.mode === "demo" ? " · modalità prova: i dati restano su questo dispositivo" : ""}</p>
   </div>`;
 }
 async function adminAct(act, el){
