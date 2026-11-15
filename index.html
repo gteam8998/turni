@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>Turni Arese</title>
-<!-- versione 2026.11.15-44 -->
+<!-- versione 2026.11.15-45 -->
 <meta name="description" content="Turni e agenda del reparto Telefonia &amp; Service, MediaWorld Arese">
 <meta name="theme-color" content="#FFFFFF" media="(prefers-color-scheme: light)">
 <meta name="theme-color" content="#0B0F17" media="(prefers-color-scheme: dark)">
@@ -1332,7 +1332,7 @@ function qrSvg(text, color = "#0B1220", bg = "#FFFFFF") {
 if (typeof module !== "undefined") module.exports = { QRGEN, qrSvg };
 
 </script>
-<script src="firebase-config.js?v=2026.11.15-44"></script>
+<script src="firebase-config.js?v=2026.11.15-45"></script>
 <script>
 (() => {
 "use strict";
@@ -1468,14 +1468,17 @@ async function loadHist(){
     S.hist = {}; r.docs.forEach(d => S.hist[d.id] = d.data()); computeUsual(); renderShifts(); if (ROUTE === "me") renderMe(); } catch {}
 }
 function computeUsual(){
-  const m = {};
+  const m = {}, alt = {};
   const add = docs => Object.values(docs).forEach(doc => Object.entries((doc && doc.rows) || {}).forEach(([sid, bl]) => (Array.isArray(bl) ? bl : []).forEach(b => {
+    if (b && b.d === "alt" && b.g){ const a = (alt[sid] = alt[sid] || {}); a[b.g] = (a[b.g] || 0) + Math.max(0, toMin(b.e) - toMin(b.s)); return; }
     if (!b || (b.d !== "tel" && b.d !== "srv")) return;
     const k = (m[sid] = m[sid] || {tel: 0, srv: 0}); k[b.d] += Math.max(0, toMin(b.e) - toMin(b.s));
   })));
   let ps = {}; try { ps = P.shifts || {}; } catch {}
   const all = {...S.hist, ...S.shifts, ...ps};
   add(all);
+  /* reparto più frequente fuori da Telefonia e Service: serve solo per la scritta «di solito» nell'elenco dei balordi */
+  S.usualAlt = {}; Object.entries(alt).forEach(([sid, a]) => { const g = Object.keys(a).sort((x, y) => a[y] - a[x])[0]; if (g) S.usualAlt[sid] = g; });
   S.usual = {}; Object.entries(m).forEach(([sid, k]) => { if (k.tel || k.srv) S.usual[sid] = {d: k.srv > k.tel ? "srv" : "tel", share: Math.round(Math.max(k.tel, k.srv) / (k.tel + k.srv) * 100)}; });
 }
 const usual = sid => (S.usual[sid] && S.usual[sid].d) || "";
@@ -1866,7 +1869,7 @@ function openStaff(focusNew){
       <p style="margin:0;color:var(--ink-2)">Nessuno ha un reparto fisso: il reparto si sceglie su ogni turno; «di solito» è solo un suggerimento calcolato dagli ultimi turni. Gli accessi all'app (codici e password) si gestiscono in Impostazioni.</p>
       <ul class="stafflist">${list.map(s => `<li>
         <input id="sn-${s.id}" value="${esc(s.name)}" aria-label="Nome" data-sid="${s.id}" data-k="name">
-        <span class="usual ${usual(s.id) || "none"}">${usual(s.id) ? `<i class="dot ${usual(s.id)}"></i>${esc(usualText(s.id))}${S.usual[s.id].share < 100 ? ` <small>${S.usual[s.id].share}%</small>` : ""}` : "nessun turno recente"}</span>
+        <span class="usual ${usual(s.id) || "none"}">${usual(s.id) ? `<i class="dot ${usual(s.id)}"></i>${esc(usualText(s.id))}${S.usual[s.id].share < 100 ? ` <small>${S.usual[s.id].share}%</small>` : ""}` : (S.usualAlt && S.usualAlt[s.id] ? `<i class="dot none"></i>di solito ${esc(sigName(S.usualAlt[s.id]))}` : "nessun turno recente")}</span>
         <span class="st-act"><button type="button" class="btn ghost" data-hide-staff="${s.id}" title="${s.hide ? "Torna visibile in agenda e nelle aree dei colleghi" : "Non compare in agenda né ai colleghi; le letture dei fogli lo saltano"}">${s.hide ? "Mostra" : "Nascondi"}</button><button type="button" class="btn danger" data-del-staff="${s.id}" data-confirm="Sicuro?">Togli</button></span>${s.hide ? `<small class="st-hid">Nascosto: non compare da nessuna parte e i fogli lo saltano</small>` : ""}</li>`).join("") || `<li style="display:block;color:var(--ink-3)">Ancora nessuno.</li>`}</ul>
       <div class="f-row" style="grid-template-columns:minmax(0,1fr) auto;align-items:end">
         <div class="fld"><label for="nsName">Nuovo balordo</label><input id="nsName" placeholder="Nome" maxlength="40"></div>
@@ -2042,7 +2045,7 @@ function renderUpload(){
   if (gate){ $("#upBody").innerHTML = gate; return; }
   const b = $("#upBody");
   if (U.step === "done"){
-    b.innerHTML = `<div class="done-box"><h2>Turni salvati</h2><p style="margin:0">Ho inserito ${U.saved} ${U.saved === 1 ? "turno" : "turni"} nell'agenda${U.savedDays > 1 ? ` su ${U.savedDays} giorni` : U.lastDate ? ` per ${esc(dateLong(U.lastDate).toLowerCase())}` : ""}.</p>
+    b.innerHTML = `<div class="done-box"><h2>Turni salvati</h2><p style="margin:0">${U.saved || !U.savedArch ? `Ho inserito ${U.saved} ${U.saved === 1 ? "turno" : "turni"} nell'agenda${U.savedDays > 1 ? ` su ${U.savedDays} giorni` : U.lastDate ? ` per ${esc(dateLong(U.lastDate).toLowerCase())}` : ""}.` : ""}${U.savedArch ? ` ${U.savedArch === 1 ? "Messo da parte 1 turno di un collega non in elenco: lo prende quando lo aggiungi." : `Messi da parte ${U.savedArch} turni di colleghi non in elenco: li prendono quando li aggiungi.`}` : ""}</p>
       <div class="actions"><button class="btn primary big" data-act="go-agenda-day">Vedi l'agenda</button><button class="btn big" data-act="up-again">Carica altri fogli</button></div></div>`;
     return;
   }
@@ -2480,6 +2483,8 @@ async function claimArchive(sid, full, quiet){
     for (let i = 0; i < ops.length; i += 400) await S.db.batch(ops.slice(i, i + 400));
     n = ops.length;
   } catch (e) { writeErr(e); }
+  if (n){ try { await loadHist(); } catch {}
+    if (S.staffOpen && !(document.activeElement && document.activeElement.closest && document.activeElement.closest(".stafflist"))) openStaff(document.activeElement && document.activeElement.id === "nsName"); }
   if (n && !quiet) toast(`Trovati i turni di ${titleCase(full)} già letti: ${n} ${n === 1 ? "giorno" : "giorni"}`);
   return n;
 }
@@ -2613,16 +2618,17 @@ function personHtml(p, gi){
   </div>`;
 }
 function reviewHtml(){
-  const total = U.groups.reduce((n, g) => n + g.people.length, 0);
+  const total = U.groups.reduce((n, g) => n + g.people.length, 0), arch = U.groups.reduce((n, g) => n + (g.archive || []).length, 0);
   const doubts = U.doubts.length ? `<div class="doubts"><b>Da controllare sul foglio</b><ul>${U.doubts.map(d => `<li>${esc(d)}</li>`).join("")}</ul></div>` : "";
   let h = `<section class="step"><div class="step-h"><b>2</b><h2>Controlla i turni letti</h2></div>${U.model ? `<p class="up-model">Letto ${U.model === "Claude" ? "da" : "con"} ${esc(U.model)}${/lite/.test(U.model) ? " (modello ridotto: controlla bene reparti e orari)" : ""}</p>` : ""}`;
-  if (!total) return h + `<div class="doubts"><b>Non ho trovato nessuno da salvare.</b>${U.doubts.length ? `<ul>${U.doubts.map(d => `<li>${esc(d)}</li>`).join("")}</ul>` : ""}Rifai le foto più dritte, con nomi e griglia oraria ben leggibili.</div><button class="btn" data-act="up-reset">Ricomincia</button></section>`;
+  if (!total && !arch) return h + `<div class="doubts"><b>Non ho trovato nessuno da salvare.</b>${U.doubts.length ? `<ul>${U.doubts.map(d => `<li>${esc(d)}</li>`).join("")}</ul>` : ""}Rifai le foto più dritte, con nomi e griglia oraria ben leggibili.</div><button class="btn" data-act="up-reset">Ricomincia</button></section>`;
   const many = U.groups.length > 1;
-  h += `<div class="found">${many ? `Ho letto ${total} turni su ${U.groups.length} giorni` : `Da salvare: ${total} ${total === 1 ? "persona" : "persone"}`}. Correggi l'orario se serve: scrivi tipo <span class="num">9-13, 13:30-16</span> oppure <b>Riposo</b>.</div>${doubts}`;
+  if (!total) h += `<div class="found">${arch === 1 ? "Questo collega non è in elenco: il suo turno viene messo" : `Nessuno di questi colleghi è in elenco: i loro turni (${arch}) vengono messi`} da parte. ${arch === 1 ? "Quando lo aggiungi in Balordi lo prende da solo; se è già in elenco" : "Quando li aggiungi in Balordi li prendono da soli; se sono già in elenco"}, controlla che nome e cognome siano scritti uguali al foglio.</div>${doubts}`;
+  else h += `<div class="found">${many ? `Ho letto ${total} turni su ${U.groups.length} giorni` : `Da salvare: ${total} ${total === 1 ? "persona" : "persone"}`}. Correggi l'orario se serve: scrivi tipo <span class="num">9-13, 13:30-16</span> oppure <b>Riposo</b>.</div>${doubts}`;
   if (U.groups.length > 1) h += `<p class="tip">Ho trovato ${U.groups.length} giorni: tocca un giorno per aprirlo e controllarlo.</p>`;
   U.groups.forEach((g, gi) => {
     const tl = g.people.filter(p => p.dept === "tel").length, he = g.people.filter(p => p.dept === "srv").length, al = g.people.length - tl - he;
-    h += `<details class="dgroup" data-gopen="${gi}" ${g.open ? "open" : ""}><summary><span class="dg-t">${esc(capitalize(dateLong(g.date)))}</span><span class="dg-m">${tl} in TLC · ${he} in HE${al ? ` · ${al} in altri reparti` : ""}${g.people.some(p => p.flags.length) ? ` · <b class="warnline">${g.people.filter(p => p.flags.length).length} da controllare</b>` : ""}${g.detected ? "" : ` · <b class="warnline">data da controllare</b>`}</span></summary>
+    h += `<details class="dgroup" data-gopen="${gi}" ${g.open ? "open" : ""}><summary><span class="dg-t">${esc(capitalize(dateLong(g.date)))}</span><span class="dg-m">${tl} in TLC · ${he} in HE${al ? ` · ${al} in altri reparti` : ""}${g.archive && g.archive.length ? ` · ${g.archive.length} messi da parte` : ""}${g.people.some(p => p.flags.length) ? ` · <b class="warnline">${g.people.filter(p => p.flags.length).length} da controllare</b>` : ""}${g.detected ? "" : ` · <b class="warnline">data da controllare</b>`}</span></summary>
       <div class="dg-body"><div class="fld dg-date"><label for="gd-${gi}">Giorno del foglio</label><input type="date" id="gd-${gi}" data-gdate="${gi}" value="${g.date}"></div>
       <p class="${g.detected ? "okline" : "warnline"}">${g.detected ? `Data letta dal foglio: <b>${esc(dateLong(g.date).toLowerCase())}</b>` : "Non ho trovato la data sul foglio: controllala qui sopra."}</p>
       <div class="plist">${g.people.map(p => personHtml(p, gi)).join("")}</div>
@@ -2635,7 +2641,7 @@ function reviewHtml(){
       <button class="btn" data-act="up-reset">Ricomincia</button>
       <button class="btn primary big" data-act="up-save" data-confirm="Conferma: salva i turni">Salva i turni</button></div>`;
 }
-const saveLabel = n => U.groups.length > 1 ? `${n} ${n === 1 ? "turno da salvare" : "turni da salvare"}` : `${n} ${n === 1 ? "persona da salvare" : "persone da salvare"}`;
+const saveLabel = n => !n && U.groups.some(g => (g.archive || []).length) ? "Turni di altri reparti da mettere da parte" : U.groups.length > 1 ? `${n} ${n === 1 ? "turno da salvare" : "turni da salvare"}` : `${n} ${n === 1 ? "persona da salvare" : "persone da salvare"}`;
 function bindReview(){
   const b = $("#upBody");
   b.querySelectorAll("[data-gdate]").forEach(inp => inp.onchange = () => { const v = validDate(inp.value); if (v){ const g = U.groups[+inp.dataset.gdate]; g.date = v; g.detected = true; g.open = true; renderUpload(); } });
@@ -2660,7 +2666,8 @@ function bindReview(){
 
 async function saveUpload(btn){
   const items = []; U.groups.forEach(g => g.people.forEach(p => { if (p.include) items.push({g, p}); }));
-  if (!items.length){ toast("Spunta almeno una persona da salvare."); return; }
+  const nArch = U.groups.reduce((n, g) => n + (g.archive || []).length, 0);
+  if (!items.length && !nArch){ toast("Spunta almeno una persona da salvare."); return; }
   const seen = new Set();
   for (const {g, p} of items){
     if (!p.matchId && !String(p.newName).trim()){ toast(`Scrivi il nome da usare per ${p.full}.`); return; }
@@ -2720,7 +2727,7 @@ async function saveUpload(btn){
     if (dates.length){ const at = new Date().toISOString(), from = dates[0], to = dates[dates.length - 1];
       try { await S.db.doc("shifts/_avviso").set({kind: "avviso", at, from, to, days: dates.length, by: meId() || ""}); } catch {}
       try { await S.db.doc("news/t-" + at.replace(/\D/g, "").slice(0, 14)).set({kind: "turni", title: "Nuovi turni caricati", body: "Turni " + rngText(from, to) + ": li trovi nella tua area.", from, to, at, by: meId() || ""}); } catch {} }
-    U.saved = n; U.savedDays = dates.length; U.lastDate = dates[0] || null; U.step = "done"; renderUpload(); window.scrollTo(0, 0);
+    U.saved = n; U.savedArch = nArch; U.savedDays = dates.length; U.lastDate = dates[0] || null; U.step = "done"; renderUpload(); window.scrollTo(0, 0);
     if (dates.length) sendPush(dates[0], dates[dates.length - 1]).then(k => { if (k > 0) toast(k === 1 ? "Notifica inviata a 1 telefono" : `Notifica inviata a ${k} telefoni`); else if (k < 0) toast("Turni salvati, ma la notifica non è partita"); });
   } catch (e) { btn.disabled = false; btn.textContent = "Salva i turni"; writeErr(e); }
 }
