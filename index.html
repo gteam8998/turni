@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>Turni Arese</title>
-<!-- versione 2026.11.13-42 -->
+<!-- versione 2026.11.15-43 -->
 <meta name="description" content="Turni e agenda del reparto Telefonia &amp; Service, MediaWorld Arese">
 <meta name="theme-color" content="#FFFFFF" media="(prefers-color-scheme: light)">
 <meta name="theme-color" content="#0B0F17" media="(prefers-color-scheme: dark)">
@@ -1326,7 +1326,7 @@ function qrSvg(text, color = "#0B1220", bg = "#FFFFFF") {
 if (typeof module !== "undefined") module.exports = { QRGEN, qrSvg };
 
 </script>
-<script src="firebase-config.js?v=2026.11.13-42"></script>
+<script src="firebase-config.js?v=2026.11.15-43"></script>
 <script>
 (() => {
 "use strict";
@@ -1476,7 +1476,11 @@ const usual = sid => (S.usual[sid] && S.usual[sid].d) || "";
 const usualText = sid => S.usual[sid] ? `di solito ${deptName(S.usual[sid].d)}` : "";
 const blkDept = (b, sid) => b && (b.d === "tel" || b.d === "srv" || b.d === "alt") ? b.d : (usual(sid) || "tel");
 /* nome del reparto di una fascia: Telefonia, Service o la sigla dell'altro reparto (TV, PE...) */
-const blkName = (b, sid) => { const d = blkDept(b, sid); return d === "alt" ? (b.g || "altro reparto") : deptName(d); };
+const SIGN = {REGIA: "Responsabile", NAS: "Facing", CS: "Centro servizi", PE: "Piccolo elettrodomestico", GE: "Grande elettrodomestico", CASS: "Cassa", MAGA: "Magazzino", MAGE: "Magazzino", RMAG: "Resp. magazzino", SEG: "Segreteria", RAMM: "Amministrazione", TRAIN: "Formazione", TV: "TV", PC: "PC"};
+const sigName = g => SIGN[String(g || "").toUpperCase()] || g || "";
+const blkName = (b, sid) => { const d = blkDept(b, sid); return d === "alt" ? (sigName(b.g) || "altro reparto") : deptName(d); };
+/* chi lavora insieme: Telefonia+Service, PE+GE (reparti vicini), CS+Cassa (stesso bancone); gli altri ognuno col suo */
+const blkGroup = (b, sid) => { const d = blkDept(b, sid); if (d !== "alt") return "TS"; const g = String(b.g || "").toUpperCase(); return g === "PE" || g === "GE" ? "PEGE" : g === "CS" || g === "CASS" ? "CSCASS" : g === "MAGA" || g === "MAGE" || g === "RMAG" ? "MAG" : g || "ALT"; };
 /* reparti di una giornata, il principale per primo (più minuti) */
 function deptsOf(bl, sid){
   const k = {}; (bl || []).forEach(b => { const d = blkDept(b, sid); k[d] = (k[d] || 0) + toMin(b.e) - toMin(b.s); });
@@ -1874,7 +1878,7 @@ function openStaff(focusNew){
           up.full = titleCase(v);
           try { (await S.db.collection("invites").where("staffId", "==", sid).get()).docs.forEach(d => ops.push({op: "update", path: "invites/" + d.id, data: {name: up.full}})); } catch {}
         }
-        try { await S.db.batch([{op: "update", path: "staff/" + sid, data: up}, ...ops]); toast("Aggiornato"); } catch (er) { writeErr(er); }
+        try { await S.db.batch([{op: "update", path: "staff/" + sid, data: up}, ...ops]); toast("Aggiornato"); if (up.full) claimArchive(sid, up.full); } catch (er) { writeErr(er); }
       });
       root.addEventListener("click", async e => {
         const hb = e.target.closest("[data-hide-staff]");
@@ -1888,7 +1892,7 @@ function openStaff(focusNew){
         e.preventDefault(); if (!needDb()) return;
         const name = $("#nsName", root).value.trim();
         if (!name) return $("#stErr", root).textContent = "Scrivi il nome del balordo.";
-        try { await S.db.collection("staff").add({name, order: S.staff.length, ...(twoWords(name) ? {full: titleCase(name)} : {})}); toast(`${name} aggiunto`); openStaff(true); }
+        try { const ref = await S.db.collection("staff").add({name, order: S.staff.length, ...(twoWords(name) ? {full: titleCase(name)} : {})}); toast(`${name} aggiunto`); openStaff(true); if (twoWords(name)) claimArchive(ref.id, name); }
         catch (er) { writeErr(er); }
       };
     }, focusNew ? "#nsName" : null);
@@ -2022,7 +2026,7 @@ const when = iso => { const d = new Date(iso); if (isNaN(d)) return ""; return `
 function upGate(){
   if (!S.db) return `<div class="reading"><span class="spin"></span>Collegamento…</div>`;
   if (!isAdmin()) return `<div class="doubts"><b>Solo il responsabile carica gli orari</b>Qui trovi i tuoi turni appena vengono caricati.</div>`;
-  if (!AI.key) return `<div class="doubts"><b>Lettura automatica non ancora attiva</b>Inserisci la chiave gratuita di Gemini in Impostazioni › Lettura delle foto. Intanto puoi scrivere i turni a mano dall'agenda.</div><button class="btn primary" data-act="nav" data-to="set">Vai alle impostazioni</button>`;
+  if (false) return `<div class="doubts"><b>Lettura automatica non ancora attiva</b>Inserisci la chiave gratuita di Gemini in Impostazioni › Lettura delle foto. Intanto puoi scrivere i turni a mano dall'agenda.</div><button class="btn primary" data-act="nav" data-to="set">Vai alle impostazioni</button>`;
   return "";
 }
 
@@ -2047,11 +2051,13 @@ function renderUpload(){
       <label for="upGal">${ICON.img}Scegli dalla galleria<small>puoi selezionarne tante</small><input type="file" id="upGal" accept="image/*,.heic,.heif" multiple></label>
     </div>` : ""}
   </section>`;
-  if (U.step === "pick") h += `<details class="step paste"${U.pasteOpen ? " open" : ""}><summary><b>Incolla la lettura di Claude</b><small>Mandi la foto a Claude, copi la sua risposta e la incolli qui</small></summary>
+  /* senza chiave Gemini la lettura la fa Claude: resta solo il riquadro dove incollarla */
+  if (!AI.key && U.step === "pick") h = "";
+  if (U.step === "pick") h += `<details class="step paste"${U.pasteOpen || !AI.key ? " open" : ""}><summary><b>Incolla la lettura di Claude</b><small>Mandi la foto a Claude, copi la sua risposta e la incolli qui</small></summary>
     <textarea id="upPaste" rows="7" spellcheck="false" autocapitalize="off" placeholder="TURNI 2026-11-01&#10;Nome | Cognome | 09:00-13:00 | TLC 09:00-13:00">${esc(U.paste || "")}</textarea>
     <button class="btn primary big" data-act="up-paste" style="width:100%">Controlla i turni incollati</button></details>`;
-  if (!n && U.step === "pick") h += `<ul class="tips" aria-label="Per una foto che si legge bene"><li><b>Dritta</b>Dall'alto, senza storcere il foglio</li><li><b>Tutta</b>Nomi, Da/A e la griglia oraria</li><li><b>Luce</b>Niente riflessi né ombre sopra</li><li><b>Una per foglio</b>Di solito sono due al giorno</li></ul>`;
-  if (n && U.step === "pick") h += `<button class="btn primary big" data-act="up-read" style="width:100%">Leggi i turni ${n === 1 ? "dalla foto" : `dalle ${n} foto`}</button>${n > 4 ? `<p class="tip">Ci vuole circa mezzo minuto per foto: ${n} foto ≈ ${Math.max(1, Math.round(n * 0.5))} minuti. Tieni l'app aperta.</p>` : ""}`;
+  if (AI.key && !n && U.step === "pick") h += `<ul class="tips" aria-label="Per una foto che si legge bene"><li><b>Dritta</b>Dall'alto, senza storcere il foglio</li><li><b>Tutta</b>Nomi, Da/A e la griglia oraria</li><li><b>Luce</b>Niente riflessi né ombre sopra</li><li><b>Una per foglio</b>Di solito sono due al giorno</li></ul>`;
+  if (AI.key && n && U.step === "pick") h += `<button class="btn primary big" data-act="up-read" style="width:100%">Leggi i turni ${n === 1 ? "dalla foto" : `dalle ${n} foto`}</button>${n > 4 ? `<p class="tip">Ci vuole circa mezzo minuto per foto: ${n} foto ≈ ${Math.max(1, Math.round(n * 0.5))} minuti. Tieni l'app aperta.</p>` : ""}`;
   if (U.step === "reading"){
     h += `<section class="step"><div class="step-h"><b>2</b><h2>Sto leggendo i fogli…</h2></div>
       <div class="reading"><span class="spin"></span><span><span id="upProg">${esc(U.progress)}</span><br><small style="font-weight:400">Di solito bastano 20–40 secondi per foto. Tieni l'app aperta in primo piano.</small></span></div>
@@ -2440,6 +2446,37 @@ const SIGLA = s => String(s||"").toUpperCase().replace(/[^A-Z]/g, "");
 const sigDept = sig => sig === "TLC" ? "tel" : sig === "HE" ? "srv" : "alt";
 const mergeSegs = list => { const out = []; for (const x of sorted(list.map(x => ({s: x.s, e: x.e})))){ const l = out[out.length - 1]; if (l && toMin(x.s) <= toMin(l.e)){ if (toMin(x.e) > toMin(l.e)) l.e = x.e; } else out.push({...x}); } return out; };
 const blocksKey = bl => bl.map(b => b.s + "-" + b.e).join(",");
+const sigD = sig => { const d = sigDept(sig); return d === "alt" ? {d, g: sig || ""} : {d}; };
+/* fasce di chi va in archivio, divise per reparto quando la sigla cambia a metà turno */
+function archBlocks(segs, daBl, rep){
+  const base = segs.length ? mergeSegs(segs) : daBl, out = [];
+  base.forEach(b => {
+    const s0 = toMin(b.s), e0 = toMin(b.e);
+    const parts = segs.map(x => ({s: Math.max(s0, toMin(x.s)), e: Math.min(e0, toMin(x.e)), sig: x.sig})).filter(x => x.e > x.s).sort((x, y) => x.s - y.s);
+    if (!parts.length){ out.push({s: b.s, e: b.e, ...sigD(rep)}); return; }
+    parts[0].s = s0; parts.forEach((x, i) => { x.e = i < parts.length - 1 ? parts[i + 1].s : e0; });
+    let last = null; parts.forEach(x => { const dd = sigD(x.sig); if (last && last.d === dd.d && (last.g || "") === (dd.g || "")){ last.e = fromMin(x.e); } else { last = {s: fromMin(x.s), e: fromMin(x.e), ...dd}; out.push(last); } });
+  });
+  return out;
+}
+/* quando un collega entra in elenco (o gli scrivi nome e cognome) prende i turni già letti dall'archivio */
+async function claimArchive(sid, full, quiet){
+  if (!S.db || !sid || !twoWords(full)) return 0;
+  const fw = words(full); let n = 0;
+  try {
+    const ops = [];
+    for (const v of docs(await S.db.collection("shifts").get())){
+      if (!v.date || !v.ext || (v.rows && v.rows[sid])) continue;
+      const hits = Object.values(v.ext).filter(x => x && fw.every(w => words(x.n).includes(w)));
+      if (hits.length !== 1) continue;
+      ops.push({op: "update", path: "shifts/" + v.id, data: {rows: {[sid]: hits[0].bl || []}}});
+    }
+    for (let i = 0; i < ops.length; i += 400) await S.db.batch(ops.slice(i, i + 400));
+    n = ops.length;
+  } catch (e) { writeErr(e); }
+  if (n && !quiet) toast(`Trovati i turni di ${titleCase(full)} già letti: ${n} ${n === 1 ? "giorno" : "giorni"}`);
+  return n;
+}
 function ingest(results){
   const groups = new Map(); let firstDate = null;
   results.forEach(r => r.out.days.forEach(d => { const v = validDate(d.data); if (v && !firstDate) firstDate = v; }));
@@ -2447,7 +2484,7 @@ function ingest(results){
     out.dubbi.forEach(x => U.doubts.push(results.length > 1 ? `Foto ${fi + 1} · ${x}` : x));
     out.days.forEach(day => {
       const own = validDate(day.data), d = own || firstDate || todayStr();
-      if (!groups.has(d)) groups.set(d, {date: d, detected: !!(own || firstDate), people: new Map(), excluded: new Map()});
+      if (!groups.has(d)) groups.set(d, {date: d, detected: !!(own || firstDate), people: new Map(), excluded: new Map(), archive: new Map()});
       const g = groups.get(d);
       day.rows.forEach(row => {
         const nome = String(row.nome || "").trim(), cognome = String(row.cognome || "").trim();
@@ -2462,6 +2499,8 @@ function ingest(results){
         /* si salvano: chi ha celle TLC/HE, e i balordi già in elenco qualunque sia il reparto di oggi (TV, PE, ...) */
         const match = matchStaff(full, !ours.length && rep !== "TLC" && rep !== "HE");
         if (match && ((S.staffAll || []).find(x => x.id === match) || {}).hide){ g.excluded.set(k, `${first} (nascosto in elenco)`); return; }
+        /* altro reparto e non in elenco: lo metto da parte con il suo reparto, così se un giorno lo aggiungi ha già i suoi turni */
+        if (!ours.length && !match && (segs.length || daBl.length)){ if (!g.people.has(k) && !g.archive.has(k)) g.archive.set(k, {full, first, sig: [...new Set(segs.map(x => x.sig))].join("+") || rep || "", bl: archBlocks(segs, daBl, rep)}); return; }
         if (!ours.length && !(match && (segs.length || daBl.length))){
           if ((rep === "TLC" || rep === "HE" || match) && (daBl.length || segs.length) && !g.people.has(k))
             g.excluded.set(k, `${first} (${[...new Set(segs.map(x => x.sig))].join(", ") || "nessuna cella TLC/HE"})`);
@@ -2480,7 +2519,7 @@ function ingest(results){
           flags.push(`Le colonne Da/A dicono ${daBl.map(fmtR).join(", ")}, le celle colorate ${bl.map(fmtR).join(", ")}: guarda la foto e correggi se serve.`);
         else if (!segs.length) flags.push("Celle colorate non lette: l'orario viene solo dalle colonne Da/A, controllalo.");
         else if (!daBl.length) flags.push("Colonne Da/A non lette: l'orario viene solo dalle celle colorate, controllalo.");
-        if (sigs.length > 1) notes.push(`Dal foglio: ${segs.map(x => `${x.sig} ${fmtR(x)}`).join(", ")}. In agenda compare solo la parte ${ours.map(x => x.sig).filter((v, i, a) => a.indexOf(v) === i).join("/") || "TLC/HE"}.`);
+        if (sigs.length > 1) notes.push(`Dal foglio: ${segs.map(x => `${x.sig} ${fmtR(x)}`).join(", ")}. ${ours.length ? `In agenda compare solo la parte ${ours.map(x => x.sig).filter((v, i, a) => a.indexOf(v) === i).join("/")}.` : "Nell'agenda di Telefonia e Service non compare, nella sua area sì."}`);
         else if (dept === "alt") notes.push(`Oggi è in ${sigs[0] || rep || "un altro reparto"}: nell'agenda di Telefonia e Service non compare, nella sua area sì.`);
         if (!(daBl.length && blocksKey(daBl) === blocksKey(bl)) && bl.some(b => !/:(00|30)$/.test(b.s) || !/:(00|30)$/.test(b.e))) flags.push("Un orario non cade sulla mezz'ora: controllalo.");
         if (bl.some(b => toMin(b.s) < 7*60 || toMin(b.e) > 24*60)) flags.push("Orario fuori dall'apertura del negozio: controllalo.");
@@ -2498,7 +2537,7 @@ function ingest(results){
   const firstStart = p => toMin(parseDayText(p.text).blocks?.[0]?.s || "23:59");
   U.groups = [...groups.values()].sort((a, b) => a.date.localeCompare(b.date)).map((g, i, all) => {
     const people = [...g.people.values()].sort((a, b) => (b.flags.length ? 1 : 0) - (a.flags.length ? 1 : 0) || a.dept.localeCompare(b.dept) || firstStart(a) - firstStart(b) || a.full.localeCompare(b.full));
-    return {date: g.date, detected: g.detected, excluded: [...g.excluded.values()], people, open: all.length <= 2 || !g.detected || people.some(p => p.flags.length)};
+    return {date: g.date, detected: g.detected, excluded: [...g.excluded.values()], archive: [...g.archive.values()], people, open: all.length <= 2 || !g.detected || people.some(p => p.flags.length)};
   });
   U.doubts = [...new Set(U.doubts)].slice(0, 20);
 }
@@ -2581,7 +2620,8 @@ function reviewHtml(){
       <div class="dg-body"><div class="fld dg-date"><label for="gd-${gi}">Giorno del foglio</label><input type="date" id="gd-${gi}" data-gdate="${gi}" value="${g.date}"></div>
       <p class="${g.detected ? "okline" : "warnline"}">${g.detected ? `Data letta dal foglio: <b>${esc(dateLong(g.date).toLowerCase())}</b>` : "Non ho trovato la data sul foglio: controllala qui sopra."}</p>
       <div class="plist">${g.people.map(p => personHtml(p, gi)).join("")}</div>
-      ${g.excluded.length ? `<p class="excl"><b>Non salvati (oggi non in TLC/HE e non in elenco):</b> ${g.excluded.map(esc).join(", ")}</p>` : ""}</div></details>`;
+      ${g.excluded.length ? `<p class="excl"><b>Non salvati:</b> ${g.excluded.map(esc).join(", ")}</p>` : ""}
+      ${g.archive && g.archive.length ? `<p class="excl"><b>Altri reparti, messi da parte (${g.archive.length}):</b> ${g.archive.map(a => `${esc(a.first)} (${esc(a.sig || "R")})`).join(", ")}. Non compaiono finché non li aggiungi in elenco: allora prendono da soli questi turni.</p>` : ""}</div></details>`;
   });
   const nInc = U.groups.reduce((n, g) => n + g.people.filter(p => p.include).length, 0);
   return h + `</section>
@@ -2627,7 +2667,7 @@ async function saveUpload(btn){
   if (!armed(btn) || !needDb()) return;
   btn.disabled = true; btn.textContent = "Salvo…";
   try {
-    const perDate = {}, created = {}; let n = 0;
+    const perDate = {}, created = {}, newFull = {}; let n = 0;
     for (const {g, p} of items){
       const sheet = norm(p.full);
       let sid = p.matchId;
@@ -2635,6 +2675,7 @@ async function saveUpload(btn){
         const name = String(p.newName).trim(), nk = norm(name);
         const ex = created[nk] || (S.staff.find(s => norm(s.name) === nk) || {}).id;
         sid = ex || (await S.db.collection("staff").add({name, order: S.staff.length + Object.keys(created).length, sheetName: sheet, ...(twoWords(p.full) ? {full: titleCase(p.full)} : {}), ...(p.cognome ? {cognome: p.cognome} : {})})).id;
+        if (!ex && twoWords(p.full)) newFull[sid] = titleCase(p.full);
         created[nk] = sid;
       } else {
         const st = staffById(sid), patch = {};
@@ -2659,12 +2700,16 @@ async function saveUpload(btn){
       };
       (perDate[g.date] = perDate[g.date] || {})[sid] = r.blocks.flatMap(split); n++;
     }
-    const dates = Object.keys(perDate).sort();
-    for (const [i, d] of dates.entries()){
-      if (dates.length > 3) btn.textContent = `Salvo… ${i + 1} di ${dates.length}`;
-      const ref = S.db.doc("shifts/" + d), cur = await ref.get();
-      if (cur.exists) await ref.update({rows: perDate[d]}); else await ref.set({date: d, rows: perDate[d]});
+    const perExt = {};
+    U.groups.forEach(g => (g.archive || []).forEach(a => { (perExt[g.date] = perExt[g.date] || {})[slugOf(a.full)] = {n: a.full, bl: a.bl}; }));
+    const dates = Object.keys(perDate).sort(), all = [...new Set([...dates, ...Object.keys(perExt)])].sort();
+    for (const [i, d] of all.entries()){
+      if (all.length > 3) btn.textContent = `Salvo… ${i + 1} di ${all.length}`;
+      const ref = S.db.doc("shifts/" + d), cur = await ref.get(), up = {};
+      if (perDate[d]) up.rows = perDate[d]; if (perExt[d]) up.ext = perExt[d];
+      if (cur.exists) await ref.update(up); else await ref.set({date: d, rows: {}, ...up});
     }
+    for (const [sid, full] of Object.entries(newFull)) await claimArchive(sid, full);
     /* avviso per i colleghi: sta in shifts/_avviso (senza "date", quindi le ricerche per giorno non lo vedono) */
     if (dates.length){ const at = new Date().toISOString(), from = dates[0], to = dates[dates.length - 1];
       try { await S.db.doc("shifts/_avviso").set({kind: "avviso", at, from, to, days: dates.length, by: meId() || ""}); } catch {}
@@ -3505,8 +3550,11 @@ function renderMe(){
   const ap = myAppts(id, isT ? null : d);
   const rowsT = rowsOf(d);
   const overl = (a, b) => a.some(x => b.some(y => toMin(x.s) < toMin(y.e) && toMin(y.s) < toMin(x.e)));
-  const ours = bl => sorted(bl).filter(b => b.d === "tel" || b.d === "srv");
-  const mates = Object.keys(rowsT).filter(k => k !== id && staffById(k) && ours(rowsT[k]).length).map(k => ({bl: ours(rowsT[k]), st: staffById(k)})).sort((a, b) => toMin(a.bl[0].s) - toMin(b.bl[0].s));
+  /* i miei reparti di quel giorno (se riposo: quelli dell'ultimo turno che conosco, se no Telefonia e Service) */
+  const myGroups = (() => { let bl = dayBl; if (!bl.length){ const ks = Object.keys({...S.shifts, ...P.shifts}).filter(x => x < d).sort().reverse(); for (const k of ks){ const b = sorted(myRows(k, id)); if (b.length){ bl = b; break; } } }
+    const gs = new Set(bl.map(b => blkGroup(b, id))); return gs.size ? gs : new Set(["TS"]); })();
+  const ours = (bl, sid) => sorted(bl).filter(b => myGroups.has(blkGroup(b, sid)));
+  const mates = Object.keys(rowsT).filter(k => k !== id && staffById(k) && ours(rowsT[k], k).length).map(k => ({bl: ours(rowsT[k], k), st: staffById(k)})).sort((a, b) => toMin(a.bl[0].s) - toMin(b.bl[0].s));
   const wdays = [...Array(7)].map((_, i) => addDays(P.week, i));
   const wTot = wdays.reduce((s, d) => s + mins(myRows(d, id)), 0);
   const wMaxDay = Math.max(9 * 60, ...wdays.map(d => mins(myRows(d, id))));
@@ -3695,7 +3743,7 @@ async function adminAct(act, el){
       await S.db.batch([...old.map(i => ({op: "delete", path: "invites/" + i.id})),
         {op: "update", path: "staff/" + sid, data: {full}},
         {op: "set", path: "invites/" + code, data: {role: "user", staffId: sid, name: full, exp: Date.now() + 14 * 864e5, at: new Date().toISOString()}}]);
-      toast(`Codice per ${full}: ${code}`); return renderSet();
+      toast(`Codice per ${full}: ${code}`); renderSet(); if (norm(full) !== norm(st.full || "")) claimArchive(sid, full, true).then(n => { if (n) setTimeout(() => toast(`Trovati i turni di ${full} già letti: ${n} ${n === 1 ? "giorno" : "giorni"}`), 5000); }); return;
     }
     if (act === "adm-reset"){
       if (!armed(el)) return;
