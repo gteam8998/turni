@@ -7,7 +7,7 @@ Apre l'app in MODALITÀ PROVA (dati finti, niente Firebase) in un browser automa
   - testi che escono dal loro riquadro, pagina più larga dello schermo, scritte sovrapposte, immagini rotte
   - tempo di apertura dell'app e peso dei file
 su telefono piccolo (320), telefono (390), tablet (768) e PC (1366), tema chiaro, scuro e con sfondo,
-per collega, responsabile e PC del banco, compresa la vista "Prossimo turno" con le frecce.
+per collega, responsabile e PC del banco, compresi gli altri giorni aperti con le frecce della scheda del turno.
 
 Uso (dalla cartella del repository):  python3 controlli/controllo.py --out /percorso/cartella-report
 Scrive report.json, report.md e le schermate. Non tocca i dati veri: i nomi sono inventati.
@@ -60,7 +60,9 @@ def seed(today):
             p = PATTERNS[(k + j * 3) % len(PATTERNS)]
             if sid == "usr" and k == 0: p = PATTERNS[0]      # oggi la collega lavora (spezzato)
             rows[sid] = [dict(s=a, e=b, d=dep, **({"g": g} if g else {})) for a, b, dep, g in p]
-        db[f"shifts/{d.isoformat()}"] = {"date": d.isoformat(), "rows": rows}
+        ext = {"paolo-neri": {"n": "Paolo Neri", "bl": [{"s": "09:00", "e": "13:00", "d": "alt", "g": "PE"}]},
+               "alessio-braga": {"n": "Alessio Braga", "bl": [{"s": "14:00", "e": "21:30", "d": "alt", "g": "REGIA"}]}}
+        db[f"shifts/{d.isoformat()}"] = {"date": d.isoformat(), "rows": rows, "ext": ext}
     for k, (t, kind) in enumerate([("10:30", "rip"), ("16:00", "dati"), ("", "rip")]):
         d = (today + datetime.timedelta(days=k + 1)).isoformat()
         db[f"appts/p{k}"] = {"date": d, "time": t, "kind": kind, "model": "iPhone 15 Pro Max 256 GB Titanio Naturale" if k == 0 else "Galaxy A55",
@@ -202,14 +204,14 @@ def main():
                     except Exception: report["problemi"].append({"tipo": "la mia area non si apre", "dove": tag})
                 pg.wait_for_timeout(700)
                 try:
-                    if sc in ("me-prossimo", "me-frecce", "me-passato"):
-                        pg.click("#scr-me .next-c"); pg.wait_for_timeout(500)
-                        if not pg.locator("#scr-me .me-dnav").count(): report["problemi"].append({"tipo": "frecce dei giorni non comparse", "dove": tag})
-                        if not pg.locator("#scr-me .today-fab").count(): report["problemi"].append({"tipo": "tasto Torna a oggi mancante", "dove": tag})
+                    if sc in ("me-prossimo", "me-frecce", "me-passato"):   # le frecce stanno solo nella scheda del turno
+                        if pg.locator("#scr-me .me-hero .hn-arr").count() != 2: report["problemi"].append({"tipo": "frecce dei giorni mancanti nella scheda del turno", "dove": tag})
+                        pg.click("#scr-me .me-hero [data-act=me-dnext]"); pg.wait_for_timeout(500)
+                        if not pg.locator("#scr-me .me-hero .hn-today").count(): report["problemi"].append({"tipo": "tasto Torna a oggi mancante", "dove": tag})
                     if sc == "me-frecce":
-                        for _ in range(3): pg.click("#scr-me .me-dnav [data-act=me-dnext]"); pg.wait_for_timeout(250)
+                        for _ in range(3): pg.click("#scr-me .me-hero [data-act=me-dnext]"); pg.wait_for_timeout(250)
                     if sc == "me-passato":
-                        for _ in range(4): pg.click("#scr-me .me-dnav [data-act=me-dprev]"); pg.wait_for_timeout(250)
+                        for _ in range(5): pg.click("#scr-me .me-hero [data-act=me-dprev]"); pg.wait_for_timeout(250)
                     if sc == "agenda-balordi":   # elenco dei balordi: i campi del nome devono restare leggibili
                         pg.click("[data-act=staff]"); pg.wait_for_selector(".stafflist", timeout=4000); pg.wait_for_timeout(400)
                         narrow = pg.evaluate("() => [...document.querySelectorAll('.stafflist input')].filter(i => i.getBoundingClientRect().width < 140).map(i => i.value)")
@@ -221,7 +223,7 @@ def main():
                 for it in issues: it["schermata"] = f"{tag} {sc}"; report["problemi"].append(it)
                 f = os.path.join(shots, f"{tag}-{sc}.png"); pg.screenshot(path=f, full_page=True); report["schermate"].append(f)
                 if sc in ("me-prossimo", "me-frecce", "me-passato"):
-                    pg.click("#scr-me .today-fab") if pg.locator("#scr-me .today-fab").count() else None
+                    pg.click("#scr-me .hn-today") if pg.locator("#scr-me .hn-today").count() else None
             ctx.close()
         b.close()
     srv.shutdown()

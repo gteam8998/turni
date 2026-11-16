@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>Turni Arese</title>
-<!-- versione 2026.11.16-50 -->
+<!-- versione 2026.11.16-51 -->
 <meta name="description" content="Turni e agenda del reparto Telefonia &amp; Service, MediaWorld Arese">
 <meta name="theme-color" content="#FFFFFF" media="(prefers-color-scheme: light)">
 <meta name="theme-color" content="#0B0F17" media="(prefers-color-scheme: dark)">
@@ -604,7 +604,22 @@ body[data-role="banco"] .me-only{display:none!important}
 .paste textarea{width:100%;margin:12px 0 10px;border:1.5px solid var(--line);border-radius:12px;background:var(--bg);color:var(--ink);padding:10px 12px;font:14px/1.45 var(--f-mono, ui-monospace, monospace);resize:vertical}
 .acc-t .acc-full-t{color:var(--ink-3)}
 .acc-a .btn{min-height:42px;font-size:14px;padding:0 12px}
-@media (max-width:420px){ .acc li{grid-template-columns:auto minmax(0,1fr)} .acc-a{grid-column:1/-1} }
+.acc-tools{display:grid;grid-template-columns:minmax(0,1fr);gap:10px;margin:2px 0 4px}
+.acc-tools > *{min-width:0}
+.acc-q{display:flex;align-items:center;gap:8px;min-height:46px;padding:0 14px;border:1.5px solid var(--line);border-radius:12px;background:var(--bg);color:var(--ink-3)}
+.acc-q svg{width:20px;height:20px;flex:none}
+.acc-q input{flex:1;min-width:0;height:42px;border:0;background:none;font:inherit;font-size:16px;color:var(--ink);outline:none}
+.acc-q:focus-within{border-color:var(--tel)}
+.acc-tools .mt-pick{margin:0}
+.acc-on{color:var(--ok);font-weight:700}
+.acc-new{color:var(--ink-3);font-weight:700}
+.acc li[hidden]{display:none}
+.acc-hint{display:flex;align-items:center;gap:6px;margin:0;font-size:13px;font-weight:700;color:var(--ink-3)}
+.acc-hint[hidden]{display:none}
+.acc-hint svg{width:15px;height:15px}
+.acc-tools .mt-pick.off{opacity:.45}
+@media (min-width:720px){ .acc-tools{grid-template-columns:minmax(0,1fr) minmax(0,1fr)} }
+@media (max-width:420px){ .acc li{grid-template-columns:auto minmax(0,1fr);row-gap:8px} .acc-a{grid-column:2} .acc-a .btn{min-height:38px} }
 .share{display:grid;grid-template-columns:128px minmax(0,1fr);gap:16px;align-items:center}
 .share .qr{width:128px;height:128px;background:#fff;border-radius:12px;padding:6px;border:1.5px solid var(--line)}
 .share .qr svg{width:100%;height:100%;display:block}
@@ -829,15 +844,16 @@ html,body{background:var(--bg);transition:background-color .2s}
 .b-t i{position:absolute;left:0;top:0;bottom:0;border-radius:6px;background:var(--tel)}
 .b-t em{position:absolute;top:-4px;bottom:-4px;width:2.5px;background:var(--ink);border-radius:2px}
 .b-v{text-align:right;font-weight:700;font-family:var(--f-num)}
-.mt-pick{display:block;margin:-2px 0 12px}
+.mt-pick{display:block;min-width:0;margin:-2px 0 12px}
 .mt-pick select{width:100%;min-height:44px;border:1.5px solid var(--line);border-radius:12px;background-color:var(--bg);color:var(--ink);padding:0 38px 0 14px;font:inherit;font-weight:700;font-size:15px;appearance:none;-webkit-appearance:none;text-overflow:ellipsis;
   background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%238791A3' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 12px center;cursor:pointer}
-.mates{list-style:none;margin:0;padding:0;display:grid;gap:8px}
-.mates li{display:grid;grid-template-columns:auto minmax(0,1fr);gap:1px 12px;align-items:center}
-.mates .av{width:36px;height:36px;font-size:13px;grid-row:span 3}
-.mates b{font-size:16px;overflow-wrap:anywhere}
-.mates .num{font-weight:700;font-size:15px;overflow-wrap:anywhere}
-.mates small{color:var(--ok);font-weight:700;font-size:12px}
+.mates{list-style:none;margin:0;padding:0;display:grid}
+.mates li{display:grid;grid-template-columns:auto minmax(0,1fr);gap:2px 12px;align-items:center;padding:10px 0;border-top:1px solid var(--line-2)}
+.mates li:first-child{border-top:0;padding-top:2px}
+.mates .av{width:38px;height:38px;font-size:13px;grid-row:span 3}
+.mates b{font-size:17px;font-weight:800;line-height:1.2;color:var(--ink);overflow-wrap:anywhere}
+.mates .num{font-weight:800;font-size:17px;line-height:1.25;color:var(--ink);overflow-wrap:anywhere}
+.mates small{color:var(--ok);font-weight:700;font-size:13px}
 .set-row{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
 .set-row label{font-weight:700}
 .set-row input{width:110px;height:46px;border:1.5px solid var(--line);border-radius:12px;background:var(--bg);padding:0 12px;font-size:17px;color:var(--ink)}
@@ -893,6 +909,21 @@ html,body{background:var(--bg);transition:background-color .2s}
 /* etichette che si riconoscono al volo: OGGI rossa, Prossimo turno grigio acciaio */
 .hk-l.is-today{display:inline-flex;align-items:center;gap:7px;padding:5px 13px 5px 10px;border-radius:999px;background:#D92D20;color:#fff;letter-spacing:.12em;box-shadow:0 0 0 4px rgba(217,45,32,.22),0 0 18px 2px rgba(255,90,78,.45)}
 .hk-l.is-today::before{content:"";width:8px;height:8px;border-radius:50%;background:#fff}
+/* frecce dentro la scheda del giorno: l'unico modo per scorrere i giorni */
+.hero-nav{display:grid;grid-template-columns:46px minmax(0,1fr) 46px;align-items:center;gap:8px;margin:-6px -6px 0}
+.hn-arr{width:46px;height:46px;border-radius:50%;border:0;display:grid;place-items:center;background:var(--hero-ink);color:var(--hero);cursor:pointer;box-shadow:0 8px 18px -8px rgba(0,0,0,.6);-webkit-tap-highlight-color:transparent;transition:transform .12s ease}
+.hn-arr svg{width:26px;height:26px}
+.hn-arr.flip svg{transform:rotate(180deg)}
+.hn-arr:active{transform:scale(.9)}
+.hn-arr:focus-visible{outline:3px solid var(--focus);outline-offset:3px}
+.hn-c{display:grid;justify-items:center;gap:3px;text-align:center;min-width:0}
+.hn-c .hk-l{font-size:13px;font-weight:700;letter-spacing:.12em;text-transform:uppercase}
+.hn-c small{font-size:12px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--hero-2)}
+.hn-c b{font-family:var(--f-head);font-size:19px;font-weight:700;line-height:1.15;color:var(--hero-ink);text-wrap:balance}
+.me-hero .hero-k .chip-st{margin-left:0}
+.hn-today{display:inline-flex;align-items:center;gap:7px;height:36px;padding:0 15px 0 11px;border-radius:999px;border:0;background:#D92D20;color:#fff;font:inherit;font-size:14px;font-weight:700;letter-spacing:0;text-transform:none;cursor:pointer;box-shadow:0 0 0 3px rgba(217,45,32,.22)}
+.hn-today svg{width:18px;height:18px}
+.hn-today:active{transform:scale(.96)}
 /* "Prossimo turno": scheda da toccare */
 .next-c{width:100%;text-align:left;font:inherit;color:var(--ink);cursor:pointer;-webkit-tap-highlight-color:transparent;transition:transform .15s ease}
 .next-c:hover{background:var(--hover)}
@@ -933,10 +964,7 @@ html,body{background:var(--bg);transition:background-color .2s}
   .ph.browsing{padding-bottom:84px}
   body:has(#scr-me:not([hidden]) .today-fab) .toast{bottom:calc(160px + env(safe-area-inset-bottom,0px))}
 }
-/* settimana: i giorni si toccano, quello guardato ha l'argento */
-.strip .sd{font:inherit;cursor:pointer;-webkit-tap-highlight-color:transparent}
-.strip .sd:hover{background:var(--hover)}
-.strip .sd:focus-visible{outline:3px solid var(--focus);outline-offset:2px}
+/* settimana: solo da guardare (i giorni si scorrono con le frecce della scheda); il giorno guardato è in rosso */
 .strip .sd.vw .dn{background:#D92D20;color:#fff;box-shadow:0 0 0 4px rgba(217,45,32,.22),0 0 16px 2px rgba(255,90,78,.5)}
 .ph.browsing .sd.today:not(.vw) .dn{background:none;color:var(--now);box-shadow:inset 0 0 0 2px var(--now)}
 .daylist li[data-act]{cursor:pointer;border-radius:12px}
@@ -1337,7 +1365,7 @@ function qrSvg(text, color = "#0B1220", bg = "#FFFFFF") {
 if (typeof module !== "undefined") module.exports = { QRGEN, qrSvg };
 
 </script>
-<script src="firebase-config.js?v=2026.11.16-50"></script>
+<script src="firebase-config.js?v=2026.11.16-51"></script>
 <script>
 (() => {
 "use strict";
@@ -1485,16 +1513,25 @@ function computeUsual(){
   /* reparto più frequente fuori da Telefonia e Service: serve solo per la scritta «di solito» nell'elenco dei balordi */
   S.usualAlt = {}; Object.entries(alt).forEach(([sid, a]) => { const g = Object.keys(a).sort((x, y) => a[y] - a[x])[0]; if (g) S.usualAlt[sid] = g; });
   S.usual = {}; Object.entries(m).forEach(([sid, k]) => { if (k.tel || k.srv) S.usual[sid] = {d: k.srv > k.tel ? "srv" : "tel", share: Math.round(Math.max(k.tel, k.srv) / (k.tel + k.srv) * 100)}; });
+  /* reparto logico di solito: quello con più ore (formazione e prove non contano) */
+  const gm = {}; Object.values(all).forEach(doc => Object.entries((doc && doc.rows) || {}).forEach(([sid, bl]) => (Array.isArray(bl) ? bl : []).forEach(b => {
+    if (!b || !b.s || !b.e) return; const g = blkGroup(b, sid); if (g === "NEUTRO") return;
+    const o = (gm[sid] = gm[sid] || {}); o[g] = (o[g] || 0) + Math.max(0, toMin(b.e) - toMin(b.s)); })));
+  S.ugrp = {}; Object.entries(gm).forEach(([sid, o]) => { S.ugrp[sid] = Object.keys(o).sort((x, y) => o[y] - o[x])[0]; });
 }
 const usual = sid => (S.usual[sid] && S.usual[sid].d) || "";
 const usualText = sid => S.usual[sid] ? `di solito ${deptName(S.usual[sid].d)}` : "";
 const blkDept = (b, sid) => b && (b.d === "tel" || b.d === "srv" || b.d === "alt") ? b.d : (usual(sid) || "tel");
 /* nome del reparto di una fascia: Telefonia, Service o la sigla dell'altro reparto (TV, PE...) */
 const SIGN = {REGIA: "Responsabile", NAS: "Facing", CS: "Centro servizi", PE: "Piccolo elettrodomestico", GE: "Grande elettrodomestico", CASS: "Cassa", MAGA: "Magazzino", MAGE: "Magazzino", RMAG: "Resp. magazzino", SEG: "Segreteria", RAMM: "Amministrazione", TRAIN: "Formazione", TV: "TV", PC: "PC"};
-const sigName = g => SIGN[String(g || "").toUpperCase()] || g || "";
+const sigName = g => SIGN[String(g || "").toUpperCase()] || SIGN[sigKey(g)] || g || "";
 const blkName = (b, sid) => { const d = blkDept(b, sid); return d === "alt" ? (sigName(b.g) || "altro reparto") : deptName(d); };
-/* chi lavora insieme: Telefonia+Service, PE+GE (reparti vicini), CS+Cassa (stesso bancone); gli altri ognuno col suo */
-const blkGroup = (b, sid) => { const d = blkDept(b, sid); if (d !== "alt") return "TS"; const g = String(b.g || "").toUpperCase().replace(/\s+/g, ""); return g === "PE" || g === "GE" ? "PEGE" : g === "CS" || g === "CASS" ? "CSCASS" : g === "MAGA" || g === "MAGE" || g === "RMAG" ? "MAG" : g || "ALT"; };
+/* reparti logici (chi lavora insieme): Telefonia+Service, PE+GE, CS+Casse, TV+PC, Magazzino (tutti i MAG), Responsabili (REGIA).
+   Formazione e prove (TRAIN, antincendio…) non sono un reparto: quel giorno vedi i tuoi soliti colleghi e loro non vedono te */
+const SIGRP = {PE: "PEGE", GE: "PEGE", CS: "CSCASS", CASS: "CSCASS", TV: "TVPC", PC: "TVPC", MAG: "MAG", MAGA: "MAG", MAGE: "MAG", RMAG: "MAG", REGIA: "REGIA"};
+const sigKey = g => String(g || "").toUpperCase().replace(/[^A-Z]/g, "");
+const NEUTRAL = new Set(["TRAIN", "FORM", "FORMAZ", "ANTI", "ANTINC", "ANTINCENDIO", "INC", "AI", "PAI", "EVAC", "PROVA"]);
+const blkGroup = (b, sid) => { const d = blkDept(b, sid); if (d !== "alt") return "TS"; const k = sigKey(b.g); if (NEUTRAL.has(k) || k.startsWith("ANTI")) return "NEUTRO"; return SIGRP[k] || k || "ALT"; };
 /* reparti di una giornata, il principale per primo (più minuti) */
 function deptsOf(bl, sid){
   const k = {}; (bl || []).forEach(b => { const d = blkDept(b, sid); k[d] = (k[d] || 0) + toMin(b.e) - toMin(b.s); });
@@ -1502,13 +1539,15 @@ function deptsOf(bl, sid){
 }
 function deptOn(st, date){ const ds = deptsOf(sorted(rowsFor(date)[st.id]), st.id); return ds[0] || usual(st.id) || "none"; }
 const deptsLabel = (bl, sid) => { const k = {}; (bl || []).forEach(b => { const n = blkName(b, sid); k[n] = (k[n] || 0) + toMin(b.e) - toMin(b.s); }); return Object.keys(k).sort((a, b) => k[b] - k[a]).join(" e "); };
+/* in agenda contano Telefonia e Service: chi di solito lavora in altri reparti compare solo nei giorni in cui è da noi */
+const tsStaff = (st, worked) => worked || usualGroup(st.id) === "TS";
 function visibleStaff(date){
-  if (S.dept === "all") return S.staff;
+  if (S.dept === "all") return S.staff.filter(st => tsStaff(st, sorted(rowsFor(date)[st.id]).length));
   return S.staff.filter(st => { const bl = sorted(rowsFor(date)[st.id]); return bl.length ? deptsOf(bl, st.id).includes(S.dept) : (!usual(st.id) || usual(st.id) === S.dept); });
 }
 function visibleWeek(mon){
-  if (S.dept === "all") return S.staff;
   const days = [...Array(7)].map((_, i) => addDays(mon, i));
+  if (S.dept === "all") return S.staff.filter(st => tsStaff(st, days.some(d => sorted(rowsFor(d)[st.id]).length)));
   return S.staff.filter(st => { const worked = days.filter(d => sorted(rowsFor(d)[st.id]).length); return worked.length ? worked.some(d => deptsOf(sorted(rowsFor(d)[st.id]), st.id).includes(S.dept)) : (!usual(st.id) || usual(st.id) === S.dept); });
 }
 const deptLabel = () => S.dept === "tel" ? " di Telefonia" : S.dept === "srv" ? " di Service" : "";
@@ -2933,6 +2972,7 @@ const ICO = {
   idea: sv(`<path d="M9 18h6M10 21h4"/><path d="M12 3a6 6 0 0 0-3.6 10.8c.6.5 1 1.2 1 2V16h5.2v-.2c0-.8.4-1.5 1-2A6 6 0 0 0 12 3z"/>`),
   bug: sv(`<path d="M12 3 2.5 19.5h19z"/><path d="M12 10v4.5M12 17.2v.1"/>`),
   send: sv(`<path d="M21 3 10 14M21 3l-7 18-4-7-7-4z"/>`),
+  search: sv(`<circle cx="11" cy="11" r="7"/><path d="m20 20-3.6-3.6"/>`),
   today: sv(`<path d="M3.5 12a8.5 8.5 0 1 0 2.6-6.1L3.5 8.5"/><path d="M3.5 3.5v5h5"/><circle cx="12" cy="12" r="1.6" fill="currentColor" stroke="none"/>`),
   chev: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="m9 6 6 6-6 6"/></svg>`
 };
@@ -3545,9 +3585,14 @@ function heroDay(id, d){
       <span class="tk" style="left:0">${a / 60}</span><span class="tk" style="left:50%">${(a + W / 2) / 60 | 0}</span><span class="tk l" style="left:100%">${z / 60}</span></div>`;
   } else if (known(d)){ chip = isT ? "Riposo" : esc(relGap(d)); big = "Riposo"; meta = isT ? "Oggi non sei in turno. Goditela." : g > 0 ? "Quel giorno non sei in turno." : "Quel giorno eri a riposo."; }
   else { chip = isT ? "Non ancora caricati" : esc(relGap(d)); big = "—"; meta = isT ? "I turni di oggi non sono ancora stati caricati." : "I turni di quel giorno non sono ancora stati caricati."; }
-  const k = isT ? "Oggi" : bl.length ? "Il tuo turno" : "Il tuo giorno";
+  /* l'unica scheda per scorrere i giorni: frecce ai lati, al centro oggi o la data; negli altri giorni «Torna a oggi» */
   return `<section class="hero me-hero ${dCls(dept)}${isT ? "" : " silver"}${P.anim ? " in-" + P.anim : ""}" aria-label="Il tuo turno di ${isT ? "oggi" : esc(dateLong(d))}">
-      <div class="hero-k"><span class="hk-l is-today">${k}</span>${isT ? `<span class="chip-st">${chip}</span>` : ""}</div>
+      <div class="hero-nav">
+        <button type="button" class="hn-arr" data-act="me-dprev" aria-label="Giorno prima">${ICO.back}</button>
+        <div class="hn-c" aria-live="polite">${isT ? `<span class="hk-l is-today">Oggi</span>` : `<small>${esc(relGap(d))}</small><b>${esc(capitalize(dateLong(d)))}</b>`}</div>
+        <button type="button" class="hn-arr flip" data-act="me-dnext" aria-label="Giorno dopo">${ICO.back}</button>
+      </div>
+      ${isT ? (chip ? `<div class="hero-k"><span class="chip-st">${chip}</span></div>` : "") : `<div class="hero-k"><button type="button" class="hn-today" data-act="me-today">${ICO.today}Torna a oggi</button></div>`}
       <div class="hero-big">${big}</div>
       <div class="hero-meta">${esc(meta)}</div>${line}
     </section>`;
@@ -3555,24 +3600,34 @@ function heroDay(id, d){
 const heroToday = id => heroDay(id, todayStr());
 
 /* ---------- la mia area ---------- */
-/* «In turno»: si vedono solo i colleghi del reparto dove sono quel giorno (se sono al TV, chi c'è al TV);
-   dal menu si può passare al reparto dove sono di solito. Contano anche i colleghi che non sono in elenco (archivio del foglio) */
-const GRPN = {TS: "Telefonia e Service", PEGE: "PE e GE", CSCASS: "Centro servizi e Cassa", MAG: "Magazzino", ALT: "altro reparto"};
+/* «In turno»: ognuno vede i colleghi del reparto logico dove è quel giorno (se sei al TV, TV e PC).
+   Dal menu: PE o GE da soli, TV o PC da soli, il reparto di solito. I Responsabili (e Gerti) dal menu vedono tutti i reparti.
+   In formazione o a una prova vedi i tuoi soliti colleghi; loro non vedono te. Contano anche i colleghi che non sono in elenco */
+const GRPN = {TS: "Telefonia e Service", PEGE: "Piccolo e Grande elettrodomestico", CSCASS: "Centro servizi e Casse", TVPC: "TV e PC", MAG: "Magazzino", REGIA: "Responsabili", NEUTRO: "Formazione", ALT: "Altro reparto"};
+const GRP_ORDER = ["TS", "PEGE", "CSCASS", "TVPC", "MAG", "REGIA"];
+const GRP_SUB = {PEGE: [["PE", "Solo Piccolo elettrodomestico"], ["GE", "Solo Grande elettrodomestico"]], TVPC: [["TV", "Solo TV"], ["PC", "Solo PC"]]};
 const grpName = k => GRPN[k] || sigName(k) || k;
 /* il reparto dove lavoro di più negli ultimi turni (non basta un'ora in Telefonia per diventare «di solito Telefonia») */
-function usualGroup(id){
-  const m = {};
-  Object.values({...S.hist, ...S.shifts, ...P.shifts}).forEach(doc => { const bl = doc && doc.rows && doc.rows[id];
-    (Array.isArray(bl) ? bl : []).forEach(b => { if (!b || !b.s || !b.e) return; const g = blkGroup(b, id); m[g] = (m[g] || 0) + Math.max(0, toMin(b.e) - toMin(b.s)); }); });
-  return Object.keys(m).sort((a, b) => m[b] - m[a])[0] || (usual(id) ? "TS" : S.usualAlt && S.usualAlt[id] ? blkGroup({d: "alt", g: S.usualAlt[id]}, id) : "TS");
-}
-function matesGroups(id, d, dayBl){
-  const opts = [], label = gs => [...gs].map(grpName).join(", ");
-  const dayG = new Set(sorted(dayBl).map(b => blkGroup(b, id))), uG = usualGroup(id);
-  const same = dayG.size === 1 && dayG.has(uG);
-  if (dayG.size) opts.push({v: "oggi", g: dayG, n: label(dayG), l: `${same ? "Il mio reparto" : d === todayStr() ? "Oggi sono in" : "Quel giorno sono in"}: ${label(dayG)}`});
-  if (!same) opts.push({v: "solito", g: new Set([uG]), n: grpName(uG), l: `Di solito: ${grpName(uG)}`});
-  return {opts};
+const usualGroup = id => (S.ugrp && S.ugrp[id]) || ((S.staffAll || []).find(x => x.id === id) || {}).grp || "TS";
+/* nome da mostrare: chi non ha ancora fatto il primo accesso compare con nome e cognome del foglio */
+const showName = st => !st ? "" : (String(st.id).startsWith("ext:") || !st.acc) ? (st.full || st.name) : st.name;
+function matesOptions(id, d, dayBl, people){
+  const boss = isAdmin(), uG = usualGroup(id);
+  const dayG = [...new Set(sorted(dayBl).map(b => blkGroup(b, id)).filter(g => g !== "NEUTRO"))];
+  const main = boss ? ["TS"] : dayG.length ? dayG : [uG];
+  const all = boss || main.includes("REGIA");
+  const opts = [], add = (v, l, test, n) => { if (!opts.some(o => o.v === v)) opts.push({v, l, test, n: n == null ? l : n}); };
+  add("g:" + main.join("+"), main.map(grpName).join(", "), (b, sid) => main.includes(blkGroup(b, sid)));
+  if (!all) main.forEach(g => (GRP_SUB[g] || []).forEach(([k, l]) => add("s:" + k, l, (b, sid) => blkDept(b, sid) === "alt" && sigKey(b.g) === k, sigName(k))));
+  if (!all && !main.includes(uG)) add("g:" + uG, `Di solito: ${grpName(uG)}`, (b, sid) => blkGroup(b, sid) === uG, grpName(uG));
+  /* tutti possono vedere quale responsabile è in turno */
+  if (!all){ add("g:REGIA", "Responsabili in turno", (b, sid) => blkGroup(b, sid) === "REGIA", "Regia"); opts[opts.length - 1].e = "Nessun responsabile segnato"; }
+  if (all){
+    const here = new Set(); people.forEach(x => x.bl.forEach(b => { const g = blkGroup(b, x.st.id); if (g !== "NEUTRO" && g !== "ALT") here.add(g); }));
+    [...GRP_ORDER, ...[...here].filter(g => !GRP_ORDER.includes(g)).sort()].forEach(g => add("g:" + g, grpName(g), (b, sid) => blkGroup(b, sid) === g));
+    add("tutti", "Tutto il negozio", () => true, "");
+  }
+  return opts;
 }
 /* chi lavora quel giorno: i balordi in elenco e quelli del foglio messi da parte (non hanno l'accesso né un codice) */
 function matesPeople(id, d){
@@ -3583,7 +3638,7 @@ function matesPeople(id, d){
     if (!x || !x.n || !Array.isArray(x.bl) || !x.bl.length) return;
     const xw = words(x.n), m = all.find(st => { const fw = words(st.full || st.name); return fw.length >= 2 && fw.every(w => xw.includes(w)); });
     if (m){ if (m.id === id || m.hide || has.has(m.id) || !staffById(m.id)) return; has.add(m.id); out.push({st: m, bl: x.bl}); return; }
-    out.push({st: {id: "ext:" + slug, name: x.n}, bl: x.bl});
+    out.push({st: {id: "ext:" + slug, name: x.n, full: x.n}, bl: x.bl});
   });
   return out;
 }
@@ -3595,7 +3650,7 @@ function renderMe(){
     return;
   }
   const st = staffById(id);
-  const d = viewDay(), isT = d === t, dayBl = sorted(myRows(d, id)), nx = nextShift(id, d);
+  const d = viewDay(), isT = d === t, dayBl = sorted(myRows(d, id));
   const today = dayBl;  // il giorno guardato (oggi se non sto sfogliando)
   const todayD = deptsOf(dayBl, id), dept = todayD[0] || usual(id) || "tel";
   const pill = !isT ? "" : dayBl.length ? `<span class="pill ${dCls(todayD[0])}">${esc(relShort(d))} ${esc(deptsLabel(dayBl, id).split(" e ")[0])}</span>`
@@ -3604,12 +3659,11 @@ function renderMe(){
   const ap = myAppts(id, isT ? null : d);
   /* colleghi in turno: per primi quelli del reparto dove sono quel giorno (se sono al TV, chi c'è al TV);
      dal menu a tendina: il mio reparto di solito, gli altri reparti di quel giorno o tutto il negozio */
-  const mt = matesGroups(id, d, dayBl);
-  const pick = P.mSel && P.mSel.d === d && mt.opts.some(o => o.v === P.mSel.v) ? P.mSel.v : mt.opts[0].v;
-  const pickO = mt.opts.find(o => o.v === pick) || {g: new Set(["TS"]), n: grpName("TS")}, pickG = pickO.g;
-  const ours = (bl, sid) => sorted(bl).filter(b => !pickG || pickG.has(blkGroup(b, sid)));
-  const mates = matesPeople(id, d).map(x => ({st: x.st, bl: ours(x.bl, x.st.id)})).filter(x => x.bl.length).sort((a, b) => toMin(a.bl[0].s) - toMin(b.bl[0].s));
-  const mtPick = known(d) && mt.opts.length > 1 ? `<label class="mt-pick"><select data-mates-d="${d}" aria-label="Quale reparto vedere">${mt.opts.map(o => `<option value="${esc(o.v)}" ${o.v === pick ? "selected" : ""}>${esc(o.l)}</option>`).join("")}</select></label>` : "";
+  const ppl = matesPeople(id, d), opts = matesOptions(id, d, dayBl, ppl);
+  const pick = P.mSel && P.mSel.d === d && opts.some(o => o.v === P.mSel.v) ? P.mSel.v : opts[0].v;
+  const pickO = opts.find(o => o.v === pick);
+  const mates = ppl.map(x => ({st: x.st, bl: sorted(x.bl).filter(b => pickO.test(b, x.st.id))})).filter(x => x.bl.length).sort((a, b) => toMin(a.bl[0].s) - toMin(b.bl[0].s) || showName(a.st).localeCompare(showName(b.st)));
+  const mtPick = known(d) && opts.length > 1 ? `<label class="mt-pick"><select data-mates-d="${d}" aria-label="Quale reparto vedere">${opts.map(o => `<option value="${esc(o.v)}" ${o.v === pick ? "selected" : ""}>${esc(o.l)}</option>`).join("")}</select></label>` : "";
   const wdays = [...Array(7)].map((_, i) => addDays(P.week, i));
   const wTot = wdays.reduce((s, d) => s + mins(myRows(d, id)), 0);
   const wMaxDay = Math.max(9 * 60, ...wdays.map(d => mins(myRows(d, id))));
@@ -3625,31 +3679,15 @@ function renderMe(){
   const R = 36, C = 2 * Math.PI * R, frac = contr ? Math.min(1, wTot / (contr * 60)) : (wTot ? 1 : 0);
   const cmp = !contr ? "Puoi impostare le ore da contratto nelle impostazioni" : wTot === contr * 60 ? `In linea con il contratto (${contr} h)` : wTot > contr * 60 ? `${hm(wTot - contr * 60)} in più del contratto (${contr} h)` : `${hm(contr * 60 - wTot)} in meno del contratto (${contr} h)`;
   const col = d => d === "alt" ? "ink-3" : d;
-  /* frecce per scorrere i giorni (solo dopo aver aperto un altro giorno) */
-  const dnav = P.browse ? `<nav class="me-dnav${isT ? "" : " silver"}" aria-label="Scorri i giorni">
-      <button class="dn-arr" data-act="me-dprev" aria-label="Giorno prima">${ICO.back}</button>
-      <div class="dn-c" aria-live="polite"><b>${esc(capitalize(dateLong(d)))}</b>${isT ? `<small><i class="dn-dot"></i>Oggi</small>` : ""}</div>
-      <button class="dn-arr flip" data-act="me-dnext" aria-label="Giorno dopo">${ICO.back}</button>
-    </nav>` : "";
-  /* "Prossimo turno": si tocca e apre quel giorno */
-  const nxGo = nx ? nx.d : addDays(d, 1);
-  const nxLbl = nx ? `Prossimo turno: ${dateLong(nx.d)}, ${nx.bl.map(fmtR).join(" e ")}. Tocca per aprire il giorno` : "Nessun prossimo turno segnato. Tocca per sfogliare i giorni";
-  const nxCard = `<button type="button" class="card next-c silver${isT ? " live" : ""}" data-act="me-day" data-d="${nxGo}" aria-label="${esc(nxLbl)}">
-      <span class="nc-h"><span class="nc-t">Prossimo turno${isT ? "" : `<small>dopo ${esc(dayShort(d).toLowerCase())}</small>`}</span><span class="go">${nx ? "Apri" : "Sfoglia"}${ICO.chev}</span></span>
-      ${nx ? `<span class="next"><b>${nx.bl.map(b => `<span class="nb">${fmtR(b)}</span>`).join(" e ")}</b><span>${esc(capitalize(dateLong(nx.d)))}</span></span><span class="mut">${esc(deptsLabel(nx.bl, id))} · ${hm(mins(nx.bl))}${pauseText(nx.bl).length ? ` · pausa ${pauseText(nx.bl).join(", ")}` : ""}</span>`
-        : `<span class="mut">${isT ? "Nessun turno segnato nei prossimi giorni: appena vengono caricati li trovi qui." : "Nessun turno segnato dopo questo giorno."}</span>`}
-    </button>`;
   const matesTitle = isT ? "In turno oggi" : `In turno ${relShort(d) === "Domani" || relShort(d) === "Ieri" ? relShort(d).toLowerCase() : dayShort(d).toLowerCase()}`;
-  const matesCard = mates.length || !isT || mtPick ? `<section class="card mates-c${isT ? "" : " silver"}${P.anim ? " in-" + P.anim : ""}"><h2>${esc(matesTitle)}${mates.length ? `<small>${mates.length}</small>` : ""}</h2>${mtPick}${mates.length ? `<ul class="mates">${mates.map(x => { const w = dayBl.some(a => x.bl.some(b => blkGroup(a, id) === blkGroup(b, x.st.id) && toMin(a.s) < toMin(b.e) && toMin(b.s) < toMin(a.e))); return `<li><span class="av ${dCls(deptsOf(x.bl, x.st.id)[0])}">${avIn(x.st.id, x.st.name)}</span><b>${esc(x.st.name)}</b><span class="num">${x.bl.map(fmtR).join(", ")}</span><small style="color:var(--ink-3)">${esc(deptsLabel(x.bl, x.st.id))}${w ? ` · <span style="color:var(--ok)">con te</span>` : ""}</small></li>`; }).join("")}</ul>`
-      : `<p class="mut">${known(d) ? `Nessun altro collega ${pickO.n ? "in " + esc(pickO.n) + " " : ""}${isT ? "oggi" : "quel giorno"}.` : "I turni di quel giorno non sono ancora stati caricati."}</p>`}</section>` : "";
+  const matesCard = mates.length || !isT || mtPick ? `<section class="card mates-c${isT ? "" : " silver"}${P.anim ? " in-" + P.anim : ""}"><h2>${esc(matesTitle)}${mates.length ? `<small>${mates.length}</small>` : ""}</h2>${mtPick}${mates.length ? `<ul class="mates">${mates.map(x => { const w = dayBl.some(a => x.bl.some(b => blkGroup(a, id) === blkGroup(b, x.st.id) && toMin(a.s) < toMin(b.e) && toMin(b.s) < toMin(a.e))); return `<li><span class="av ${dCls(deptsOf(x.bl, x.st.id)[0])}">${avIn(x.st.id, showName(x.st))}</span><b>${esc(showName(x.st))}</b><span class="num">${x.bl.map(fmtR).join(", ")}</span><small style="color:var(--ink-3)">${esc(deptsLabel(x.bl, x.st.id))}${w ? ` · <span style="color:var(--ok)">con te</span>` : ""}</small></li>`; }).join("")}</ul>`
+      : `<p class="mut">${known(d) ? `${pickO.e || `Nessun altro collega ${pickO.n ? "in " + esc(pickO.n) + " " : ""}`.trim()} ${isT ? "oggi" : "quel giorno"}.` : "I turni di quel giorno non sono ancora stati caricati."}</p>`}</section>` : "";
   el.innerHTML = `<div class="ph${P.browse ? " browsing" : ""}">
     <div class="ph-top">${isAdmin() ? `<button class="btn back ph-back" data-act="nav" data-to="agenda">${ICO.back}Agenda</button>` : ""}<span class="ph-date">${esc(capitalize(dateLong(t)))}</span>${msgBtn()}${gearBtn()}</div>
     <header class="me-id"><label class="av av-pick ${dCls(todayD[0] || usual(id))}" title="Cambia la foto profilo">${avIn(id, st.name)}<i class="av-cam" aria-hidden="true">${ICO.cam}</i><input type="file" accept="image/*" data-avatar="${id}" aria-label="Cambia la foto profilo"></label>
       <div><small class="me-gr">${greet()}</small><h1>${esc(firstName(st))}</h1></div>${pill}</header>
     ${pushCardHtml("me")}
-    ${dnav}
     ${heroDay(id, d)}
-    ${isT ? nxCard : ""}
     ${ap.length ? `<section class="card"><h2>Appuntamenti da fare<small>${ap.length}</small></h2>
       <ul class="myap">${ap.map(a => `<li><div class="ma">
           <span class="ma-w">${isT ? `<b>${esc(relDay(a.date))}</b><span>${a.time ? esc(fmtClock(a.time)) : "senza ora"}</span>` : `<b>${a.time ? esc(fmtClock(a.time)) : "Senza ora"}</b>`}</span>
@@ -3659,8 +3697,8 @@ function renderMe(){
     ${matesCard}
     <section class="card">
       <div class="me-nav"><button class="icon-btn" data-act="me-wprev" aria-label="Settimana prima">${ICO.back}</button><h2>Settimana ${esc(wLabel)}</h2><button class="icon-btn flip" data-act="me-wnext" aria-label="Settimana dopo">${ICO.back}</button></div>
-      <div class="strip">${wdays.map(x => { const bl = sorted(myRows(x, id)), dt = pd(x), mm = mins(bl); return `<button type="button" class="sd ${dCls(deptsOf(bl, id)[0] || dept)} ${x === t ? "today" : ""} ${P.browse && x === d && !isT ? "vw" : ""} ${!bl.length && !known(x) ? "unk" : ""}" data-act="me-day" data-d="${x}" aria-label="${esc(capitalize(dateLong(x)))}${bl.length ? ", " + bl.map(fmtR).join(" e ") : ""}" ${P.browse && x === d ? `aria-current="date"` : ""}><span class="dl">${GS[dt.getDay()].toUpperCase()}</span><span class="dn">${dt.getDate()}</span><span class="bar"><i style="height:${Math.round(mm / wMaxDay * 100)}%"></i></span><span class="hh">${mm ? hmShort(mm) : ""}</span></button>`; }).join("")}</div>
-      <ul class="daylist">${wdays.map(d0 => { const d = d0, bl = sorted(myRows(d, id)), dt = pd(d), oth = bl.some(b => blkDept(b, id) === "alt"); return `<li class="${d === t ? "is-today" : ""} ${P.browse && d === viewDay() && d !== t ? "is-view" : ""} ${bl.length ? "" : "off"}" data-act="me-day" data-d="${d}"><span class="d">${GS[dt.getDay()]} ${dt.getDate()}</span><span class="h">${bl.length ? nbList(bl) + (oth ? `<small class="dl-dep">${esc(deptsLabel(bl, id))}</small>` : "") : known(d) ? "Riposo" : "Non ancora caricato"}</span><span class="t">${bl.length ? hm(mins(bl)) : ""}</span></li>`; }).join("")}</ul>
+      <div class="strip">${wdays.map(x => { const bl = sorted(myRows(x, id)), dt = pd(x), mm = mins(bl); return `<div class="sd ${dCls(deptsOf(bl, id)[0] || dept)} ${x === t ? "today" : ""} ${P.browse && x === d && !isT ? "vw" : ""} ${!bl.length && !known(x) ? "unk" : ""}" role="img" aria-label="${esc(capitalize(dateLong(x)))}${bl.length ? ", " + bl.map(fmtR).join(" e ") : ""}"><span class="dl">${GS[dt.getDay()].toUpperCase()}</span><span class="dn">${dt.getDate()}</span><span class="bar"><i style="height:${Math.round(mm / wMaxDay * 100)}%"></i></span><span class="hh">${mm ? hmShort(mm) : ""}</span></div>`; }).join("")}</div>
+      <ul class="daylist">${wdays.map(d0 => { const d = d0, bl = sorted(myRows(d, id)), dt = pd(d), oth = bl.some(b => blkDept(b, id) === "alt"); return `<li class="${d === t ? "is-today" : ""} ${P.browse && d === viewDay() && d !== t ? "is-view" : ""} ${bl.length ? "" : "off"}"><span class="d">${GS[dt.getDay()]} ${dt.getDate()}</span><span class="h">${bl.length ? nbList(bl) + (oth ? `<small class="dl-dep">${esc(deptsLabel(bl, id))}</small>` : "") : known(d) ? "Riposo" : "Non ancora caricato"}</span><span class="t">${bl.length ? hm(mins(bl)) : ""}</span></li>`; }).join("")}</ul>
       <div class="wtot"><svg class="ring" viewBox="0 0 84 84" aria-hidden="true"><circle class="bgc" cx="42" cy="42" r="${R}"/><circle class="fg" cx="42" cy="42" r="${R}" style="stroke:var(--${col(dept)})" stroke-dasharray="${(C * frac).toFixed(1)} ${C.toFixed(1)}"/></svg>
         <div><span>Monte ore della settimana</span><b>${hm(wTot)}</b><span>${esc(cmp)}</span></div></div>
       ${P.week !== monday(t) && !P.browse ? `<button class="btn ghost" data-act="me-wtoday">Torna a questa settimana</button>` : ""}
@@ -3673,11 +3711,11 @@ function renderMe(){
     </section>` : ""}
     <p class="foot">In caso di dubbio fa fede il foglio orari appeso in negozio.</p>
   </div>
-  ${P.browse && !isT ? `<button type="button" class="today-fab" data-act="me-today">${ICO.today}Torna a oggi</button>` : ""}`;
+`;
 }
 
 /* ---------- impostazioni (ingranaggio) ---------- */
-const AD = {members: null, invites: null, logins: null, loading: false, showKey: false, test: "", fresh: {}};
+const AD = {members: null, invites: null, logins: null, loading: false, showKey: false, test: "", fresh: {}, accDept: "TS", accQ: ""};
 /* accessi, codici e nomi: sempre in diretta, così vedi subito quando un collega entra */
 function loadAdminData(){
   if (AD.subs || !S.db || !isAdmin()) return; AD.loadErr = false;
@@ -3691,7 +3729,7 @@ function loadAdminData(){
     if (prev){ const old = new Set(prev.map(m => m.id));
       got.members.filter(m => !old.has(m.id)).forEach(m => { const st = m.staffId && staffById(m.staffId);
         toast(m.role === "banco" ? "✓ PC del banco collegato" : `✓ ${st ? firstName(st) : "Un collega"} ha fatto l'accesso`); }); }
-    AD.members = got.members; AD.invites = got.invites; AD.logins = got.logins; AD.loadErr = false;
+    AD.members = got.members; AD.invites = got.invites; AD.logins = got.logins; AD.loadErr = false; syncAcc();
     refreshSet();
   }, fail));
 }
@@ -3701,6 +3739,33 @@ function refreshSet(){ if (ROUTE !== "set") return; if (typingIn("#scr-set")){ A
 document.addEventListener("focusout", () => setTimeout(() => { if (AD.pending) refreshSet(); }, 0));
 const rnd = n => { let s = ""; const a = new Uint32Array(n); crypto.getRandomValues(a); a.forEach(x => s += (x % 10)); return s; };
 const fmtExp = ms => { const d = new Date(ms); return `${d.getDate()} ${MM[d.getMonth()].slice(0, 3)}`; };
+/* colleghi letti dai fogli ma non in elenco (archivio): nome intero e reparto dove lavorano di più */
+function archivePeople(){
+  const all = S.staffAll && S.staffAll.length ? S.staffAll : S.staff, out = {};
+  Object.values({...S.hist, ...S.shifts}).forEach(doc => Object.values((doc && doc.ext) || {}).forEach(x => {
+    if (!x || !twoWords(x.n)) return; const k = norm(x.n);
+    const o = out[k] = out[k] || {name: titleCase(x.n), m: {}};
+    (Array.isArray(x.bl) ? x.bl : []).forEach(b => { const g = blkGroup(b, ""); if (g !== "NEUTRO") o.m[g] = (o.m[g] || 0) + Math.max(0, toMin(b.e) - toMin(b.s)); });
+  }));
+  return Object.values(out).filter(o => !all.some(st => { const fw = words(st.full || st.name), xw = words(o.name); return fw.length >= 2 && fw.every(w => xw.includes(w)); }))
+    .map(o => ({name: o.name, grp: Object.keys(o.m).sort((a, b) => o.m[b] - o.m[a])[0] || "ALT"}));
+}
+const accIn = (g, k) => k === "tutti" || g === k || (k === "ALTRI" && !GRP_ORDER.includes(g));
+/* filtro della lista accessi: la ricerca guarda in tutti i reparti */
+function accFilter(){
+  const box = $("#scr-set .acc"); if (!box) return; const q = norm(AD.accQ); let n = 0;
+  box.querySelectorAll("li").forEach(li => { const on = q ? li.dataset.q.includes(q) : accIn(li.dataset.grp, AD.accDept); li.hidden = !on; if (on) n++; });
+  const none = $("#scr-set .acc-none"); if (none) none.hidden = n > 0;
+  const hint = $("#scr-set .acc-hint"); if (hint) hint.hidden = !q;
+  const dep = $("#accDept"); if (dep) dep.closest("label").classList.toggle("off", !!q);
+}
+/* chi ha fatto il primo accesso: lo segno sul balordo, così i colleghi vedono il nome corto solo per chi ha l'app */
+function syncAcc(){
+  if (!isAdmin() || !AD.members || !S.db) return;
+  const ops = (S.staffAll || S.staff).filter(st => !!st.acc !== AD.members.some(m => m.staffId === st.id && m.role !== "banco"))
+    .map(st => ({op: "update", path: "staff/" + st.id, data: {acc: !st.acc}}));
+  if (ops.length) S.db.batch(ops).catch(() => {});
+}
 function renderSet(){
   const el = $("#scr-set"); if (!el || ROUTE !== "set") return;
   const id = meId(), st = id ? staffById(id) : null, contr = st ? Number(st.contratto) || 0 : 0;
@@ -3712,17 +3777,33 @@ function renderSet(){
       const now = Date.now();
       const act = sid => AD.members.some(m => m.staffId === sid);
       const inv = sid => AD.invites.filter(i => i.role === "user" && i.staffId === sid && (i.exp || 0) > now).sort((a, b) => (b.exp || 0) - (a.exp || 0))[0];
-      /* tu sempre in cima, poi gli altri in ordine alfabetico */
-      const staff = [...S.staff].sort((a, b) => (b.id === id) - (a.id === id) || a.name.localeCompare(b.name));
+      /* tutti i colleghi, anche quelli letti dai fogli e non ancora in elenco; divisi per reparto, tu sempre in cima */
+      const rows = [...S.staff.map(s => { const a = act(s.id) || s.id === id, full = knownFull(s) || s.full || "";
+          return {s, a, i: inv(s.id), me: s.id === id, grp: usualGroup(s.id), name: a ? s.name : (full || s.name), full}; }),
+        ...archivePeople().map(x => ({ext: true, grp: x.grp, name: x.name}))]
+        .sort((a, b) => (b.me ? 1 : 0) - (a.me ? 1 : 0) || a.name.localeCompare(b.name));
+      const cnt = k => rows.filter(r => accIn(r.grp, k)).length;
+      const deps = [...GRP_ORDER, "ALTRI", "tutti"].filter(k => k === "tutti" || k === "TS" || cnt(k));
+      if (!deps.includes(AD.accDept)) AD.accDept = "TS";
       const banco = AD.invites.find(i => i.role === "banco"), bancos = AD.members.filter(m => m.role === "banco");
       adm = `
     <section class="card"><h2>${ICO.users}Accessi dei balordi</h2>
-      <p class="mut">Per far entrare un collega scrivi il suo <b>nome e cognome</b>, crea il <b>codice di primo accesso</b> e daglielo: apre l'app, tocca «Primo accesso», scrive nome, cognome e codice e sceglie la sua password. Il codice vale 14 giorni e si usa una volta.</p>
-      <ul class="acc">${staff.map(s => { const a = act(s.id), i = inv(s.id), me = s.id === id, full = knownFull(s) || (i && i.name) || "";
-        return `<li><span class="av ${dCls(usual(s.id))}">${avIn(s.id, s.name)}</span><div class="acc-t"><b>${esc(s.name)}${me ? " (tu)" : ""}</b>
-          ${a || me || twoWords(full) ? (full && norm(full) !== norm(s.name) ? `<small class="acc-full-t">${esc(full)}</small>` : "") : `<input class="acc-full" data-full="${esc(s.id)}" value="${esc(twoWords(full) ? full : "")}" placeholder="Nome e cognome" aria-label="Nome e cognome di ${esc(s.name)}" maxlength="60" autocapitalize="words" spellcheck="false">`}
-          <small>${a ? "Accesso attivo" : i ? `Codice <b class="num code">${esc(i.id)}</b> · scade il ${fmtExp(i.exp)}` : "Nessun accesso"}</small></div>
+      <p class="mut">Scegli il reparto o cerca un nome. Per far entrare un collega crea il <b>codice di primo accesso</b> e daglielo: apre l'app, tocca «Primo accesso», scrive nome, cognome e codice e sceglie la sua password. Il codice vale 14 giorni.</p>
+      <div class="acc-tools">
+        <label class="acc-q">${ICO.search}<input type="search" id="accQ" value="${esc(AD.accQ)}" placeholder="Cerca un collega" autocomplete="off" spellcheck="false" aria-label="Cerca un collega"></label>
+        <label class="mt-pick acc-dep"><select id="accDept" aria-label="Reparto">${deps.map(k => `<option value="${k}" ${k === AD.accDept ? "selected" : ""}>${k === "tutti" ? "Tutti i reparti" : k === "ALTRI" ? "Altri reparti" : esc(grpName(k))} (${k === "tutti" ? rows.length : cnt(k)})</option>`).join("")}</select></label>
+      </div>
+      <p class="acc-hint" hidden>${ICO.search}Cerco in tutti i reparti</p>
+      <ul class="acc">${rows.map(r => { const q = esc(norm([r.name, r.s && r.s.name, r.full].filter(Boolean).join(" ")));
+        if (r.ext) return `<li data-grp="${esc(r.grp)}" data-q="${q}"><span class="av none">${esc(initials(r.name))}</span><div class="acc-t"><b>${esc(r.name)}</b>
+          <small>${esc(grpName(r.grp))} · <span class="acc-new">Non è ancora in elenco</span></small></div>
+          <div class="acc-a"><button class="btn" data-act="adm-code-ext" data-name="${esc(r.name)}" data-grp="${esc(r.grp)}">Crea codice</button></div></li>`;
+        const s = r.s, a = r.a, i = r.i, me = r.me, full = r.full || (i && i.name) || "";
+        return `<li data-grp="${esc(r.grp)}" data-q="${q}"><span class="av ${dCls(usual(s.id))}">${avIn(s.id, r.name)}</span><div class="acc-t"><b>${esc(r.name)}${me ? " (tu)" : ""}</b>
+          ${a || me || twoWords(full) ? (a && full && norm(full) !== norm(r.name) ? `<small class="acc-full-t">${esc(full)}</small>` : "") : `<input class="acc-full" data-full="${esc(s.id)}" value="${esc(twoWords(full) ? full : "")}" placeholder="Nome e cognome" aria-label="Nome e cognome di ${esc(s.name)}" maxlength="60" autocapitalize="words" spellcheck="false">`}
+          <small>${esc(grpName(r.grp))} · ${a ? `<span class="acc-on">Accesso attivo</span>` : i ? `Codice <b class="num code">${esc(i.id)}</b> · scade il ${fmtExp(i.exp)}` : "Nessun accesso"}</small></div>
           <div class="acc-a">${me ? "" : a ? `<button class="btn ghost" data-act="adm-reset" data-id="${esc(s.id)}" data-confirm="Sì, azzera">Azzera accesso</button>` : `<button class="btn" data-act="adm-code" data-id="${esc(s.id)}">${i ? "Nuovo codice" : "Crea codice"}</button>`}</div></li>`; }).join("")}</ul>
+      <p class="mut acc-none" hidden>Nessun collega trovato.</p>
       <button class="btn" data-act="staff">${ICO.users}Aggiungi, rinomina o togli balordi</button>
     </section>
     <section class="card"><h2>${ICO.spark}Indirizzo dell'app</h2>
@@ -3783,6 +3864,7 @@ function renderSet(){
     <section class="card"><button class="btn out" data-act="logout">${ICO.out}${isBanco() ? "Scollega questo PC" : "Esci dalla mia area"}</button></section>
     <p class="foot">Turni Arese · versione ${esc(((document.querySelector('script[src*="firebase-config.js"]') || {}).src || "").split("v=")[1] || "?")}${BK.mode === "demo" ? " · modalità prova: i dati restano su questo dispositivo" : ""}</p>
   </div>`;
+  accFilter();
 }
 async function adminAct(act, el){
   if (!isAdmin() || !needDb()) return;
@@ -3799,6 +3881,17 @@ async function adminAct(act, el){
         {op: "update", path: "staff/" + sid, data: {full}},
         {op: "set", path: "invites/" + code, data: {role: "user", staffId: sid, name: full, exp: Date.now() + 14 * 864e5, at: new Date().toISOString()}}]);
       toast(`Codice per ${full}: ${code}`); renderSet(); if (norm(full) !== norm(st.full || "")) claimArchive(sid, full, true).then(n => { if (n) setTimeout(() => toast(`Trovati i turni di ${full} già letti: ${n} ${n === 1 ? "giorno" : "giorni"}`), 5000); }); return;
+    }
+    if (act === "adm-code-ext"){
+      const full = titleCase(String(el.dataset.name || "").trim().replace(/\s+/g, " ")), grp = el.dataset.grp || "";
+      if (!twoWords(full)) return;
+      const all = S.staffAll || S.staff, twin = all.find(x => sameName(x.full || x.name, full));
+      if (twin && twin.hide){ toast(`${full} è nascosto in elenco: rendilo visibile in Balordi.`); return; }
+      el.disabled = true;
+      const sid = twin ? twin.id : (await S.db.collection("staff").add({name: full, full, order: all.length, ...(grp ? {grp} : {})})).id;
+      let code; for (let i = 0; i < 5; i++){ code = rnd(6); if (!(await S.db.doc("invites/" + code).get()).exists) break; }
+      await S.db.batch([{op: "set", path: "invites/" + code, data: {role: "user", staffId: sid, name: full, exp: Date.now() + 14 * 864e5, at: new Date().toISOString()}}]);
+      toast(`Codice per ${full}: ${code}`); claimArchive(sid, full, true); return renderSet();
     }
     if (act === "adm-reset"){
       if (!armed(el)) return;
@@ -4276,6 +4369,7 @@ document.addEventListener("click", async e => {
   }
 });
 document.addEventListener("input", e => {
+  if (e.target && e.target.id === "accQ"){ AD.accQ = e.target.value; return accFilter(); }
   if (e.target && e.target.id === "upPaste"){ U.paste = e.target.value; return; }
   const id = e.target.id, map = {lgName: "name", lgPw: "pw", lgPw2: "pw2", lgCode: "code"};
   if (map[id]) LG.v[map[id]] = e.target.value;
@@ -4296,6 +4390,7 @@ document.addEventListener("submit", async e => {
 });
 document.addEventListener("change", async e => {
   const el = e.target;
+  if (el.id === "accDept"){ AD.accDept = el.value; AD.accQ = ""; const q = $("#accQ"); if (q) q.value = ""; return accFilter(); }
   if (el.dataset && el.dataset.matesD){ P.mSel = {d: el.dataset.matesD, v: el.value}; return renderMe(); }
   if (el.dataset && el.dataset.avatar && el.files && el.files[0]){ const f = el.files[0]; el.value = ""; return openCropper(f, el.dataset.avatar); }
   if (el.dataset && "bgPick" in el.dataset && el.files && el.files[0]){ const f = el.files[0]; el.value = ""; return pickBg(f); }
