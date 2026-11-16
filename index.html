@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>Turni Arese</title>
-<!-- versione 2026.11.16-49 -->
+<!-- versione 2026.11.16-50 -->
 <meta name="description" content="Turni e agenda del reparto Telefonia &amp; Service, MediaWorld Arese">
 <meta name="theme-color" content="#FFFFFF" media="(prefers-color-scheme: light)">
 <meta name="theme-color" content="#0B0F17" media="(prefers-color-scheme: dark)">
@@ -1337,7 +1337,7 @@ function qrSvg(text, color = "#0B1220", bg = "#FFFFFF") {
 if (typeof module !== "undefined") module.exports = { QRGEN, qrSvg };
 
 </script>
-<script src="firebase-config.js?v=2026.11.16-49"></script>
+<script src="firebase-config.js?v=2026.11.16-50"></script>
 <script>
 (() => {
 "use strict";
@@ -3555,22 +3555,37 @@ function heroDay(id, d){
 const heroToday = id => heroDay(id, todayStr());
 
 /* ---------- la mia area ---------- */
-/* reparti per «In turno»: dove sono quel giorno (prima scelta), il mio di solito, gli altri reparti di quel giorno, tutto il negozio */
+/* «In turno»: si vedono solo i colleghi del reparto dove sono quel giorno (se sono al TV, chi c'è al TV);
+   dal menu si può passare al reparto dove sono di solito. Contano anche i colleghi che non sono in elenco (archivio del foglio) */
 const GRPN = {TS: "Telefonia e Service", PEGE: "PE e GE", CSCASS: "Centro servizi e Cassa", MAG: "Magazzino", ALT: "altro reparto"};
 const grpName = k => GRPN[k] || sigName(k) || k;
-function matesGroups(id, d, dayBl, rowsT){
-  const opts = [], seen = new Set();
-  const label = gs => [...gs].map(grpName).join(", ");
-  const add = (v, gs, pre) => { const key = [...gs].sort().join("+"); if (seen.has(key)) return; seen.add(key); opts.push({v, g: gs, n: label(gs), l: pre ? `${pre}: ${label(gs)}` : label(gs)}); };
-  const dayG = new Set(sorted(dayBl).map(b => blkGroup(b, id)));
-  const uG = usual(id) ? "TS" : S.usualAlt && S.usualAlt[id] ? blkGroup({d: "alt", g: S.usualAlt[id]}, id) : "TS";
-  const sameAsUsual = dayG.size === 1 && dayG.has(uG);
-  if (dayG.size) add("oggi", dayG, sameAsUsual ? "Il mio reparto" : d === todayStr() ? "Oggi sono in" : "Quel giorno sono in");
-  add("solito", new Set([uG]), "Di solito");
-  const others = new Set(); Object.entries(rowsT).forEach(([k, bl]) => { if (k !== id && staffById(k)) (bl || []).forEach(b => others.add(blkGroup(b, k))); });
-  [...others].sort((a, b) => (a === "TS" ? -1 : b === "TS" ? 1 : grpName(a).localeCompare(grpName(b)))).forEach(g => add("g:" + g, new Set([g])));
-  if (others.size > 1) opts.push({v: "tutti", g: null, n: "", l: "Tutto il negozio"});
+/* il reparto dove lavoro di più negli ultimi turni (non basta un'ora in Telefonia per diventare «di solito Telefonia») */
+function usualGroup(id){
+  const m = {};
+  Object.values({...S.hist, ...S.shifts, ...P.shifts}).forEach(doc => { const bl = doc && doc.rows && doc.rows[id];
+    (Array.isArray(bl) ? bl : []).forEach(b => { if (!b || !b.s || !b.e) return; const g = blkGroup(b, id); m[g] = (m[g] || 0) + Math.max(0, toMin(b.e) - toMin(b.s)); }); });
+  return Object.keys(m).sort((a, b) => m[b] - m[a])[0] || (usual(id) ? "TS" : S.usualAlt && S.usualAlt[id] ? blkGroup({d: "alt", g: S.usualAlt[id]}, id) : "TS");
+}
+function matesGroups(id, d, dayBl){
+  const opts = [], label = gs => [...gs].map(grpName).join(", ");
+  const dayG = new Set(sorted(dayBl).map(b => blkGroup(b, id))), uG = usualGroup(id);
+  const same = dayG.size === 1 && dayG.has(uG);
+  if (dayG.size) opts.push({v: "oggi", g: dayG, n: label(dayG), l: `${same ? "Il mio reparto" : d === todayStr() ? "Oggi sono in" : "Quel giorno sono in"}: ${label(dayG)}`});
+  if (!same) opts.push({v: "solito", g: new Set([uG]), n: grpName(uG), l: `Di solito: ${grpName(uG)}`});
   return {opts};
+}
+/* chi lavora quel giorno: i balordi in elenco e quelli del foglio messi da parte (non hanno l'accesso né un codice) */
+function matesPeople(id, d){
+  const doc = P.shifts[d] || S.shifts[d] || {}, rows = doc.rows || {}, ext = doc.ext || {}, out = [], has = new Set(Object.keys(rows));
+  Object.entries(rows).forEach(([k, bl]) => { const st = staffById(k); if (k !== id && st && Array.isArray(bl) && bl.length) out.push({st, bl}); });
+  const all = S.staffAll && S.staffAll.length ? S.staffAll : S.staff;
+  Object.entries(ext).forEach(([slug, x]) => {
+    if (!x || !x.n || !Array.isArray(x.bl) || !x.bl.length) return;
+    const xw = words(x.n), m = all.find(st => { const fw = words(st.full || st.name); return fw.length >= 2 && fw.every(w => xw.includes(w)); });
+    if (m){ if (m.id === id || m.hide || has.has(m.id) || !staffById(m.id)) return; has.add(m.id); out.push({st: m, bl: x.bl}); return; }
+    out.push({st: {id: "ext:" + slug, name: x.n}, bl: x.bl});
+  });
+  return out;
 }
 function renderMe(){
   const el = $("#scr-me"); if (!el || ROUTE !== "me") return;
@@ -3587,14 +3602,13 @@ function renderMe(){
     : !isT && known(d) ? `<span class="pill soft">${esc(relShort(d))} riposo</span>`
     : usual(id) ? `<span class="pill soft">${esc(capitalize(usualText(id)))}</span>` : "";
   const ap = myAppts(id, isT ? null : d);
-  const rowsT = rowsOf(d);
   /* colleghi in turno: per primi quelli del reparto dove sono quel giorno (se sono al TV, chi c'è al TV);
      dal menu a tendina: il mio reparto di solito, gli altri reparti di quel giorno o tutto il negozio */
-  const mt = matesGroups(id, d, dayBl, rowsT);
+  const mt = matesGroups(id, d, dayBl);
   const pick = P.mSel && P.mSel.d === d && mt.opts.some(o => o.v === P.mSel.v) ? P.mSel.v : mt.opts[0].v;
-  const pickO = mt.opts.find(o => o.v === pick), pickG = pickO.g;
+  const pickO = mt.opts.find(o => o.v === pick) || {g: new Set(["TS"]), n: grpName("TS")}, pickG = pickO.g;
   const ours = (bl, sid) => sorted(bl).filter(b => !pickG || pickG.has(blkGroup(b, sid)));
-  const mates = Object.keys(rowsT).filter(k => k !== id && staffById(k) && ours(rowsT[k], k).length).map(k => ({bl: ours(rowsT[k], k), st: staffById(k)})).sort((a, b) => toMin(a.bl[0].s) - toMin(b.bl[0].s));
+  const mates = matesPeople(id, d).map(x => ({st: x.st, bl: ours(x.bl, x.st.id)})).filter(x => x.bl.length).sort((a, b) => toMin(a.bl[0].s) - toMin(b.bl[0].s));
   const mtPick = known(d) && mt.opts.length > 1 ? `<label class="mt-pick"><select data-mates-d="${d}" aria-label="Quale reparto vedere">${mt.opts.map(o => `<option value="${esc(o.v)}" ${o.v === pick ? "selected" : ""}>${esc(o.l)}</option>`).join("")}</select></label>` : "";
   const wdays = [...Array(7)].map((_, i) => addDays(P.week, i));
   const wTot = wdays.reduce((s, d) => s + mins(myRows(d, id)), 0);
