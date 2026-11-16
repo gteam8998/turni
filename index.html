@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
 <title>Turni Arese</title>
-<!-- versione 2026.11.16-60 -->
+<!-- versione 2026.11.16-61 -->
 <meta name="description" content="Turni e agenda del reparto Telefonia &amp; Service, MediaWorld Arese">
 <meta name="theme-color" content="#FFFFFF" media="(prefers-color-scheme: light)">
 <meta name="theme-color" content="#0B0F17" media="(prefers-color-scheme: dark)">
@@ -604,7 +604,7 @@ button.nofoto{justify-self:start;padding:0;border:0;background:none;font:inherit
 /* disegno del tema personalizzato */
 :root[data-custom="deco"] .hero::after{inset:auto -6% -4% auto;width:auto;height:min(76%,280px);aspect-ratio:1;border-radius:0;background:var(--deco) center/contain no-repeat;opacity:.17;z-index:0;
   -webkit-mask-image:radial-gradient(closest-side,#000 62%,transparent);mask-image:radial-gradient(closest-side,#000 62%,transparent)}
-:root[data-custom] .hero > *{position:relative;z-index:1}
+:root[data-custom] .hero > :not(.hn-arr){position:relative;z-index:1}
 :root[data-custom="deco"] body{background:transparent}
 :root[data-custom="deco"] body::before{content:"";position:fixed;right:-60px;bottom:-40px;width:340px;height:340px;background:var(--deco) center/contain no-repeat;opacity:.06;pointer-events:none;z-index:-1;filter:invert(var(--deco-inv,0))}
 :root[data-custom] .hero .btn{background:var(--hero-ink);color:var(--hero);border-color:var(--hero-ink)}
@@ -935,27 +935,36 @@ html,body{background:var(--bg);transition:background-color .2s}
 .hk-l.is-today::before{content:"";width:8px;height:8px;border-radius:50%;background:#fff}
 /* frecce dentro la scheda del giorno: l'unico modo per scorrere i giorni */
 /* scheda del turno: tutto al centro, frecce ai lati a metà altezza */
-.me-hero{padding:20px 60px 18px;justify-items:center;text-align:center;container-type:inline-size;min-height:306px;grid-template-rows:auto 1fr auto;align-content:stretch}
-/* tre fasce fisse: il giorno in alto, il turno al centro dello spazio che resta, la barra del giorno in fondo */
-.me-hero .hero-mid{display:flex;flex-direction:column;align-items:center;gap:12px;justify-self:stretch;min-width:0}
-/* orari al centro dello spazio, la scritta delle ore scende appena sopra la barra della giornata */
-.me-hero .hero-mid > :first-child{margin-top:auto}
-.me-hero .hero-mid > .hero-meta{margin-top:auto}
-.me-hero .hero-mid > *{max-width:100%}
+.me-hero{--zone:64px;padding:20px 60px;justify-items:center;text-align:center;container-type:inline-size;min-height:316px;grid-template-rows:minmax(var(--zone),1fr) auto minmax(var(--zone),1fr);align-content:stretch}
+/* tre fasce: giorno (e stato) in alto, orari esattamente a metà, all'altezza delle frecce, ore e barra della giornata in fondo.
+   Le due fasce esterne hanno sempre la stessa altezza: così gli orari restano al centro, con una riga o con due */
+.me-hero .hero-top{align-self:start;display:grid;justify-items:center;gap:12px;justify-self:stretch;min-width:0}
+.me-hero .hero-big{align-self:center}
+.me-hero .hero-bot{align-self:end;display:grid;justify-items:center;gap:12px;justify-self:stretch;min-width:0}
+.me-hero .hero-top > *,.me-hero .hero-bot > *{max-width:100%}
 .me-hero .chip-st{white-space:normal;max-width:100%;justify-content:center;text-align:center}
-/* telefono: cerchi delle frecce più piccoli, con un po' d'aria verso il bordo e verso gli orari */
-@media (max-width:520px){ .me-hero{padding-left:58px;padding-right:58px} .me-hero .hn-arr{width:38px;height:38px;margin-top:-19px} .me-hero .hn-arr.l{left:12px} .me-hero .hn-arr.r{right:12px} .me-hero .hn-arr svg{width:21px;height:21px} .me-hero .dayline{margin:0 -36px} }
-@media (max-width:360px){ .me-hero{padding-left:50px;padding-right:50px} .me-hero .hn-arr{width:34px;height:34px;margin-top:-17px} .me-hero .hn-arr.l{left:9px} .me-hero .hn-arr.r{right:9px} .me-hero .hn-arr svg{width:19px;height:19px} .me-hero .dayline{margin:0 -28px} }
 .me-hero .dayline.off .tr{opacity:.7}
 /* altezza fissa: le frecce restano nello stesso punto in tutti i giorni, anche toccandole di fila */
-.me-hero .hn-arr{position:absolute;top:50%;margin-top:-23px;z-index:2}
-.me-hero .hn-arr.l{left:10px}.me-hero .hn-arr.r{right:10px}
+.me-hero .hn-arr{position:absolute;top:50%;width:40px;height:56px;margin-top:-28px;z-index:2;border-radius:14px;background:none;box-shadow:none;color:var(--hero-ink)}
+.me-hero .hn-arr svg{width:36px;height:36px;stroke-width:3.2;filter:drop-shadow(0 0 2px var(--silver-hi)) drop-shadow(0 0 9px var(--silver)) drop-shadow(0 0 16px var(--silver-glow))}
+.me-hero .hn-arr:hover svg,.me-hero .hn-arr:active svg{filter:drop-shadow(0 0 3px var(--silver-hi)) drop-shadow(0 0 12px var(--silver)) drop-shadow(0 0 20px var(--silver))}
+.me-hero .hn-arr.l{left:8px}.me-hero .hn-arr.r{right:8px}
 .me-hero .hero-k{justify-content:center}
-.me-hero .hero-big{font-size:clamp(24px,calc((100vw - 152px) / var(--w,6)),40px);font-size:clamp(22px,calc(100cqw / var(--w,6)),40px);justify-self:stretch;display:grid;justify-content:center;justify-items:start;gap:2px}
+.me-hero .hero-big{font-size:clamp(24px,calc((100vw - 152px) / var(--w,6)),40px);font-size:clamp(22px,calc(100cqw / var(--w,6)),40px);justify-self:stretch;display:grid;justify-content:center;justify-items:start;gap:2px;padding-right:.02em}
+/* centratura al pixel: il blocco degli orari è centrato, le icone partono dallo stesso punto; le spaziature fra le lettere non spostano il testo */
+.me-hero .hero-big .nb{padding-left:.03em}
+/* altezza al pixel: ogni riga misura quanto le cifre (dall'alto delle maiuscole alla base), così il testo sta proprio all'altezza delle frecce */
+.me-hero .hero-big .nb,.me-hero .hero-big .nbt{text-box:trim-both cap alphabetic}
+.me-hero .hero-big .nbt.dash{position:relative;top:-.08em}
+.me-hero .hero-big{row-gap:calc(.3em + 2px)}
+.me-hero .hn-c small{padding-left:.1em}
 /* una fascia per riga, senza la «e» in mezzo: si legge al volo */
 .me-hero .hero-big .and{display:none}
 .me-hero .hero-meta{justify-self:stretch;text-wrap:balance}
 .me-hero .dayline{justify-self:stretch;margin:0 -38px}
+/* telefono: cerchi delle frecce più piccoli, con un po' d'aria verso il bordo e verso gli orari */
+@media (max-width:520px){ .me-hero{padding-left:52px;padding-right:52px} .me-hero .hn-arr{width:36px;height:52px;margin-top:-26px} .me-hero .hn-arr.l{left:8px} .me-hero .hn-arr.r{right:8px} .me-hero .hn-arr svg{width:34px;height:34px} .me-hero .dayline{margin:0 -30px} }
+@media (max-width:360px){ .me-hero .chip-st{font-size:11.5px;padding:4px 9px;white-space:nowrap} .me-hero{padding-left:44px;padding-right:44px} .me-hero .hn-arr{width:32px;height:48px;margin-top:-24px} .me-hero .hn-arr.l{left:6px} .me-hero .hn-arr.r{right:6px} .me-hero .hn-arr svg{width:30px;height:30px} .me-hero .dayline{margin:0 -22px} }
 .hn-arr{width:46px;height:46px;border-radius:50%;border:0;display:grid;place-items:center;background:var(--hero-ink);color:var(--hero);cursor:pointer;box-shadow:0 8px 18px -8px rgba(0,0,0,.6);-webkit-tap-highlight-color:transparent;transition:transform .12s ease}
 .hn-arr svg{width:26px;height:26px}
 .hn-arr.flip svg{transform:rotate(180deg)}
@@ -1410,7 +1419,7 @@ function qrSvg(text, color = "#0B1220", bg = "#FFFFFF") {
 if (typeof module !== "undefined") module.exports = { QRGEN, qrSvg };
 
 </script>
-<script src="firebase-config.js?v=2026.11.16-60"></script>
+<script src="firebase-config.js?v=2026.11.16-61"></script>
 <script>
 (() => {
 "use strict";
@@ -3642,8 +3651,8 @@ function heroDay(id, d){
     line = `<div class="dayline" aria-hidden="true"><span class="tr"></span>${bl.map(b => `<span class="bk ${dCls(blkDept(b, id))}" style="left:${x(toMin(b.s))};width:calc(${x(toMin(b.e))} - ${x(toMin(b.s))})"></span>`).join("")}
       ${isT && nm >= a && nm <= z ? `<span class="nw" style="left:calc(${x(nm)} - 1.5px)"></span>` : ""}
       <span class="tk" style="left:0">${a / 60}</span><span class="tk" style="left:50%">${(a + W / 2) / 60 | 0}</span><span class="tk l" style="left:100%">${z / 60}</span></div>`;
-  } else if (known(d)){ chip = ""; big = "Riposo"; meta = isT ? "Oggi non sei in turno. Goditela." : g > 0 ? "Quel giorno non sei in turno." : "Quel giorno eri a riposo."; }
-  else { chip = ""; big = "—"; meta = isT ? "I turni di oggi non sono ancora stati caricati." : "I turni di quel giorno non sono ancora stati caricati."; }
+  } else if (known(d)){ chip = ""; big = `<span class="nbt">Riposo</span>`; meta = isT ? "Oggi non sei in turno. Goditela." : g > 0 ? "Quel giorno non sei in turno." : "Quel giorno eri a riposo."; }
+  else { chip = ""; big = `<span class="nbt dash">—</span>`; meta = isT ? "I turni di oggi non sono ancora stati caricati." : "I turni di quel giorno non sono ancora stati caricati."; }
   /* riposo o non caricato: la barra del giorno resta, vuota, così la scheda ha sempre la stessa forma */
   if (!bl.length){ const a = 8 * 60, z = 22 * 60, x = m => ((m - a) / (z - a) * 100).toFixed(2) + "%";
     line = `<div class="dayline off" aria-hidden="true"><span class="tr"></span>${isT && nm >= a && nm <= z ? `<span class="nw" style="left:calc(${x(nm)} - 1.5px)"></span>` : ""}<span class="tk" style="left:0">8</span><span class="tk" style="left:50%">15</span><span class="tk l" style="left:100%">22</span></div>`; }
@@ -3651,12 +3660,12 @@ function heroDay(id, d){
   return `<section class="hero me-hero ${dCls(dept)}${isT ? "" : " silver"}${P.anim ? " in-" + P.anim : ""}" aria-label="Il tuo turno di ${isT ? "oggi" : esc(dateLong(d))}">
       <button type="button" class="hn-arr l" data-act="me-dprev" aria-label="Giorno prima">${ICO.back}</button>
       <button type="button" class="hn-arr r flip" data-act="me-dnext" aria-label="Giorno dopo">${ICO.back}</button>
-      <div class="hn-c" aria-live="polite">${isT ? `<span class="hk-l is-today">Oggi</span>` : `<small>${esc(relGap(d))}</small><b>${esc(capitalize(dateLong(d)))}</b>`}</div>
-      <div class="hero-mid">
+      <div class="hero-top">
+        <div class="hn-c" aria-live="polite">${isT ? `<span class="hk-l is-today">Oggi</span>` : `<small>${esc(relGap(d))}</small><b>${esc(capitalize(dateLong(d)))}</b>`}</div>
         ${isT && chip ? `<div class="hero-k"><span class="chip-st">${chip}</span></div>` : ""}
-        <div class="hero-big"${bl.length ? ` style="--w:${(Math.max(...bl.map(b => fmtR(b).length)) * .62 + .9).toFixed(2)}"` : ""}>${big}</div>
-        <div class="hero-meta">${esc(meta)}</div>
-      </div>${line}
+      </div>
+      <div class="hero-big"${bl.length ? ` style="--w:${(Math.max(...bl.map(b => fmtR(b).length)) * .62 + .9).toFixed(2)}"` : ""}>${big}</div>
+      <div class="hero-bot"><div class="hero-meta">${esc(meta)}</div>${line}</div>
     </section>`;
 }
 const heroToday = id => heroDay(id, todayStr());
