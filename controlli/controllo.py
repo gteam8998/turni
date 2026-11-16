@@ -207,7 +207,7 @@ def main():
                     if sc in ("me-prossimo", "me-frecce", "me-passato"):   # le frecce stanno solo nella scheda del turno
                         if pg.locator("#scr-me .me-hero .hn-arr").count() != 2: report["problemi"].append({"tipo": "frecce dei giorni mancanti nella scheda del turno", "dove": tag})
                         pg.click("#scr-me .me-hero [data-act=me-dnext]"); pg.wait_for_timeout(500)
-                        if not pg.locator("#scr-me .me-hero .hn-today").count(): report["problemi"].append({"tipo": "tasto Torna a oggi mancante", "dove": tag})
+                        if not pg.locator("#scr-me .today-fab").count(): report["problemi"].append({"tipo": "tasto Torna a oggi mancante", "dove": tag})
                     if sc == "me-frecce":
                         for _ in range(3): pg.click("#scr-me .me-hero [data-act=me-dnext]"); pg.wait_for_timeout(250)
                     if sc == "me-passato":
@@ -223,7 +223,7 @@ def main():
                 for it in issues: it["schermata"] = f"{tag} {sc}"; report["problemi"].append(it)
                 f = os.path.join(shots, f"{tag}-{sc}.png"); pg.screenshot(path=f, full_page=True); report["schermate"].append(f)
                 if sc in ("me-prossimo", "me-frecce", "me-passato"):
-                    pg.click("#scr-me .hn-today") if pg.locator("#scr-me .hn-today").count() else None
+                    pg.click("#scr-me .today-fab") if pg.locator("#scr-me .today-fab").count() else None
             ctx.close()
         b.close()
     srv.shutdown()
