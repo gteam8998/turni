@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>Turni Arese</title>
-<!-- versione 2026.11.16-53 -->
+<!-- versione 2026.11.16-54 -->
 <meta name="description" content="Turni e agenda del reparto Telefonia &amp; Service, MediaWorld Arese">
 <meta name="theme-color" content="#FFFFFF" media="(prefers-color-scheme: light)">
 <meta name="theme-color" content="#0B0F17" media="(prefers-color-scheme: dark)">
@@ -517,10 +517,8 @@ body[data-role="banco"] .me-only{display:none!important}
 .me-id .av img{border-radius:50%}
 .me-av{padding:0;font:inherit;cursor:zoom-in;-webkit-tap-highlight-color:transparent}
 .me-av:focus-visible{outline:3px solid var(--focus);outline-offset:3px}
-.av-zoom{position:fixed;inset:0;z-index:120;display:grid;place-items:center;padding:24px;background:rgba(5,8,15,.9);animation:avz .16s ease}
+.av-zoom{position:fixed;inset:0;z-index:120;cursor:zoom-out;outline:none;display:grid;place-items:center;padding:24px;background:rgba(5,8,15,.9);animation:avz .16s ease}
 .av-zoom img{width:min(82vw,70vh,440px);aspect-ratio:1;height:auto;object-fit:cover;border-radius:50%;border:8px solid var(--tel);box-sizing:border-box;box-shadow:0 30px 60px -20px rgba(0,0,0,.7)}
-.av-zoom-x{position:absolute;top:calc(16px + env(safe-area-inset-top,0px));right:16px;width:46px;height:46px;border-radius:50%;border:0;display:grid;place-items:center;background:#fff;color:#0E1526;cursor:pointer}
-.av-zoom-x svg{width:22px;height:22px}
 @keyframes avz{from{opacity:0}}
 .av-cam svg{width:12px;height:12px}
 .av-xl{width:96px;height:96px;font-size:34px;border-width:3px;overflow:visible}
@@ -573,6 +571,7 @@ body[data-role="banco"] .me-only{display:none!important}
 .nofoto{display:inline-block;margin-top:4px;font-weight:700;color:var(--focus);cursor:pointer;text-decoration:underline;text-underline-offset:3px}
 button.nofoto{justify-self:start;padding:0;border:0;background:none;font:inherit;font-weight:700;text-align:left}
 .nofoto.del{color:var(--danger,#D92D20)}
+.row-act .nofoto{align-self:center;margin:0 0 0 10px}
 .push-ok{color:var(--ok)}
 .push-err{margin:8px 0 0;padding:10px 12px;border-radius:12px;background:var(--now-fill);color:var(--now);font-weight:700;font-size:15px}
 .cu-acc{display:grid;gap:8px;margin-top:14px}
@@ -581,10 +580,16 @@ button.nofoto{justify-self:start;padding:0;border:0;background:none;font:inherit
 :root[data-bg] body{background:transparent}
 /* con lo sfondo, i riquadri che di solito sono «vuoti» diventano pieni: niente testo appoggiato direttamente sull'immagine */
 :root[data-bg] .minical,:root[data-bg] .side-box,:root[data-bg] .step,:root[data-bg] .tips li,:root[data-bg] .results{background:var(--bg)}
-:root[data-bg] .ph-top,:root[data-bg] .me-id>div,:root[data-bg] .set-h,:root[data-bg] .foot,:root[data-bg] .up-top h1,:root[data-bg] #app>.bar .brand,:root[data-bg] #bigDate,:root[data-bg] .ph>.mut{
-  text-shadow:0 0 2px var(--bg),0 0 6px var(--bg),0 0 12px var(--bg),0 0 20px var(--bg)}
+:root[data-bg] .ph-top,:root[data-bg] .me-id,:root[data-bg] .set-h,:root[data-bg] .foot,:root[data-bg] .up-top h1,:root[data-bg] #app>.bar .brand,:root[data-bg] #bigDate,:root[data-bg] .ph>.mut{
+  background:color-mix(in srgb, var(--bg) 74%, transparent);-webkit-backdrop-filter:blur(14px) saturate(1.3);backdrop-filter:blur(14px) saturate(1.3);
+  border:1px solid color-mix(in srgb, var(--bg) 60%, transparent);box-shadow:0 8px 24px -14px rgba(0,0,0,.35)}
+/* vetro sopra lo sfondo: pillola per la data e i titoli, riquadro per il saluto */
+:root[data-bg] .ph-top{border-radius:999px;padding:4px 6px 4px 16px;justify-self:start;width:max-content;max-width:100%}
+:root[data-bg] .me-id{gap:8px;border-radius:24px;padding:10px}
+:root[data-bg] .me-id .av{width:50px;height:50px;font-size:19px}
+:root[data-bg] .set-h,:root[data-bg] .up-top h1,:root[data-bg] #bigDate,:root[data-bg] #app>.bar .brand{border-radius:18px;padding:6px 14px;width:max-content;max-width:100%}
+:root[data-bg] .foot,:root[data-bg] .ph>.mut{border-radius:14px;padding:8px 12px}
 :root[data-bg] .ph-date,:root[data-bg] .me-gr,:root[data-bg] .foot,:root[data-bg] .ph>.mut,:root[data-bg] .brand p{color:var(--ink)!important;opacity:.9}
-:root[data-bg] .set-h svg{filter:drop-shadow(0 0 3px var(--bg)) drop-shadow(0 0 8px var(--bg))}
 :root[data-bg] body::after{content:"";position:fixed;inset:0;z-index:-2;pointer-events:none;
   background:linear-gradient(color-mix(in srgb, var(--bg) var(--veil1, 6%), transparent), color-mix(in srgb, var(--bg) var(--veil2, 18%), transparent)), var(--bgimg) center/cover no-repeat}
 .cu-acc .cu-sw{flex-wrap:wrap;gap:8px}
@@ -596,7 +601,9 @@ button.nofoto{justify-self:start;padding:0;border:0;background:none;font:inherit
 .cu-prev{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-top:12px}
 .cu-sw{display:flex;gap:6px}.cu-sw i{width:28px;height:28px;border-radius:50%;border:2px solid var(--line);display:block}
 /* disegno del tema personalizzato */
-:root[data-custom="deco"] .hero::after{inset:auto -40px -50px auto;width:260px;height:260px;border-radius:0;background:var(--deco) center/contain no-repeat;opacity:.22}
+:root[data-custom="deco"] .hero::after{inset:auto -6% -4% auto;width:auto;height:min(76%,280px);aspect-ratio:1;border-radius:0;background:var(--deco) center/contain no-repeat;opacity:.17;z-index:0;
+  -webkit-mask-image:radial-gradient(closest-side,#000 62%,transparent);mask-image:radial-gradient(closest-side,#000 62%,transparent)}
+:root[data-custom] .hero > *{position:relative;z-index:1}
 :root[data-custom="deco"] body{background:transparent}
 :root[data-custom="deco"] body::before{content:"";position:fixed;right:-60px;bottom:-40px;width:340px;height:340px;background:var(--deco) center/contain no-repeat;opacity:.06;pointer-events:none;z-index:-1;filter:invert(var(--deco-inv,0))}
 :root[data-custom] .hero .btn{background:var(--hero-ink);color:var(--hero);border-color:var(--hero-ink)}
@@ -1378,7 +1385,7 @@ function qrSvg(text, color = "#0B1220", bg = "#FFFFFF") {
 if (typeof module !== "undefined") module.exports = { QRGEN, qrSvg };
 
 </script>
-<script src="firebase-config.js?v=2026.11.16-53"></script>
+<script src="firebase-config.js?v=2026.11.16-54"></script>
 <script>
 (() => {
 "use strict";
@@ -3601,7 +3608,7 @@ function heroDay(id, d){
     } else chip = esc(relGap(d));
     big = bl.map(b => { const f = (fasceOf([b]) || {main: "mat"}).main; return `<span class="nb"><i class="hfi ${f}" title="${fascia(f).lbl}" aria-label="${fascia(f).di}">${FICO[f]}</i>${fmtR(b)}</span>`; }).join(` <span class="and">e</span> `);
     const pz = pauseText(bl);
-    meta = `${deptsLabel(bl, id)} · ${hm(mins(bl))} di lavoro${pz.length ? ` · pausa ${pz.join(", ")}` : ""}`;
+    meta = `${hm(mins(bl))} di lavoro${pz.length ? ` · pausa ${pz.join(", ")}` : ""}`;
     const a = Math.min(8 * 60, Math.floor(s0 / 60) * 60), z = Math.max(22 * 60, Math.ceil(e1 / 60) * 60), W = z - a;
     const x = m => ((m - a) / W * 100).toFixed(2) + "%";
     line = `<div class="dayline" aria-hidden="true"><span class="tr"></span>${bl.map(b => `<span class="bk ${dCls(blkDept(b, id))}" style="left:${x(toMin(b.s))};width:calc(${x(toMin(b.e))} - ${x(toMin(b.s))})"></span>`).join("")}
@@ -3624,16 +3631,19 @@ function heroDay(id, d){
 const heroToday = id => heroDay(id, todayStr());
 
 /* la foto profilo a tutto schermo (si cambia o si toglie dalle impostazioni) */
-function zoomAvatar(){
-  const img = S.avatars[meId()]; if (!img || $(".av-zoom")) return;
-  /* sempre tonda, con il bordo dello stesso colore della foto piccola (reparto o tema) */
-  const small = $("#scr-me .me-av"), ring = small ? getComputedStyle(small).borderTopColor : "";
-  const o = document.createElement("div"); o.className = "av-zoom"; o.setAttribute("role", "dialog"); o.setAttribute("aria-label", "La tua foto profilo");
-  o.innerHTML = `<img src="${img}" alt="La tua foto profilo"${ring ? ` style="border-color:${ring}"` : ""}><button type="button" class="av-zoom-x" aria-label="Chiudi">${ICON.close}</button>`;
-  const close = () => { o.remove(); document.removeEventListener("keydown", esc); };
-  const esc = e => { if (e.key === "Escape") close(); };
-  o.addEventListener("click", close); document.addEventListener("keydown", esc);
-  document.body.appendChild(o); $(".av-zoom-x", o).focus();
+function zoomAvatar(sid, from){
+  const img = S.avatars[sid]; if (!img || $(".av-zoom")) return;
+  /* sempre tonda, con il bordo dello stesso colore della foto piccola (reparto o tema); si chiude toccando ovunque */
+  const ring = from ? getComputedStyle(from).borderTopColor : "";
+  const st = staffById(sid), who = sid === meId() ? "La tua foto profilo" : `Foto di ${showName(st) || "un collega"}`;
+  const o = document.createElement("div"); o.className = "av-zoom"; o.tabIndex = -1;
+  o.setAttribute("role", "dialog"); o.setAttribute("aria-label", `${who}. Tocca per chiudere`);
+  o.innerHTML = `<img src="${img}" alt="${esc(who)}"${ring ? ` style="border-color:${ring}"` : ""}>`;
+  const back = document.activeElement;
+  const close = () => { o.remove(); document.removeEventListener("keydown", key); back && back.focus && back.focus(); };
+  const key = e => { if (e.key === "Escape" || e.key === "Enter" || e.key === " "){ e.preventDefault(); close(); } };
+  o.addEventListener("click", close); document.addEventListener("keydown", key);
+  document.body.appendChild(o); o.focus();
 }
 /* ---------- la mia area ---------- */
 /* «In turno»: ognuno vede i colleghi del reparto logico dove è quel giorno (se sei al TV, TV e PC).
@@ -3703,9 +3713,8 @@ function renderMe(){
   const d = viewDay(), isT = d === t, dayBl = sorted(myRows(d, id));
   const today = dayBl;  // il giorno guardato (oggi se non sto sfogliando)
   const todayD = deptsOf(dayBl, id), dept = todayD[0] || usual(id) || "tel";
-  const pill = !isT ? "" : dayBl.length ? `<span class="pill ${dCls(todayD[0])}">${esc(relShort(d))} ${esc(deptsLabel(dayBl, id).split(" e ")[0])}</span>`
-    : !isT && known(d) ? `<span class="pill soft">${esc(relShort(d))} riposo</span>`
-    : usual(id) ? `<span class="pill soft">${esc(capitalize(usualText(id)))}</span>` : "";
+  /* il reparto del giorno guardato sta solo qui («Oggi Telefonia», «Domani TV»): nella scheda del turno non si ripete */
+  const pill = dayBl.length ? `<span class="pill ${dCls(todayD[0])}">${esc(relShort(d))} ${esc(deptsLabel(dayBl, id))}</span>` : "";
   const ap = myAppts(id, isT ? null : d);
   /* colleghi in turno: per primi quelli del reparto dove sono quel giorno (se sono al TV, chi c'è al TV);
      dal menu a tendina: il mio reparto di solito, gli altri reparti di quel giorno o tutto il negozio */
@@ -3730,7 +3739,7 @@ function renderMe(){
   const cmp = !contr ? "Puoi impostare le ore da contratto nelle impostazioni" : wTot === contr * 60 ? `In linea con il contratto (${contr} h)` : wTot > contr * 60 ? `${hm(wTot - contr * 60)} in più del contratto (${contr} h)` : `${hm(contr * 60 - wTot)} in meno del contratto (${contr} h)`;
   const col = d => d === "alt" ? "ink-3" : d;
   const matesTitle = isT ? "In turno oggi" : `In turno ${relShort(d) === "Domani" || relShort(d) === "Ieri" ? relShort(d).toLowerCase() : dayShort(d).toLowerCase()}`;
-  const matesCard = mates.length || !isT || mtPick ? `<section class="card mates-c${isT ? "" : " silver"}${P.anim ? " in-" + P.anim : ""}"><h2>${esc(matesTitle)}${mates.length ? `<small>${mates.length}</small>` : ""}</h2>${mtPick}${mates.length ? `<ul class="mates">${mates.map(x => { const w = dayBl.some(a => x.bl.some(b => { const ga = blkGroup(a, id), gb = blkGroup(b, x.st.id); return ga !== "NEUTRO" && (ga === gb || ga === "REGIA" || gb === "REGIA") && toMin(a.s) < toMin(b.e) && toMin(b.s) < toMin(a.e); })); return `<li><span class="av ${dCls(deptsOf(x.bl, x.st.id)[0])}">${avIn(x.st.id, showName(x.st))}</span><b>${esc(showName(x.st))}</b><span class="num">${fasceNb(x.bl)}</span><small style="color:var(--ink-3)">${esc(deptsLabel(x.bl, x.st.id))}${w ? ` · <span style="color:var(--ok)">con te</span>` : ""}</small></li>`; }).join("")}</ul>`
+  const matesCard = mates.length || !isT || mtPick ? `<section class="card mates-c${isT ? "" : " silver"}${P.anim ? " in-" + P.anim : ""}"><h2>${esc(matesTitle)}${mates.length ? `<small>${mates.length}</small>` : ""}</h2>${mtPick}${mates.length ? `<ul class="mates">${mates.map(x => { const w = dayBl.some(a => x.bl.some(b => { const ga = blkGroup(a, id), gb = blkGroup(b, x.st.id); return ga !== "NEUTRO" && (ga === gb || ga === "REGIA" || gb === "REGIA") && toMin(a.s) < toMin(b.e) && toMin(b.s) < toMin(a.e); })); return `<li>${S.avatars[x.st.id] ? `<button type="button" class="av me-av ${dCls(deptsOf(x.bl, x.st.id)[0])}" data-act="av-zoom" data-sid="${esc(x.st.id)}" aria-label="Guarda la foto di ${esc(showName(x.st))}">${avIn(x.st.id, showName(x.st))}</button>` : `<span class="av ${dCls(deptsOf(x.bl, x.st.id)[0])}">${avIn(x.st.id, showName(x.st))}</span>`}<b>${esc(showName(x.st))}</b><span class="num">${fasceNb(x.bl)}</span><small style="color:var(--ink-3)">${esc(deptsLabel(x.bl, x.st.id))}${w ? ` · <span style="color:var(--ok)">con te</span>` : ""}</small></li>`; }).join("")}</ul>`
       : `<p class="mut">${known(d) ? `${pickO.e || `Nessun altro collega ${pickO.n ? "in " + esc(pickO.n) + " " : ""}`.trim()} ${isT ? "oggi" : "quel giorno"}.` : "I turni di quel giorno non sono ancora stati caricati."}</p>`}</section>` : "";
   el.innerHTML = `<div class="ph${P.browse ? " browsing" : ""}">
     <div class="ph-top">${isAdmin() ? `<button class="btn back ph-back" data-act="nav" data-to="agenda">${ICO.back}Agenda</button>` : ""}<span class="ph-date">${esc(capitalize(dateLong(t)))}</span>${msgBtn()}${gearBtn()}</div>
@@ -3894,7 +3903,7 @@ function renderSet(){
         <button data-act="cu-accent" data-c="" aria-pressed="${!getCustom().accent}" title="Automatico">Auto</button>${(getCustom().cands || []).map(c => `<button data-act="cu-accent" data-c="${c}" aria-pressed="${getCustom().accent === c}" style="background:${c}" aria-label="Usa ${c}"></button>`).join("")}<label class="cu-any" title="Scegli un colore qualsiasi" style="${getCustom().accent && !(getCustom().cands || []).includes(getCustom().accent) ? `background:${getCustom().accent};outline:3px solid var(--ink);outline-offset:2px` : ""}">+<input type="color" id="cuAny" value="${getCustom().accent || "#7ec8f0"}"></label></div>
         <small class="mut">Colori presi dalla foto, anche i dettagli piccoli. Col «+» scegli un colore qualsiasi. Quello scelto colora pulsanti, schede e avvisi.</small></div>` : ""}
       <p class="mut set-note">${getMode() === "custom" ? "Colori e disegni presi dalla tua foto profilo: se la cambi, il tema si aggiorna da solo." : S.avatars[id] ? "Con «Foto» l'app prende i colori più forti e i disegni della tua foto profilo e li usa dappertutto." : "Con «Foto» l'app usa i colori della tua foto profilo: metti una foto, non fare il noioso."}</p>
-      <div class="cu-bg"><b>Sfondo</b><div class="row-act"><label class="btn">${ICO.cam}${lsGet("ui-bg") ? "Cambia sfondo" : "Scegli uno sfondo"}<input type="file" accept="image/*" data-bg-pick hidden></label>${lsGet("ui-bg") ? `<button class="btn ghost" data-act="bg-del">Togli sfondo</button>` : ""}</div><small class="mut">Un'immagine dalla tua galleria dietro a tutta l'app. Resta solo su questo telefono.</small></div>
+      <div class="cu-bg"><b>Sfondo</b><div class="row-act"><label class="btn">${ICO.cam}${lsGet("ui-bg") ? "Cambia sfondo" : "Scegli uno sfondo"}<input type="file" accept="image/*" data-bg-pick hidden></label>${lsGet("ui-bg") ? `<button type="button" class="nofoto del" data-act="bg-del">Togli sfondo</button>` : ""}</div><small class="mut">Un'immagine dalla tua galleria dietro a tutta l'app. Resta solo su questo telefono.</small></div>
     </section>
     ${isAdmin() ? `<section class="card"><h2>${ICO.cal}Avviso nuovi turni</h2>
       <p class="mut">Quando salvi dei turni, i colleghi che hanno attivato le notifiche ricevono «Nuovi turni caricati» sul telefono, e tutti lo trovano nella pagina Messaggi. A te arriva solo se lo attivi qui sotto.</p>
@@ -4346,7 +4355,7 @@ document.addEventListener("click", async e => {
   if (act === "me-day"){ const d = el.dataset.d; if (!d) return; const first = !P.browse; goDay(d); if (first || !el.closest(".me-dnav")) showDay(); return; }
   if (act === "me-dprev" || act === "me-dnext") return dayStep(act === "me-dnext" ? 1 : -1);
   if (act === "me-today") return exitBrowse(true);
-  if (act === "av-zoom") return zoomAvatar();
+  if (act === "av-zoom") return zoomAvatar(el.dataset.sid || meId(), el);
   if (act === "me-mprev" || act === "me-mnext"){ const [y, m] = P.month.split("-").map(Number), d = new Date(y, m - 1 + (act === "me-mnext" ? 1 : -1), 1); P.month = `${d.getFullYear()}-${pad(d.getMonth() + 1)}`; subscribeMe(); return renderMe(); }
   if (act === "close") return closeSheet();
   /* azioni di tutti (anche dei balordi, che non scrivono in agenda) */
