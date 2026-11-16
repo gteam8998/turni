@@ -210,6 +210,9 @@ def main():
                         if not pg.locator("#scr-me .today-fab").count(): report["problemi"].append({"tipo": "tasto Torna a oggi mancante", "dove": tag})
                     if sc == "me-frecce":
                         for _ in range(3): pg.click("#scr-me .me-hero [data-act=me-dnext]"); pg.wait_for_timeout(250)
+                    if sc == "me-frecce":   # anche i giorni della settimana si toccano per aprirli
+                        pg.click("#scr-me .strip .sd >> nth=6"); pg.wait_for_timeout(300)
+                        if not pg.locator("#scr-me .strip .sd.vw, #scr-me .strip .sd.today").count(): report["problemi"].append({"tipo": "il giorno toccato nella settimana non si apre", "dove": tag})
                     if sc == "me-passato":
                         for _ in range(5): pg.click("#scr-me .me-hero [data-act=me-dprev]"); pg.wait_for_timeout(250)
                     if sc == "agenda-balordi":   # elenco dei balordi: i campi del nome devono restare leggibili

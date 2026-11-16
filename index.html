@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
 <title>Turni Arese</title>
-<!-- versione 2026.11.16-56 -->
+<!-- versione 2026.11.16-57 -->
 <meta name="description" content="Turni e agenda del reparto Telefonia &amp; Service, MediaWorld Arese">
 <meta name="theme-color" content="#FFFFFF" media="(prefers-color-scheme: light)">
 <meta name="theme-color" content="#0B0F17" media="(prefers-color-scheme: dark)">
@@ -985,7 +985,10 @@ html,body{background:var(--bg);transition:background-color .2s}
   .ph.browsing{padding-bottom:84px}
   body:has(#scr-me:not([hidden]) .today-fab) .toast{bottom:calc(160px + env(safe-area-inset-bottom,0px))}
 }
-/* settimana: solo da guardare (i giorni si scorrono con le frecce della scheda); il giorno guardato è in rosso */
+/* settimana: i giorni si toccano per aprirli, quello guardato è in rosso */
+.strip .sd{font:inherit;cursor:pointer;-webkit-tap-highlight-color:transparent}
+.strip .sd:hover{background:var(--hover)}
+.strip .sd:focus-visible{outline:3px solid var(--focus);outline-offset:2px}
 .strip .sd.vw .dn{background:#D92D20;color:#fff;box-shadow:0 0 0 4px rgba(217,45,32,.22),0 0 16px 2px rgba(255,90,78,.5)}
 .ph.browsing .sd.today:not(.vw) .dn{background:none;color:var(--now);box-shadow:inset 0 0 0 2px var(--now)}
 .daylist li[data-act]{cursor:pointer;border-radius:12px}
@@ -1386,7 +1389,7 @@ function qrSvg(text, color = "#0B1220", bg = "#FFFFFF") {
 if (typeof module !== "undefined") module.exports = { QRGEN, qrSvg };
 
 </script>
-<script src="firebase-config.js?v=2026.11.16-56"></script>
+<script src="firebase-config.js?v=2026.11.16-57"></script>
 <script>
 (() => {
 "use strict";
@@ -3760,8 +3763,8 @@ function renderMe(){
     ${matesCard}
     <section class="card">
       <div class="me-nav"><button class="icon-btn" data-act="me-wprev" aria-label="Settimana prima">${ICO.back}</button><h2>Settimana ${esc(wLabel)}</h2><button class="icon-btn flip" data-act="me-wnext" aria-label="Settimana dopo">${ICO.back}</button></div>
-      <div class="strip">${wdays.map(x => { const bl = sorted(myRows(x, id)), dt = pd(x), mm = mins(bl); return `<div class="sd ${dCls(deptsOf(bl, id)[0] || dept)} ${x === t ? "today" : ""} ${P.browse && x === d && !isT ? "vw" : ""} ${!bl.length && !known(x) ? "unk" : ""}" role="img" aria-label="${esc(capitalize(dateLong(x)))}${bl.length ? ", " + bl.map(fmtR).join(" e ") : ""}"><span class="dl">${GS[dt.getDay()].toUpperCase()}</span><span class="dn">${dt.getDate()}</span><span class="bar"><i style="height:${Math.round(mm / wMaxDay * 100)}%"></i></span><span class="hh">${mm ? hmShort(mm) : ""}</span></div>`; }).join("")}</div>
-      <ul class="daylist">${wdays.map(d0 => { const d = d0, bl = sorted(myRows(d, id)), dt = pd(d), oth = bl.some(b => blkDept(b, id) === "alt"); return `<li class="${d === t ? "is-today" : ""} ${P.browse && d === viewDay() && d !== t ? "is-view" : ""} ${bl.length ? "" : "off"}"><span class="d">${GS[dt.getDay()]} ${dt.getDate()}</span><span class="h">${bl.length ? nbList(bl) + (oth ? `<small class="dl-dep">${esc(deptsLabel(bl, id))}</small>` : "") : known(d) ? "Riposo" : "Non ancora caricato"}</span><span class="t">${bl.length ? hm(mins(bl)) : ""}</span></li>`; }).join("")}</ul>
+      <div class="strip">${wdays.map(x => { const bl = sorted(myRows(x, id)), dt = pd(x), mm = mins(bl); return `<button type="button" class="sd ${dCls(deptsOf(bl, id)[0] || dept)} ${x === t ? "today" : ""} ${P.browse && x === d && !isT ? "vw" : ""} ${!bl.length && !known(x) ? "unk" : ""}" data-act="me-day" data-d="${x}" aria-label="${esc(capitalize(dateLong(x)))}${bl.length ? ", " + bl.map(fmtR).join(" e ") : ""}" ${P.browse && x === d ? `aria-current="date"` : ""}><span class="dl">${GS[dt.getDay()].toUpperCase()}</span><span class="dn">${dt.getDate()}</span><span class="bar"><i style="height:${Math.round(mm / wMaxDay * 100)}%"></i></span><span class="hh">${mm ? hmShort(mm) : ""}</span></button>`; }).join("")}</div>
+      <ul class="daylist">${wdays.map(d0 => { const d = d0, bl = sorted(myRows(d, id)), dt = pd(d), oth = bl.some(b => blkDept(b, id) === "alt"); return `<li class="${d === t ? "is-today" : ""} ${P.browse && d === viewDay() && d !== t ? "is-view" : ""} ${bl.length ? "" : "off"}" data-act="me-day" data-d="${d}"><span class="d">${GS[dt.getDay()]} ${dt.getDate()}</span><span class="h">${bl.length ? nbList(bl) + (oth ? `<small class="dl-dep">${esc(deptsLabel(bl, id))}</small>` : "") : known(d) ? "Riposo" : "Non ancora caricato"}</span><span class="t">${bl.length ? hm(mins(bl)) : ""}</span></li>`; }).join("")}</ul>
       <div class="wtot"><svg class="ring" viewBox="0 0 84 84" aria-hidden="true"><circle class="bgc" cx="42" cy="42" r="${R}"/><circle class="fg" cx="42" cy="42" r="${R}" style="stroke:var(--${col(dept)})" stroke-dasharray="${(C * frac).toFixed(1)} ${C.toFixed(1)}"/></svg>
         <div><span>Monte ore della settimana</span><b>${hm(wTot)}</b><span>${esc(cmp)}</span></div></div>
       ${P.week !== monday(t) && !P.browse ? `<button class="btn ghost" data-act="me-wtoday">Torna a questa settimana</button>` : ""}
