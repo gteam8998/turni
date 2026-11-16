@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>Turni Arese</title>
-<!-- versione 2026.11.15-47 -->
+<!-- versione 2026.11.16-48 -->
 <meta name="description" content="Turni e agenda del reparto Telefonia &amp; Service, MediaWorld Arese">
 <meta name="theme-color" content="#FFFFFF" media="(prefers-color-scheme: light)">
 <meta name="theme-color" content="#0B0F17" media="(prefers-color-scheme: dark)">
@@ -1334,7 +1334,7 @@ function qrSvg(text, color = "#0B1220", bg = "#FFFFFF") {
 if (typeof module !== "undefined") module.exports = { QRGEN, qrSvg };
 
 </script>
-<script src="firebase-config.js?v=2026.11.15-47"></script>
+<script src="firebase-config.js?v=2026.11.16-48"></script>
 <script>
 (() => {
 "use strict";
@@ -3571,9 +3571,13 @@ function renderMe(){
   const overl = (a, b) => a.some(x => b.some(y => toMin(x.s) < toMin(y.e) && toMin(y.s) < toMin(x.e)));
   /* i miei reparti di quel giorno (se riposo: quelli dell'ultimo turno che conosco, se no Telefonia e Service) */
   const myGroups = (() => { let bl = dayBl; if (!bl.length){ const ks = Object.keys({...S.shifts, ...P.shifts}).filter(x => x < d).sort().reverse(); for (const k of ks){ const b = sorted(myRows(k, id)); if (b.length){ bl = b; break; } } }
-    const gs = new Set(bl.map(b => blkGroup(b, id))); return gs.size ? gs : new Set(["TS"]); })();
+    /* Telefonia e Service sempre: è il nostro reparto, anche nei giorni in cui sono segnato altrove o la mia fascia ha una sigla diversa */
+    const gs = new Set(bl.map(b => blkGroup(b, id))); gs.add("TS"); return gs; })();
   const ours = (bl, sid) => sorted(bl).filter(b => myGroups.has(blkGroup(b, sid)));
-  const mates = Object.keys(rowsT).filter(k => k !== id && staffById(k) && ours(rowsT[k], k).length).map(k => ({bl: ours(rowsT[k], k), st: staffById(k)})).sort((a, b) => toMin(a.bl[0].s) - toMin(b.bl[0].s));
+  const byStart = (a, b) => toMin(a.bl[0].s) - toMin(b.bl[0].s);
+  let mates = Object.keys(rowsT).filter(k => k !== id && staffById(k) && ours(rowsT[k], k).length).map(k => ({bl: ours(rowsT[k], k), st: staffById(k)})).sort(byStart);
+  /* nessuno nei miei reparti ma il giorno ha dei turni: mostro chi lavora, con il suo reparto, invece di «nessun collega» */
+  if (!mates.length) mates = Object.keys(rowsT).filter(k => k !== id && staffById(k) && sorted(rowsT[k]).length).map(k => ({bl: sorted(rowsT[k]), st: staffById(k)})).sort(byStart);
   const wdays = [...Array(7)].map((_, i) => addDays(P.week, i));
   const wTot = wdays.reduce((s, d) => s + mins(myRows(d, id)), 0);
   const wMaxDay = Math.max(9 * 60, ...wdays.map(d => mins(myRows(d, id))));
@@ -3605,7 +3609,7 @@ function renderMe(){
     </button>`;
   const matesTitle = isT ? "In turno oggi" : `In turno ${relShort(d) === "Domani" || relShort(d) === "Ieri" ? relShort(d).toLowerCase() : dayShort(d).toLowerCase()}`;
   const matesCard = mates.length || !isT ? `<section class="card mates-c${isT ? "" : " silver"}${P.anim ? " in-" + P.anim : ""}"><h2>${esc(matesTitle)}${mates.length ? `<small>${mates.length}</small>` : ""}</h2>${mates.length ? `<ul class="mates">${mates.map(x => { const w = dayBl.length && overl(dayBl, x.bl); return `<li><span class="av ${dCls(deptsOf(x.bl, x.st.id)[0])}">${avIn(x.st.id, x.st.name)}</span><b>${esc(x.st.name)}</b><span class="num">${x.bl.map(fmtR).join(", ")}</span><small style="color:var(--ink-3)">${esc(deptsLabel(x.bl, x.st.id))}${w ? ` · <span style="color:var(--ok)">con te</span>` : ""}</small></li>`; }).join("")}</ul>`
-      : `<p class="mut">${known(d) ? "Nessun collega di Telefonia o Service segnato quel giorno." : "I turni di quel giorno non sono ancora stati caricati."}</p>`}</section>` : "";
+      : `<p class="mut">${known(d) ? "Nessun collega segnato quel giorno." : "I turni di quel giorno non sono ancora stati caricati."}</p>`}</section>` : "";
   el.innerHTML = `<div class="ph${P.browse ? " browsing" : ""}">
     <div class="ph-top">${isAdmin() ? `<button class="btn back ph-back" data-act="nav" data-to="agenda">${ICO.back}Agenda</button>` : ""}<span class="ph-date">${esc(capitalize(dateLong(t)))}</span>${msgBtn()}${gearBtn()}</div>
     <header class="me-id"><label class="av av-pick ${dCls(todayD[0] || usual(id))}" title="Cambia la foto profilo">${avIn(id, st.name)}<i class="av-cam" aria-hidden="true">${ICO.cam}</i><input type="file" accept="image/*" data-avatar="${id}" aria-label="Cambia la foto profilo"></label>
