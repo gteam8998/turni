@@ -2,9 +2,9 @@
 <html lang="it">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
 <title>Turni Arese</title>
-<!-- versione 2026.11.16-54 -->
+<!-- versione 2026.11.16-55 -->
 <meta name="description" content="Turni e agenda del reparto Telefonia &amp; Service, MediaWorld Arese">
 <meta name="theme-color" content="#FFFFFF" media="(prefers-color-scheme: light)">
 <meta name="theme-color" content="#0B0F17" media="(prefers-color-scheme: dark)">
@@ -50,6 +50,7 @@
 *{box-sizing:border-box}
 [hidden]{display:none!important}
 html,body{background:var(--bg)}
+html{touch-action:manipulation;-webkit-text-size-adjust:100%;text-size-adjust:100%}
 body{color:var(--ink);font-family:var(--f-body);font-size:17px;line-height:1.45;
   padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:0 48px}
 button,input,select,textarea{font:inherit;color:inherit}
@@ -865,7 +866,7 @@ html,body{background:var(--bg);transition:background-color .2s}
 .b-t em{position:absolute;top:-4px;bottom:-4px;width:2.5px;background:var(--ink);border-radius:2px}
 .b-v{text-align:right;font-weight:700;font-family:var(--f-num)}
 .mt-pick{display:block;min-width:0;margin:-2px 0 12px}
-.mt-pick select{width:100%;min-height:44px;border:1.5px solid var(--line);border-radius:12px;background-color:var(--bg);color:var(--ink);padding:0 38px 0 14px;font:inherit;font-weight:700;font-size:15px;appearance:none;-webkit-appearance:none;text-overflow:ellipsis;
+.mt-pick select{width:100%;min-height:44px;border:1.5px solid var(--line);border-radius:12px;background-color:var(--bg);color:var(--ink);padding:0 38px 0 14px;font:inherit;font-weight:700;font-size:16px;appearance:none;-webkit-appearance:none;text-overflow:ellipsis;
   background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%238791A3' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 12px center;cursor:pointer}
 .mates{list-style:none;margin:0;padding:0;display:grid}
 .mates li{display:grid;grid-template-columns:auto minmax(0,1fr);gap:2px 12px;align-items:center;padding:10px 0;border-top:1px solid var(--line-2)}
@@ -1385,7 +1386,7 @@ function qrSvg(text, color = "#0B1220", bg = "#FFFFFF") {
 if (typeof module !== "undefined") module.exports = { QRGEN, qrSvg };
 
 </script>
-<script src="firebase-config.js?v=2026.11.16-54"></script>
+<script src="firebase-config.js?v=2026.11.16-55"></script>
 <script>
 (() => {
 "use strict";
@@ -3185,6 +3186,9 @@ function showDay(){
     if (top < room || top > innerHeight * .55) window.scrollTo({top: Math.max(0, scrollY + top - room), behavior: matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth"});
   });
 }
+/* niente zoom con le dita (pizzico o doppio tocco) sullo schermo; il ritaglio della foto profilo ha il suo pizzico e resta com'è */
+["gesturestart", "gesturechange", "gestureend"].forEach(t => document.addEventListener(t, e => { if (!(e.target.closest && e.target.closest(".crop-view"))) e.preventDefault(); }, {passive: false}));
+document.addEventListener("touchmove", e => { if (e.touches.length > 1 && !(e.target.closest && e.target.closest(".crop-view"))) e.preventDefault(); }, {passive: false});
 (() => {
   let sw = null;
   document.addEventListener("touchstart", e => { const h = ROUTE === "me" && e.touches.length === 1 && e.target.closest && e.target.closest(".me-hero"); sw = h ? {x: e.touches[0].clientX, y: e.touches[0].clientY} : null; }, {passive: true});
