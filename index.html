@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>Turni Arese</title>
-<!-- versione 2026.11.16-52 -->
+<!-- versione 2026.11.16-53 -->
 <meta name="description" content="Turni e agenda del reparto Telefonia &amp; Service, MediaWorld Arese">
 <meta name="theme-color" content="#FFFFFF" media="(prefers-color-scheme: light)">
 <meta name="theme-color" content="#0B0F17" media="(prefers-color-scheme: dark)">
@@ -518,7 +518,7 @@ body[data-role="banco"] .me-only{display:none!important}
 .me-av{padding:0;font:inherit;cursor:zoom-in;-webkit-tap-highlight-color:transparent}
 .me-av:focus-visible{outline:3px solid var(--focus);outline-offset:3px}
 .av-zoom{position:fixed;inset:0;z-index:120;display:grid;place-items:center;padding:24px;background:rgba(5,8,15,.9);animation:avz .16s ease}
-.av-zoom img{width:min(88vw,480px);height:auto;max-height:78vh;object-fit:contain;border-radius:28px;box-shadow:0 30px 60px -20px rgba(0,0,0,.7)}
+.av-zoom img{width:min(82vw,70vh,440px);aspect-ratio:1;height:auto;object-fit:cover;border-radius:50%;border:8px solid var(--tel);box-sizing:border-box;box-shadow:0 30px 60px -20px rgba(0,0,0,.7)}
 .av-zoom-x{position:absolute;top:calc(16px + env(safe-area-inset-top,0px));right:16px;width:46px;height:46px;border-radius:50%;border:0;display:grid;place-items:center;background:#fff;color:#0E1526;cursor:pointer}
 .av-zoom-x svg{width:22px;height:22px}
 @keyframes avz{from{opacity:0}}
@@ -1378,7 +1378,7 @@ function qrSvg(text, color = "#0B1220", bg = "#FFFFFF") {
 if (typeof module !== "undefined") module.exports = { QRGEN, qrSvg };
 
 </script>
-<script src="firebase-config.js?v=2026.11.16-52"></script>
+<script src="firebase-config.js?v=2026.11.16-53"></script>
 <script>
 (() => {
 "use strict";
@@ -3626,8 +3626,10 @@ const heroToday = id => heroDay(id, todayStr());
 /* la foto profilo a tutto schermo (si cambia o si toglie dalle impostazioni) */
 function zoomAvatar(){
   const img = S.avatars[meId()]; if (!img || $(".av-zoom")) return;
+  /* sempre tonda, con il bordo dello stesso colore della foto piccola (reparto o tema) */
+  const small = $("#scr-me .me-av"), ring = small ? getComputedStyle(small).borderTopColor : "";
   const o = document.createElement("div"); o.className = "av-zoom"; o.setAttribute("role", "dialog"); o.setAttribute("aria-label", "La tua foto profilo");
-  o.innerHTML = `<img src="${img}" alt="La tua foto profilo"><button type="button" class="av-zoom-x" aria-label="Chiudi">${ICON.close}</button>`;
+  o.innerHTML = `<img src="${img}" alt="La tua foto profilo"${ring ? ` style="border-color:${ring}"` : ""}><button type="button" class="av-zoom-x" aria-label="Chiudi">${ICON.close}</button>`;
   const close = () => { o.remove(); document.removeEventListener("keydown", esc); };
   const esc = e => { if (e.key === "Escape") close(); };
   o.addEventListener("click", close); document.addEventListener("keydown", esc);
