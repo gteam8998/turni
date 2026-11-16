@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>Turni Arese</title>
-<!-- versione 2026.11.16-48 -->
+<!-- versione 2026.11.16-49 -->
 <meta name="description" content="Turni e agenda del reparto Telefonia &amp; Service, MediaWorld Arese">
 <meta name="theme-color" content="#FFFFFF" media="(prefers-color-scheme: light)">
 <meta name="theme-color" content="#0B0F17" media="(prefers-color-scheme: dark)">
@@ -829,6 +829,9 @@ html,body{background:var(--bg);transition:background-color .2s}
 .b-t i{position:absolute;left:0;top:0;bottom:0;border-radius:6px;background:var(--tel)}
 .b-t em{position:absolute;top:-4px;bottom:-4px;width:2.5px;background:var(--ink);border-radius:2px}
 .b-v{text-align:right;font-weight:700;font-family:var(--f-num)}
+.mt-pick{display:block;margin:-2px 0 12px}
+.mt-pick select{width:100%;min-height:44px;border:1.5px solid var(--line);border-radius:12px;background-color:var(--bg);color:var(--ink);padding:0 38px 0 14px;font:inherit;font-weight:700;font-size:15px;appearance:none;-webkit-appearance:none;text-overflow:ellipsis;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%238791A3' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 12px center;cursor:pointer}
 .mates{list-style:none;margin:0;padding:0;display:grid;gap:8px}
 .mates li{display:grid;grid-template-columns:auto minmax(0,1fr);gap:1px 12px;align-items:center}
 .mates .av{width:36px;height:36px;font-size:13px;grid-row:span 3}
@@ -1334,7 +1337,7 @@ function qrSvg(text, color = "#0B1220", bg = "#FFFFFF") {
 if (typeof module !== "undefined") module.exports = { QRGEN, qrSvg };
 
 </script>
-<script src="firebase-config.js?v=2026.11.16-48"></script>
+<script src="firebase-config.js?v=2026.11.16-49"></script>
 <script>
 (() => {
 "use strict";
@@ -1491,7 +1494,7 @@ const SIGN = {REGIA: "Responsabile", NAS: "Facing", CS: "Centro servizi", PE: "P
 const sigName = g => SIGN[String(g || "").toUpperCase()] || g || "";
 const blkName = (b, sid) => { const d = blkDept(b, sid); return d === "alt" ? (sigName(b.g) || "altro reparto") : deptName(d); };
 /* chi lavora insieme: Telefonia+Service, PE+GE (reparti vicini), CS+Cassa (stesso bancone); gli altri ognuno col suo */
-const blkGroup = (b, sid) => { const d = blkDept(b, sid); if (d !== "alt") return "TS"; const g = String(b.g || "").toUpperCase(); return g === "PE" || g === "GE" ? "PEGE" : g === "CS" || g === "CASS" ? "CSCASS" : g === "MAGA" || g === "MAGE" || g === "RMAG" ? "MAG" : g || "ALT"; };
+const blkGroup = (b, sid) => { const d = blkDept(b, sid); if (d !== "alt") return "TS"; const g = String(b.g || "").toUpperCase().replace(/\s+/g, ""); return g === "PE" || g === "GE" ? "PEGE" : g === "CS" || g === "CASS" ? "CSCASS" : g === "MAGA" || g === "MAGE" || g === "RMAG" ? "MAG" : g || "ALT"; };
 /* reparti di una giornata, il principale per primo (più minuti) */
 function deptsOf(bl, sid){
   const k = {}; (bl || []).forEach(b => { const d = blkDept(b, sid); k[d] = (k[d] || 0) + toMin(b.e) - toMin(b.s); });
@@ -3552,6 +3555,23 @@ function heroDay(id, d){
 const heroToday = id => heroDay(id, todayStr());
 
 /* ---------- la mia area ---------- */
+/* reparti per «In turno»: dove sono quel giorno (prima scelta), il mio di solito, gli altri reparti di quel giorno, tutto il negozio */
+const GRPN = {TS: "Telefonia e Service", PEGE: "PE e GE", CSCASS: "Centro servizi e Cassa", MAG: "Magazzino", ALT: "altro reparto"};
+const grpName = k => GRPN[k] || sigName(k) || k;
+function matesGroups(id, d, dayBl, rowsT){
+  const opts = [], seen = new Set();
+  const label = gs => [...gs].map(grpName).join(", ");
+  const add = (v, gs, pre) => { const key = [...gs].sort().join("+"); if (seen.has(key)) return; seen.add(key); opts.push({v, g: gs, n: label(gs), l: pre ? `${pre}: ${label(gs)}` : label(gs)}); };
+  const dayG = new Set(sorted(dayBl).map(b => blkGroup(b, id)));
+  const uG = usual(id) ? "TS" : S.usualAlt && S.usualAlt[id] ? blkGroup({d: "alt", g: S.usualAlt[id]}, id) : "TS";
+  const sameAsUsual = dayG.size === 1 && dayG.has(uG);
+  if (dayG.size) add("oggi", dayG, sameAsUsual ? "Il mio reparto" : d === todayStr() ? "Oggi sono in" : "Quel giorno sono in");
+  add("solito", new Set([uG]), "Di solito");
+  const others = new Set(); Object.entries(rowsT).forEach(([k, bl]) => { if (k !== id && staffById(k)) (bl || []).forEach(b => others.add(blkGroup(b, k))); });
+  [...others].sort((a, b) => (a === "TS" ? -1 : b === "TS" ? 1 : grpName(a).localeCompare(grpName(b)))).forEach(g => add("g:" + g, new Set([g])));
+  if (others.size > 1) opts.push({v: "tutti", g: null, n: "", l: "Tutto il negozio"});
+  return {opts};
+}
 function renderMe(){
   const el = $("#scr-me"); if (!el || ROUTE !== "me") return;
   const t = todayStr(), id = meId();
@@ -3568,16 +3588,14 @@ function renderMe(){
     : usual(id) ? `<span class="pill soft">${esc(capitalize(usualText(id)))}</span>` : "";
   const ap = myAppts(id, isT ? null : d);
   const rowsT = rowsOf(d);
-  const overl = (a, b) => a.some(x => b.some(y => toMin(x.s) < toMin(y.e) && toMin(y.s) < toMin(x.e)));
-  /* i miei reparti di quel giorno (se riposo: quelli dell'ultimo turno che conosco, se no Telefonia e Service) */
-  const myGroups = (() => { let bl = dayBl; if (!bl.length){ const ks = Object.keys({...S.shifts, ...P.shifts}).filter(x => x < d).sort().reverse(); for (const k of ks){ const b = sorted(myRows(k, id)); if (b.length){ bl = b; break; } } }
-    /* Telefonia e Service sempre: è il nostro reparto, anche nei giorni in cui sono segnato altrove o la mia fascia ha una sigla diversa */
-    const gs = new Set(bl.map(b => blkGroup(b, id))); gs.add("TS"); return gs; })();
-  const ours = (bl, sid) => sorted(bl).filter(b => myGroups.has(blkGroup(b, sid)));
-  const byStart = (a, b) => toMin(a.bl[0].s) - toMin(b.bl[0].s);
-  let mates = Object.keys(rowsT).filter(k => k !== id && staffById(k) && ours(rowsT[k], k).length).map(k => ({bl: ours(rowsT[k], k), st: staffById(k)})).sort(byStart);
-  /* nessuno nei miei reparti ma il giorno ha dei turni: mostro chi lavora, con il suo reparto, invece di «nessun collega» */
-  if (!mates.length) mates = Object.keys(rowsT).filter(k => k !== id && staffById(k) && sorted(rowsT[k]).length).map(k => ({bl: sorted(rowsT[k]), st: staffById(k)})).sort(byStart);
+  /* colleghi in turno: per primi quelli del reparto dove sono quel giorno (se sono al TV, chi c'è al TV);
+     dal menu a tendina: il mio reparto di solito, gli altri reparti di quel giorno o tutto il negozio */
+  const mt = matesGroups(id, d, dayBl, rowsT);
+  const pick = P.mSel && P.mSel.d === d && mt.opts.some(o => o.v === P.mSel.v) ? P.mSel.v : mt.opts[0].v;
+  const pickO = mt.opts.find(o => o.v === pick), pickG = pickO.g;
+  const ours = (bl, sid) => sorted(bl).filter(b => !pickG || pickG.has(blkGroup(b, sid)));
+  const mates = Object.keys(rowsT).filter(k => k !== id && staffById(k) && ours(rowsT[k], k).length).map(k => ({bl: ours(rowsT[k], k), st: staffById(k)})).sort((a, b) => toMin(a.bl[0].s) - toMin(b.bl[0].s));
+  const mtPick = known(d) && mt.opts.length > 1 ? `<label class="mt-pick"><select data-mates-d="${d}" aria-label="Quale reparto vedere">${mt.opts.map(o => `<option value="${esc(o.v)}" ${o.v === pick ? "selected" : ""}>${esc(o.l)}</option>`).join("")}</select></label>` : "";
   const wdays = [...Array(7)].map((_, i) => addDays(P.week, i));
   const wTot = wdays.reduce((s, d) => s + mins(myRows(d, id)), 0);
   const wMaxDay = Math.max(9 * 60, ...wdays.map(d => mins(myRows(d, id))));
@@ -3608,8 +3626,8 @@ function renderMe(){
         : `<span class="mut">${isT ? "Nessun turno segnato nei prossimi giorni: appena vengono caricati li trovi qui." : "Nessun turno segnato dopo questo giorno."}</span>`}
     </button>`;
   const matesTitle = isT ? "In turno oggi" : `In turno ${relShort(d) === "Domani" || relShort(d) === "Ieri" ? relShort(d).toLowerCase() : dayShort(d).toLowerCase()}`;
-  const matesCard = mates.length || !isT ? `<section class="card mates-c${isT ? "" : " silver"}${P.anim ? " in-" + P.anim : ""}"><h2>${esc(matesTitle)}${mates.length ? `<small>${mates.length}</small>` : ""}</h2>${mates.length ? `<ul class="mates">${mates.map(x => { const w = dayBl.length && overl(dayBl, x.bl); return `<li><span class="av ${dCls(deptsOf(x.bl, x.st.id)[0])}">${avIn(x.st.id, x.st.name)}</span><b>${esc(x.st.name)}</b><span class="num">${x.bl.map(fmtR).join(", ")}</span><small style="color:var(--ink-3)">${esc(deptsLabel(x.bl, x.st.id))}${w ? ` · <span style="color:var(--ok)">con te</span>` : ""}</small></li>`; }).join("")}</ul>`
-      : `<p class="mut">${known(d) ? "Nessun collega segnato quel giorno." : "I turni di quel giorno non sono ancora stati caricati."}</p>`}</section>` : "";
+  const matesCard = mates.length || !isT || mtPick ? `<section class="card mates-c${isT ? "" : " silver"}${P.anim ? " in-" + P.anim : ""}"><h2>${esc(matesTitle)}${mates.length ? `<small>${mates.length}</small>` : ""}</h2>${mtPick}${mates.length ? `<ul class="mates">${mates.map(x => { const w = dayBl.some(a => x.bl.some(b => blkGroup(a, id) === blkGroup(b, x.st.id) && toMin(a.s) < toMin(b.e) && toMin(b.s) < toMin(a.e))); return `<li><span class="av ${dCls(deptsOf(x.bl, x.st.id)[0])}">${avIn(x.st.id, x.st.name)}</span><b>${esc(x.st.name)}</b><span class="num">${x.bl.map(fmtR).join(", ")}</span><small style="color:var(--ink-3)">${esc(deptsLabel(x.bl, x.st.id))}${w ? ` · <span style="color:var(--ok)">con te</span>` : ""}</small></li>`; }).join("")}</ul>`
+      : `<p class="mut">${known(d) ? `Nessun altro collega ${pickO.n ? "in " + esc(pickO.n) + " " : ""}${isT ? "oggi" : "quel giorno"}.` : "I turni di quel giorno non sono ancora stati caricati."}</p>`}</section>` : "";
   el.innerHTML = `<div class="ph${P.browse ? " browsing" : ""}">
     <div class="ph-top">${isAdmin() ? `<button class="btn back ph-back" data-act="nav" data-to="agenda">${ICO.back}Agenda</button>` : ""}<span class="ph-date">${esc(capitalize(dateLong(t)))}</span>${msgBtn()}${gearBtn()}</div>
     <header class="me-id"><label class="av av-pick ${dCls(todayD[0] || usual(id))}" title="Cambia la foto profilo">${avIn(id, st.name)}<i class="av-cam" aria-hidden="true">${ICO.cam}</i><input type="file" accept="image/*" data-avatar="${id}" aria-label="Cambia la foto profilo"></label>
@@ -4264,6 +4282,7 @@ document.addEventListener("submit", async e => {
 });
 document.addEventListener("change", async e => {
   const el = e.target;
+  if (el.dataset && el.dataset.matesD){ P.mSel = {d: el.dataset.matesD, v: el.value}; return renderMe(); }
   if (el.dataset && el.dataset.avatar && el.files && el.files[0]){ const f = el.files[0]; el.value = ""; return openCropper(f, el.dataset.avatar); }
   if (el.dataset && "bgPick" in el.dataset && el.files && el.files[0]){ const f = el.files[0]; el.value = ""; return pickBg(f); }
   if (el.id === "cuAny"){ const c = getCustom(); if (!c) return; c.accent = el.value; try { localStorage.setItem(CUSTOM_KEY, JSON.stringify(c)); } catch {} return applyTheme(true); }
