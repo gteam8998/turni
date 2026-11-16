@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
 <title>Turni Arese</title>
-<!-- versione 2026.11.16-58 -->
+<!-- versione 2026.11.16-59 -->
 <meta name="description" content="Turni e agenda del reparto Telefonia &amp; Service, MediaWorld Arese">
 <meta name="theme-color" content="#FFFFFF" media="(prefers-color-scheme: light)">
 <meta name="theme-color" content="#0B0F17" media="(prefers-color-scheme: dark)">
@@ -935,7 +935,14 @@ html,body{background:var(--bg);transition:background-color .2s}
 .hk-l.is-today::before{content:"";width:8px;height:8px;border-radius:50%;background:#fff}
 /* frecce dentro la scheda del giorno: l'unico modo per scorrere i giorni */
 /* scheda del turno: tutto al centro, frecce ai lati a metà altezza */
-.me-hero{padding:20px 60px 18px;justify-items:center;text-align:center;container-type:inline-size;min-height:306px;align-content:center}
+.me-hero{padding:20px 60px 18px;justify-items:center;text-align:center;container-type:inline-size;min-height:306px;grid-template-rows:auto 1fr auto;align-content:stretch}
+/* tre fasce fisse: il giorno in alto, il turno al centro dello spazio che resta, la barra del giorno in fondo */
+.me-hero .hero-mid{display:grid;grid-template-columns:minmax(0,1fr);justify-items:center;align-content:center;gap:12px;justify-self:stretch;min-width:0}
+.me-hero .chip-st{white-space:normal;max-width:100%;justify-content:center;text-align:center}
+/* telefono: cerchi delle frecce più piccoli, con un po' d'aria verso il bordo e verso gli orari */
+@media (max-width:520px){ .me-hero{padding-left:58px;padding-right:58px} .me-hero .hn-arr{width:38px;height:38px;margin-top:-19px} .me-hero .hn-arr.l{left:12px} .me-hero .hn-arr.r{right:12px} .me-hero .hn-arr svg{width:21px;height:21px} .me-hero .dayline{margin:0 -36px} }
+@media (max-width:360px){ .me-hero{padding-left:50px;padding-right:50px} .me-hero .hn-arr{width:34px;height:34px;margin-top:-17px} .me-hero .hn-arr.l{left:9px} .me-hero .hn-arr.r{right:9px} .me-hero .hn-arr svg{width:19px;height:19px} .me-hero .dayline{margin:0 -28px} }
+.me-hero .dayline.off .tr{opacity:.7}
 /* altezza fissa: le frecce restano nello stesso punto in tutti i giorni, anche toccandole di fila */
 .me-hero .hn-arr{position:absolute;top:50%;margin-top:-23px;z-index:2}
 .me-hero .hn-arr.l{left:10px}.me-hero .hn-arr.r{right:10px}
@@ -1399,7 +1406,7 @@ function qrSvg(text, color = "#0B1220", bg = "#FFFFFF") {
 if (typeof module !== "undefined") module.exports = { QRGEN, qrSvg };
 
 </script>
-<script src="firebase-config.js?v=2026.11.16-58"></script>
+<script src="firebase-config.js?v=2026.11.16-59"></script>
 <script>
 (() => {
 "use strict";
@@ -3633,14 +3640,19 @@ function heroDay(id, d){
       <span class="tk" style="left:0">${a / 60}</span><span class="tk" style="left:50%">${(a + W / 2) / 60 | 0}</span><span class="tk l" style="left:100%">${z / 60}</span></div>`;
   } else if (known(d)){ chip = ""; big = "Riposo"; meta = isT ? "Oggi non sei in turno. Goditela." : g > 0 ? "Quel giorno non sei in turno." : "Quel giorno eri a riposo."; }
   else { chip = ""; big = "—"; meta = isT ? "I turni di oggi non sono ancora stati caricati." : "I turni di quel giorno non sono ancora stati caricati."; }
+  /* riposo o non caricato: la barra del giorno resta, vuota, così la scheda ha sempre la stessa forma */
+  if (!bl.length){ const a = 8 * 60, z = 22 * 60, x = m => ((m - a) / (z - a) * 100).toFixed(2) + "%";
+    line = `<div class="dayline off" aria-hidden="true"><span class="tr"></span>${isT && nm >= a && nm <= z ? `<span class="nw" style="left:calc(${x(nm)} - 1.5px)"></span>` : ""}<span class="tk" style="left:0">8</span><span class="tk" style="left:50%">15</span><span class="tk l" style="left:100%">22</span></div>`; }
   /* l'unica scheda per scorrere i giorni: frecce ai lati, al centro oggi o la data («Torna a oggi» è il tasto rosso in basso) */
   return `<section class="hero me-hero ${dCls(dept)}${isT ? "" : " silver"}${P.anim ? " in-" + P.anim : ""}" aria-label="Il tuo turno di ${isT ? "oggi" : esc(dateLong(d))}">
       <button type="button" class="hn-arr l" data-act="me-dprev" aria-label="Giorno prima">${ICO.back}</button>
       <button type="button" class="hn-arr r flip" data-act="me-dnext" aria-label="Giorno dopo">${ICO.back}</button>
       <div class="hn-c" aria-live="polite">${isT ? `<span class="hk-l is-today">Oggi</span>` : `<small>${esc(relGap(d))}</small><b>${esc(capitalize(dateLong(d)))}</b>`}</div>
-      ${isT && chip ? `<div class="hero-k"><span class="chip-st">${chip}</span></div>` : ""}
-      <div class="hero-big"${bl.length ? ` style="--w:${(Math.max(...bl.map(b => fmtR(b).length)) * .62 + .9).toFixed(2)}"` : ""}>${big}</div>
-      <div class="hero-meta">${esc(meta)}</div>${line}
+      <div class="hero-mid">
+        ${isT && chip ? `<div class="hero-k"><span class="chip-st">${chip}</span></div>` : ""}
+        <div class="hero-big"${bl.length ? ` style="--w:${(Math.max(...bl.map(b => fmtR(b).length)) * .62 + .9).toFixed(2)}"` : ""}>${big}</div>
+        <div class="hero-meta">${esc(meta)}</div>
+      </div>${line}
     </section>`;
 }
 const heroToday = id => heroDay(id, todayStr());
