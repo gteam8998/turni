@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
 <title>Turni Arese</title>
-<!-- versione 2026.11.16-61 -->
+<!-- versione 2026.11.17-62 -->
 <meta name="description" content="Turni e agenda del reparto Telefonia &amp; Service, MediaWorld Arese">
 <meta name="theme-color" content="#FFFFFF" media="(prefers-color-scheme: light)">
 <meta name="theme-color" content="#0B0F17" media="(prefers-color-scheme: dark)">
@@ -942,6 +942,7 @@ html,body{background:var(--bg);transition:background-color .2s}
 .me-hero .hero-big{align-self:center}
 .me-hero .hero-bot{align-self:end;display:grid;justify-items:center;gap:12px;justify-self:stretch;min-width:0}
 .me-hero .hero-top > *,.me-hero .hero-bot > *{max-width:100%}
+.me-hero .hero-bot > .dayline{max-width:none}
 .me-hero .chip-st{white-space:normal;max-width:100%;justify-content:center;text-align:center}
 .me-hero .dayline.off .tr{opacity:.7}
 /* altezza fissa: le frecce restano nello stesso punto in tutti i giorni, anche toccandole di fila */
@@ -952,7 +953,9 @@ html,body{background:var(--bg);transition:background-color .2s}
 .me-hero .hero-k{justify-content:center}
 .me-hero .hero-big{font-size:clamp(24px,calc((100vw - 152px) / var(--w,6)),40px);font-size:clamp(22px,calc(100cqw / var(--w,6)),40px);justify-self:stretch;display:grid;justify-content:center;justify-items:start;gap:2px;padding-right:.02em}
 /* centratura al pixel: il blocco degli orari è centrato, le icone partono dallo stesso punto; le spaziature fra le lettere non spostano il testo */
-.me-hero .hero-big .nb{padding-left:.03em}
+.me-hero .hero-big .nb{position:relative}
+/* l'icona della fascia è «appesa» a sinistra dei numeri: non conta nella centratura, così sono i NUMERI a stare sull'asse della scheda */
+.me-hero .hero-big .hfi{position:absolute;right:100%;top:50%;margin-right:.18em;transform:translateY(-50%)}
 /* altezza al pixel: ogni riga misura quanto le cifre (dall'alto delle maiuscole alla base), così il testo sta proprio all'altezza delle frecce */
 .me-hero .hero-big .nb,.me-hero .hero-big .nbt{text-box:trim-both cap alphabetic}
 .me-hero .hero-big .nbt.dash{position:relative;top:-.08em}
@@ -1419,7 +1422,7 @@ function qrSvg(text, color = "#0B1220", bg = "#FFFFFF") {
 if (typeof module !== "undefined") module.exports = { QRGEN, qrSvg };
 
 </script>
-<script src="firebase-config.js?v=2026.11.16-61"></script>
+<script src="firebase-config.js?v=2026.11.17-62"></script>
 <script>
 (() => {
 "use strict";
@@ -3664,7 +3667,7 @@ function heroDay(id, d){
         <div class="hn-c" aria-live="polite">${isT ? `<span class="hk-l is-today">Oggi</span>` : `<small>${esc(relGap(d))}</small><b>${esc(capitalize(dateLong(d)))}</b>`}</div>
         ${isT && chip ? `<div class="hero-k"><span class="chip-st">${chip}</span></div>` : ""}
       </div>
-      <div class="hero-big"${bl.length ? ` style="--w:${(Math.max(...bl.map(b => fmtR(b).length)) * .62 + .9).toFixed(2)}"` : ""}>${big}</div>
+      <div class="hero-big"${bl.length ? ` style="--w:${(Math.max(...bl.map(b => fmtR(b).length)) * .62 + 1.7).toFixed(2)}"` : ""}>${big}</div>
       <div class="hero-bot"><div class="hero-meta">${esc(meta)}</div>${line}</div>
     </section>`;
 }
