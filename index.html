@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
 <title>Turni Arese</title>
-<!-- versione 2026.11.18-65 -->
+<!-- versione 2026.11.18-66 -->
 <meta name="description" content="Turni e agenda del reparto Telefonia &amp; Service, MediaWorld Arese">
 <meta name="theme-color" content="#FFFFFF" media="(prefers-color-scheme: light)">
 <meta name="theme-color" content="#0B0F17" media="(prefers-color-scheme: dark)">
@@ -1050,7 +1050,23 @@ html,body{background:var(--bg);transition:background-color .2s}
 @keyframes in-l{from{opacity:0;transform:translateX(-18px)}}
 @media (prefers-reduced-motion:reduce){.next-c.live::after,.next-c.live .go svg,.in-r>*,.in-l>*,.today-fab{animation:none}.next-c.live::after{opacity:.6}}
 /* ---------- messaggi ---------- */
-.n-to{margin:0}
+.n-to{display:grid;gap:8px;margin:0}
+.to-seg{display:grid;grid-template-columns:1fr 1fr;gap:4px;padding:4px;border-radius:14px;background:var(--hover)}
+.to-seg button{border:0;border-radius:10px;padding:10px 8px;background:none;color:var(--ink-2);font:700 15px var(--f-body);cursor:pointer}
+.to-seg button[aria-pressed="true"]{background:var(--bg);color:var(--ink);box-shadow:0 1px 4px rgba(0,0,0,.12)}
+.to-q{margin:0}
+.to-res{list-style:none;margin:0;padding:0;display:grid;gap:4px}
+.to-res:empty{display:none}
+.to-res li{min-width:0}
+.to-res button{box-sizing:border-box;width:100%;display:flex;align-items:center;gap:10px;padding:8px 10px;border:1.5px solid var(--line-2);border-radius:12px;background:var(--bg);color:var(--ink);font:inherit;text-align:left;cursor:pointer}
+.to-res button:hover{border-color:var(--primary)}
+.to-res .av,.to-chip .av{width:32px;height:32px;font-size:12px;flex:none}
+.to-res b{font-size:15px;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.to-none{color:var(--ink-3);font-size:14px;padding:4px 2px}
+.to-chip{box-sizing:border-box;display:flex;align-items:center;gap:10px;padding:8px 8px 8px 10px;border-radius:14px;border:2px solid var(--primary);background:var(--bg)}
+.to-chip b{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:15px}
+.to-chip button{width:30px;height:30px;border-radius:50%;border:0;display:grid;place-items:center;background:var(--hover);color:var(--ink-2);cursor:pointer;flex:none}
+.to-chip button svg{width:14px;height:14px}
 .msg-to{font-style:normal;font-size:11px;font-weight:800;letter-spacing:.04em;text-transform:uppercase;padding:2px 8px;border-radius:999px;background:var(--hover);color:var(--ink-2)}
 
 @media (max-width:759px){ .msg-top{display:none} }
@@ -1126,6 +1142,10 @@ html,body{background:var(--bg);transition:background-color .2s}
 .msg-comp input,.msg-comp textarea,.fb-new textarea,.fb-ra textarea{width:100%;border:1.5px solid var(--line);border-radius:14px;background:var(--bg);color:var(--ink);font:inherit;font-size:16px;padding:12px 14px;resize:vertical}
 .msg-comp input{height:50px}
 .msg-comp input:focus,.msg-comp textarea:focus,.fb-new textarea:focus,.fb-ra textarea:focus{outline:none;border-color:var(--tel)}
+/* la casella di ricerca del collega ha già il suo bordo: l'input dentro resta pulito e non sborda */
+.msg-comp > *,.n-to > *{min-width:0}
+.msg-comp .to-q input{width:auto;flex:1;min-width:0;height:42px;border:0;border-radius:0;padding:0;background:none}
+.msg-comp .to-q:focus-within{border-color:var(--tel)}
 .chk-row{display:flex;align-items:center;gap:10px;font-weight:700;font-size:15px}
 .chk-row input{width:20px;height:20px;accent-color:var(--primary)}
 .btn svg{width:18px;height:18px}
@@ -1441,7 +1461,7 @@ function qrSvg(text, color = "#0B1220", bg = "#FFFFFF") {
 if (typeof module !== "undefined") module.exports = { QRGEN, qrSvg };
 
 </script>
-<script src="firebase-config.js?v=2026.11.18-65"></script>
+<script src="firebase-config.js?v=2026.11.18-66"></script>
 <script>
 (() => {
 "use strict";
@@ -2773,7 +2793,15 @@ function reviewHtml(){
 }
 const saveLabel = n => !n && U.groups.some(g => (g.archive || []).length) ? "Turni di altri reparti da mettere da parte" : U.groups.length > 1 ? `${n} ${n === 1 ? "turno da salvare" : "turni da salvare"}` : `${n} ${n === 1 ? "persona da salvare" : "persone da salvare"}`;
 document.addEventListener("change", e => { if (e.target && e.target.id === "upNotify") U.notify = e.target.checked; });
-document.addEventListener("change", e => { if (e.target && e.target.id === "nTo"){ M.to = e.target.value; renderMsg(); } });
+/* ricerca del collega a cui scrivere: compaiono solo i nomi che corrispondono a quello che scrivi */
+function toResults(){
+  const q = norm(($("#nToQ") || {}).value || "").trim(), ul = $("#nToRes"); if (!ul) return;
+  if (!q){ ul.innerHTML = ""; return; }
+  const r = msgPeople().filter(x => norm([x.name, x.full].filter(Boolean).join(" ")).split(/\s+/).some(w => w.startsWith(q)) || norm(x.full || x.name).includes(q)).slice(0, 6);
+  ul.innerHTML = r.length ? r.map(x => `<li><button data-act="nto-pick" data-id="${esc(x.id)}"><span class="av ${dCls(usual(x.id))}">${avIn(x.id, x.name)}</span><b>${esc(x.full || x.name)}</b></button></li>`).join("")
+    : `<li class="to-none">Nessun collega con l'accesso con questo nome</li>`;
+}
+document.addEventListener("input", e => { if (e.target && e.target.id === "nToQ") toResults(); });
 function bindReview(){
   const b = $("#upBody");
   b.querySelectorAll("[data-gdate]").forEach(inp => inp.onchange = () => { const v = validDate(inp.value); if (v){ const g = U.groups[+inp.dataset.gdate]; g.date = v; g.detected = true; g.open = true; renderUpload(); } });
@@ -3425,12 +3453,16 @@ function renderMsg(){
       return `<li class="msg-it ${n.kind === "turni" ? "k-turni" : "k-novita"}${nw ? " nw" : ""}"><button class="msg-x" data-act="msg-del" data-id="${esc(n.id)}" aria-label="Togli dalla mia pagina" title="Togli dalla mia pagina">${ICON.close}</button><span class="msg-i" aria-hidden="true">${n.kind === "turni" ? ICO.cal : ICO.spark}</span>
         <div class="msg-c"><div class="msg-meta">${nw ? `<em class="msg-new">Nuovo</em>` : ""}${Array.isArray(n.to) && n.to.length ? `<em class="msg-to">${isAdmin() ? "Solo a " + esc(n.to.map(staffName).filter(Boolean).join(", ") || "un collega") : "Solo per te"}</em>` : ""}<small>${esc(whenText(n.at))}</small></div><b>${esc(n.title || "")}</b><p>${msgBody(n.body)}</p>${all ? `<button class="msg-all" data-act="msg-del" data-id="${esc(n.id)}" data-all="1" data-confirm="Sì, cancella per tutti">${Array.isArray(n.to) && n.to.length ? "Cancella anche per lei/lui" : "Cancella per tutti"}</button>` : ""}</div></li>`; }).join("")}</ul>`
     : `<p class="mut msg-empty">Ancora niente: appena arriva una novità la trovi qui.</p>`;
-  const comp = isAdmin() ? `<section class="card msg-comp${M.comp ? " open" : ""}"><button class="comp-h" data-act="comp-open" aria-expanded="${!!M.comp}"><span>${ICO.send}Scrivi ai colleghi</span>${draftOpen ? `<em class="comp-draft">bozza pronta</em>` : ""}<i aria-hidden="true">${ICO.chev}</i></button>${M.comp ? `
-      <label class="mt-pick n-to"><select id="nTo" aria-label="A chi">${[["", "A tutti i colleghi"], ...msgPeople().map(x => [x.id, "Solo a " + (x.full || x.name)])].map(([v, l]) => `<option value="${esc(v)}" ${v === (M.to || "") ? "selected" : ""}>${esc(l)}</option>`).join("")}</select></label>
+  const comp = isAdmin() ? `<section class="card msg-comp${M.comp ? " open" : ""}"><button class="comp-h" data-act="comp-open" aria-expanded="${!!M.comp}"><span>${ICO.send}Scrivi ai colleghi</span>${draftOpen && M.toMode !== "one" ? `<em class="comp-draft">bozza pronta</em>` : ""}<i aria-hidden="true">${ICO.chev}</i></button>${M.comp ? `
+      <div class="n-to">
+        <div class="to-seg" role="group" aria-label="A chi"><button data-act="nto-all" aria-pressed="${M.toMode !== "one"}">A tutti</button><button data-act="nto-one" aria-pressed="${M.toMode === "one"}">A una persona</button></div>
+        ${M.toMode !== "one" ? "" : M.to ? (p => `<div class="to-chip"><span class="av ${dCls(usual(p.id))}">${avIn(p.id, p.name)}</span><b>${esc(p.full || p.name)}</b><button data-act="nto-clear" aria-label="Scegli un'altra persona">${ICON.close}</button></div>`)(msgPeople().find(x => x.id === M.to) || {id: M.to, name: staffName(M.to) || "Collega"})
+          : `<label class="acc-q to-q">${ICO.search}<input type="search" id="nToQ" placeholder="Cerca il collega" autocomplete="off" spellcheck="false" aria-label="Cerca il collega a cui scrivere"></label><ul class="to-res" id="nToRes"></ul>`}
+      </div>
       <input id="nTitle" maxlength="80" value="${esc(draftOpen ? NEWS_DRAFT.title : "")}" placeholder="Titolo" aria-label="Titolo">
-      <textarea id="nBody" rows="${draftOpen && !M.to ? 17 : 5}" maxlength="800" placeholder="Messaggio" aria-label="Messaggio">${esc(draftOpen ? NEWS_DRAFT.body : "")}</textarea>
+      <textarea id="nBody" rows="${draftOpen && M.toMode !== "one" ? 17 : 5}" maxlength="800" placeholder="Messaggio" aria-label="Messaggio">${esc(draftOpen ? NEWS_DRAFT.body : "")}</textarea>
       <label class="chk-row"><input type="checkbox" id="nPush" checked> Manda anche la notifica</label>
-      <div class="row-act"><button class="btn primary" data-act="news-send">${ICO.send}${M.to ? "Invia a " + esc((msgPeople().find(x => x.id === M.to) || {}).name || "lei/lui") : "Invia a tutti"}</button></div>` : ""}</section>` : "";
+      <div class="row-act"><button class="btn primary" data-act="news-send">${ICO.send}${M.toMode === "one" ? (M.to ? "Invia a " + esc((msgPeople().find(x => x.id === M.to) || {}).name || staffName(M.to) || "lei/lui") : "Scegli a chi scrivere") : "Invia a tutti"}</button></div>` : ""}</section>` : "";
   /* da colleghi a Gerti: un riquadro che si fa notare */
   const toBoss = M.boss ? "a " + M.boss : "al responsabile", ask = !isAdmin() ? `<section class="ask${M.open ? " open" : ""}">
       <button class="ask-h" data-act="ask-open" aria-expanded="${!!M.open}"><span class="ask-i" aria-hidden="true">${ICO.msg}</span><span class="ask-t"><b>Scrivi ${esc(toBoss)}</b><small>Un'idea per l'app o qualcosa che non va? Mandamela!</small></span><span class="ask-go" aria-hidden="true">${ICO.chev}</span></button>
@@ -3462,11 +3494,12 @@ async function newsSend(btn){
   if (!title || !body) return toast("Scrivi titolo e messaggio");
   const id = !M.news.some(n => n.id === NEWS_DRAFT.id) && title === NEWS_DRAFT.title ? NEWS_DRAFT.id : "n-" + Date.now().toString(36);
   btn.disabled = true;
+  if (M.toMode === "one" && !M.to){ btn.disabled = false; return toast("Scegli prima il collega a cui scrivere"); }
   const to = M.to ? [M.to] : [];
   try { await S.db.doc("news/" + id).set({kind: "novita", title, body, at: new Date().toISOString(), by: meId() || "", ...(to.length ? {to} : {})}); }
   catch { btn.disabled = false; return toast("Non riesco a inviare il messaggio: controlla la connessione"); }
   let sent = 0; if (push) sent = await sendPushMsg(title, body.split(/\n\s*\n/)[0].replace(/\s+/g, " ").slice(0, 180), "./#msg", "turni-msg", to);
-  $("#nTitle").value = ""; $("#nBody").value = ""; M.comp = false; M.to = "";
+  $("#nTitle").value = ""; $("#nBody").value = ""; M.comp = false; M.to = ""; M.toMode = "";
   toast(push ? (sent > 0 ? `Inviato · notifica a ${sent} telefon${sent === 1 ? "o" : "i"}` : sent === -2 ? "Inviato: lo trova in Messaggi (la notifica personale non è ancora attiva)" : sent < 0 ? "Inviato, ma la notifica non è partita" : "Inviato") : "Inviato");
   btn.disabled = false; renderMsg();
 }
@@ -4480,6 +4513,10 @@ document.addEventListener("click", async e => {
     msgHide(id); msgBadge(); renderMsg(); toast("Messaggio cancellato"); return;
   }
   if (act === "fb-del"){ if (!armed(el)) return; try { await S.db.doc("feedback/" + el.dataset.id).delete(); toast("Cancellato"); } catch { toast("Non riesco a cancellarlo"); } return; }
+  if (act === "nto-all"){ M.toMode = ""; M.to = ""; const t = $("#nTitle"), b = $("#nBody"); if (t && !t.value && b && !b.value && !M.news.some(n => n.id === NEWS_DRAFT.id)){ t.value = NEWS_DRAFT.title; b.value = NEWS_DRAFT.body; } return renderMsg(); }
+  if (act === "nto-one"){ M.toMode = "one"; const t = $("#nTitle"), b = $("#nBody"); if (t && t.value === NEWS_DRAFT.title){ t.value = ""; if (b) b.value = ""; } renderMsg(); const q = $("#nToQ"); if (q) q.focus(); return; }
+  if (act === "nto-pick"){ M.to = el.dataset.id; return renderMsg(); }
+  if (act === "nto-clear"){ M.to = ""; renderMsg(); const q = $("#nToQ"); if (q){ q.value = ""; q.focus(); } return; }
   if (act === "comp-open"){ M.comp = !M.comp; renderMsg(); return; }
   if (act === "ask-open"){ M.open = !M.open; M.fbOk = false; renderMsg(); if (M.open){ const t = $("#fbText"); if (t) t.focus(); } return; }
   if (act === "fb-kind"){ M.kind = el.dataset.k === "errore" ? "errore" : "idea"; const t = $("#fbText"), v = t ? t.value : ""; renderMsg(); const n = $("#fbText"); if (n){ n.value = v; n.focus(); } return; }
