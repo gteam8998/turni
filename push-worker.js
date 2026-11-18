@@ -79,7 +79,7 @@ const json = (req, obj, status = 200) => new Response(JSON.stringify(obj), {stat
 export default {
   async fetch(req){
     if (req.method === "OPTIONS") return new Response(null, {status: 204, headers: cors(req)});
-    if (req.method !== "POST") return json(req, {ok: true, service: "turni-push"});
+    if (req.method !== "POST") return json(req, {ok: true, service: "turni-push", v: 2});   // v2: sa mandare a un solo collega (campo "to")
     const token = (req.headers.get("Authorization") || "").replace(/^Bearer\s+/i, "");
     if (!token) return json(req, {error: "no_token"}, 401);
     let msg = {}; try { msg = await req.json(); } catch {}

@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
 <title>Turni Arese</title>
-<!-- versione 2026.11.18-64 -->
+<!-- versione 2026.11.18-65 -->
 <meta name="description" content="Turni e agenda del reparto Telefonia &amp; Service, MediaWorld Arese">
 <meta name="theme-color" content="#FFFFFF" media="(prefers-color-scheme: light)">
 <meta name="theme-color" content="#0B0F17" media="(prefers-color-scheme: dark)">
@@ -1441,7 +1441,7 @@ function qrSvg(text, color = "#0B1220", bg = "#FFFFFF") {
 if (typeof module !== "undefined") module.exports = { QRGEN, qrSvg };
 
 </script>
-<script src="firebase-config.js?v=2026.11.18-64"></script>
+<script src="firebase-config.js?v=2026.11.18-65"></script>
 <script>
 (() => {
 "use strict";
@@ -3467,7 +3467,7 @@ async function newsSend(btn){
   catch { btn.disabled = false; return toast("Non riesco a inviare il messaggio: controlla la connessione"); }
   let sent = 0; if (push) sent = await sendPushMsg(title, body.split(/\n\s*\n/)[0].replace(/\s+/g, " ").slice(0, 180), "./#msg", "turni-msg", to);
   $("#nTitle").value = ""; $("#nBody").value = ""; M.comp = false; M.to = "";
-  toast(push ? (sent > 0 ? `Inviato · notifica a ${sent} telefon${sent === 1 ? "o" : "i"}` : sent < 0 ? "Inviato, ma la notifica non è partita" : "Inviato") : "Inviato");
+  toast(push ? (sent > 0 ? `Inviato · notifica a ${sent} telefon${sent === 1 ? "o" : "i"}` : sent === -2 ? "Inviato: lo trova in Messaggi (la notifica personale non è ancora attiva)" : sent < 0 ? "Inviato, ma la notifica non è partita" : "Inviato") : "Inviato");
   btn.disabled = false; renderMsg();
 }
 async function fbSend(btn){
@@ -3583,6 +3583,8 @@ function rngText(from, to){ const f = pd(from), t = pd(to); return from === to ?
 const sendPush = (from, to) => sendPushMsg("Nuovi turni caricati", `Turni ${rngText(from, to)}: apri l'app per vederli`, "./#me", "turni-nuovi");
 async function sendPushMsg(title, body, url, tag, to){
   if (!PUSH_URL || DEMO) return 0;
+  /* messaggio a una persona: solo se il servizio delle notifiche sa farlo, altrimenti arriverebbe a tutti */
+  if (to && to.length){ try { const v = await (await fetch(PUSH_URL, {cache: "no-store"})).json(); if (!(v.v >= 2)) return -2; } catch { return -2; } }
   try {
     const r = await fetch(PUSH_URL, {method: "POST", headers: {"Content-Type": "application/json", Authorization: "Bearer " + await BK.auth.token()},
       body: JSON.stringify({title, body, url, tag, ...(to && to.length ? {to} : {})})});
