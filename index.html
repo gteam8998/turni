@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
 <title>Turni Arese</title>
-<!-- versione 2026.11.18-63 -->
+<!-- versione 2026.11.18-64 -->
 <meta name="description" content="Turni e agenda del reparto Telefonia &amp; Service, MediaWorld Arese">
 <meta name="theme-color" content="#FFFFFF" media="(prefers-color-scheme: light)">
 <meta name="theme-color" content="#0B0F17" media="(prefers-color-scheme: dark)">
@@ -630,6 +630,13 @@ button.nofoto{justify-self:start;padding:0;border:0;background:none;font:inherit
 .acc-q input{flex:1;min-width:0;height:42px;border:0;background:none;font:inherit;font-size:16px;color:var(--ink);outline:none}
 .acc-q:focus-within{border-color:var(--tel)}
 .acc-tools .mt-pick{margin:0}
+.acc-vedi{display:inline-flex;align-items:center;gap:6px;justify-self:start;margin:2px 0;border:0;background:none;padding:2px 0;font:700 13px var(--f-body);color:var(--primary);cursor:pointer;text-align:left}
+.acc-vedi svg{width:16px;height:16px;flex:none}
+.vedi-l{display:grid;gap:8px;margin:4px 0 0}
+.vedi-l label{display:flex;align-items:center;gap:12px;padding:12px 14px;border:1.5px solid var(--line);border-radius:14px;font-weight:700;cursor:pointer}
+.vedi-l input{width:20px;height:20px;accent-color:var(--primary)}
+.vedi-l small{margin-left:auto;color:var(--ink-3);font-weight:700}
+
 .acc-on{color:var(--ok);font-weight:700}
 .acc-new{color:var(--ink-3);font-weight:700}
 .acc li[hidden]{display:none}
@@ -866,6 +873,13 @@ html,body{background:var(--bg);transition:background-color .2s}
 .b-t em{position:absolute;top:-4px;bottom:-4px;width:2.5px;background:var(--ink);border-radius:2px}
 .b-v{text-align:right;font-weight:700;font-family:var(--f-num)}
 .mt-pick{display:block;min-width:0;margin:-2px 0 12px}
+/* separatori nell'elenco dei colleghi in turno: con te, per poco, non vi incrociate */
+.mates li.mt-sep{display:flex;align-items:center;gap:8px;padding:10px 0 2px;border:0;font-size:12px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:var(--ok);min-height:0;background:none}
+.mates li.mt-sep::after{content:"";flex:1;height:1px;background:var(--line-2)}
+.mates li.mt-sep.k1{color:var(--ink-2)}.mates li.mt-sep.k2{color:var(--ink-3)}
+.mates li.mt-sep:first-child{padding-top:0}
+.mates li.mt-sep + li{border-top:0}
+
 .mt-pick select{width:100%;min-height:44px;border:1.5px solid var(--line);border-radius:12px;background-color:var(--bg);color:var(--ink);padding:0 38px 0 14px;font:inherit;font-weight:700;font-size:16px;appearance:none;-webkit-appearance:none;text-overflow:ellipsis;
   background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%238791A3' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 12px center;cursor:pointer}
 .mates{list-style:none;margin:0;padding:0;display:grid}
@@ -1036,6 +1050,9 @@ html,body{background:var(--bg);transition:background-color .2s}
 @keyframes in-l{from{opacity:0;transform:translateX(-18px)}}
 @media (prefers-reduced-motion:reduce){.next-c.live::after,.next-c.live .go svg,.in-r>*,.in-l>*,.today-fab{animation:none}.next-c.live::after{opacity:.6}}
 /* ---------- messaggi ---------- */
+.n-to{margin:0}
+.msg-to{font-style:normal;font-size:11px;font-weight:800;letter-spacing:.04em;text-transform:uppercase;padding:2px 8px;border-radius:999px;background:var(--hover);color:var(--ink-2)}
+
 @media (max-width:759px){ .msg-top{display:none} }
 .comp-h{display:flex;align-items:center;gap:10px;width:100%;border:0;background:none;padding:0;font:600 18px var(--f-head);color:var(--ink);cursor:pointer;text-align:left}
 .comp-h span{display:flex;align-items:center;gap:8px}
@@ -1424,7 +1441,7 @@ function qrSvg(text, color = "#0B1220", bg = "#FFFFFF") {
 if (typeof module !== "undefined") module.exports = { QRGEN, qrSvg };
 
 </script>
-<script src="firebase-config.js?v=2026.11.18-63"></script>
+<script src="firebase-config.js?v=2026.11.18-64"></script>
 <script>
 (() => {
 "use strict";
@@ -2756,6 +2773,7 @@ function reviewHtml(){
 }
 const saveLabel = n => !n && U.groups.some(g => (g.archive || []).length) ? "Turni di altri reparti da mettere da parte" : U.groups.length > 1 ? `${n} ${n === 1 ? "turno da salvare" : "turni da salvare"}` : `${n} ${n === 1 ? "persona da salvare" : "persone da salvare"}`;
 document.addEventListener("change", e => { if (e.target && e.target.id === "upNotify") U.notify = e.target.checked; });
+document.addEventListener("change", e => { if (e.target && e.target.id === "nTo"){ M.to = e.target.value; renderMsg(); } });
 function bindReview(){
   const b = $("#upBody");
   b.querySelectorAll("[data-gdate]").forEach(inp => inp.onchange = () => { const v = validDate(inp.value); if (v){ const g = U.groups[+inp.dataset.gdate]; g.date = v; g.detected = true; g.open = true; renderUpload(); } });
@@ -3353,7 +3371,8 @@ const msgHidden = () => { try { return new Set(JSON.parse(lsGet(hidKey()) || "[]
 function msgHide(id){ const h = msgHidden(); h.add(id); lsSet(hidKey(), JSON.stringify([...h].slice(-300))); }
 function msgItems(){
   const hid = msgHidden();
-  const list = M.news.filter(n => n && n.at && !hid.has(n.id) && (n.kind !== "turni" || avvisoForMe()));
+  const me = meId();
+  const list = M.news.filter(n => n && n.at && !hid.has(n.id) && (n.kind !== "turni" || avvisoForMe()) && (!Array.isArray(n.to) || !n.to.length || isAdmin() || n.to.includes(me)));
   /* avviso dei turni salvato dalle versioni di prima (senza messaggio) */
   if (P.avviso && P.avviso.at && avvisoForMe() && !hid.has("_avviso:" + P.avviso.at) && !M.news.some(n => n.kind === "turni" && n.at >= P.avviso.at))
     list.push({id: "_avviso:" + P.avviso.at, kind: "turni", title: "Nuovi turni caricati", body: "Turni " + rngText(P.avviso.from, P.avviso.to) + ": li trovi nella tua area.", at: P.avviso.at, by: P.avviso.by});
@@ -3404,13 +3423,14 @@ function renderMsg(){
   const newsHtml = items.length ? `<ul class="msg-list">${items.map(n => { const nw = n.at > seen && n.by !== me;
       const all = isAdmin() && !String(n.id).startsWith("_avviso");
       return `<li class="msg-it ${n.kind === "turni" ? "k-turni" : "k-novita"}${nw ? " nw" : ""}"><button class="msg-x" data-act="msg-del" data-id="${esc(n.id)}" aria-label="Togli dalla mia pagina" title="Togli dalla mia pagina">${ICON.close}</button><span class="msg-i" aria-hidden="true">${n.kind === "turni" ? ICO.cal : ICO.spark}</span>
-        <div class="msg-c"><div class="msg-meta">${nw ? `<em class="msg-new">Nuovo</em>` : ""}<small>${esc(whenText(n.at))}</small></div><b>${esc(n.title || "")}</b><p>${msgBody(n.body)}</p>${all ? `<button class="msg-all" data-act="msg-del" data-id="${esc(n.id)}" data-all="1" data-confirm="Sì, cancella per tutti">Cancella per tutti</button>` : ""}</div></li>`; }).join("")}</ul>`
+        <div class="msg-c"><div class="msg-meta">${nw ? `<em class="msg-new">Nuovo</em>` : ""}${Array.isArray(n.to) && n.to.length ? `<em class="msg-to">${isAdmin() ? "Solo a " + esc(n.to.map(staffName).filter(Boolean).join(", ") || "un collega") : "Solo per te"}</em>` : ""}<small>${esc(whenText(n.at))}</small></div><b>${esc(n.title || "")}</b><p>${msgBody(n.body)}</p>${all ? `<button class="msg-all" data-act="msg-del" data-id="${esc(n.id)}" data-all="1" data-confirm="Sì, cancella per tutti">${Array.isArray(n.to) && n.to.length ? "Cancella anche per lei/lui" : "Cancella per tutti"}</button>` : ""}</div></li>`; }).join("")}</ul>`
     : `<p class="mut msg-empty">Ancora niente: appena arriva una novità la trovi qui.</p>`;
-  const comp = isAdmin() ? `<section class="card msg-comp${M.comp ? " open" : ""}"><button class="comp-h" data-act="comp-open" aria-expanded="${!!M.comp}"><span>${ICO.send}Scrivi a tutti</span>${draftOpen ? `<em class="comp-draft">bozza pronta</em>` : ""}<i aria-hidden="true">${ICO.chev}</i></button>${M.comp ? `
+  const comp = isAdmin() ? `<section class="card msg-comp${M.comp ? " open" : ""}"><button class="comp-h" data-act="comp-open" aria-expanded="${!!M.comp}"><span>${ICO.send}Scrivi ai colleghi</span>${draftOpen ? `<em class="comp-draft">bozza pronta</em>` : ""}<i aria-hidden="true">${ICO.chev}</i></button>${M.comp ? `
+      <label class="mt-pick n-to"><select id="nTo" aria-label="A chi">${[["", "A tutti i colleghi"], ...msgPeople().map(x => [x.id, "Solo a " + (x.full || x.name)])].map(([v, l]) => `<option value="${esc(v)}" ${v === (M.to || "") ? "selected" : ""}>${esc(l)}</option>`).join("")}</select></label>
       <input id="nTitle" maxlength="80" value="${esc(draftOpen ? NEWS_DRAFT.title : "")}" placeholder="Titolo" aria-label="Titolo">
-      <textarea id="nBody" rows="${draftOpen ? 17 : 4}" maxlength="800" placeholder="Messaggio" aria-label="Messaggio">${esc(draftOpen ? NEWS_DRAFT.body : "")}</textarea>
+      <textarea id="nBody" rows="${draftOpen && !M.to ? 17 : 5}" maxlength="800" placeholder="Messaggio" aria-label="Messaggio">${esc(draftOpen ? NEWS_DRAFT.body : "")}</textarea>
       <label class="chk-row"><input type="checkbox" id="nPush" checked> Manda anche la notifica</label>
-      <div class="row-act"><button class="btn primary" data-act="news-send">${ICO.send}Invia a tutti</button></div>` : ""}</section>` : "";
+      <div class="row-act"><button class="btn primary" data-act="news-send">${ICO.send}${M.to ? "Invia a " + esc((msgPeople().find(x => x.id === M.to) || {}).name || "lei/lui") : "Invia a tutti"}</button></div>` : ""}</section>` : "";
   /* da colleghi a Gerti: un riquadro che si fa notare */
   const toBoss = M.boss ? "a " + M.boss : "al responsabile", ask = !isAdmin() ? `<section class="ask${M.open ? " open" : ""}">
       <button class="ask-h" data-act="ask-open" aria-expanded="${!!M.open}"><span class="ask-i" aria-hidden="true">${ICO.msg}</span><span class="ask-t"><b>Scrivi ${esc(toBoss)}</b><small>Un'idea per l'app o qualcosa che non va? Mandamela!</small></span><span class="ask-go" aria-hidden="true">${ICO.chev}</span></button>
@@ -3432,15 +3452,21 @@ function renderMsg(){
   </div>`;
   el.querySelectorAll("input[id],textarea[id]").forEach(i => { if (i.id in keep){ if (i.type === "checkbox") i.checked = keep[i.id]; else i.value = keep[i.id]; } });
 }
+/* i colleghi con l'accesso attivo (a loro si può scrivere un messaggio personale) */
+function msgPeople(){
+  const ids = new Set((AD.members || []).filter(m => m.role === "user" && m.staffId).map(m => m.staffId));
+  return (S.staffAll || S.staff).filter(x => ids.has(x.id) && x.id !== meId()).sort((a, b) => (a.full || a.name).localeCompare(b.full || b.name));
+}
 async function newsSend(btn){
   const title = ($("#nTitle") || {}).value.trim(), body = ($("#nBody") || {}).value.trim(), push = ($("#nPush") || {}).checked;
   if (!title || !body) return toast("Scrivi titolo e messaggio");
   const id = !M.news.some(n => n.id === NEWS_DRAFT.id) && title === NEWS_DRAFT.title ? NEWS_DRAFT.id : "n-" + Date.now().toString(36);
   btn.disabled = true;
-  try { await S.db.doc("news/" + id).set({kind: "novita", title, body, at: new Date().toISOString(), by: meId() || ""}); }
+  const to = M.to ? [M.to] : [];
+  try { await S.db.doc("news/" + id).set({kind: "novita", title, body, at: new Date().toISOString(), by: meId() || "", ...(to.length ? {to} : {})}); }
   catch { btn.disabled = false; return toast("Non riesco a inviare il messaggio: controlla la connessione"); }
-  let sent = 0; if (push) sent = await sendPushMsg(title, body.split(/\n\s*\n/)[0].replace(/\s+/g, " ").slice(0, 180), "./#msg", "turni-msg");
-  $("#nTitle").value = ""; $("#nBody").value = ""; M.comp = false;
+  let sent = 0; if (push) sent = await sendPushMsg(title, body.split(/\n\s*\n/)[0].replace(/\s+/g, " ").slice(0, 180), "./#msg", "turni-msg", to);
+  $("#nTitle").value = ""; $("#nBody").value = ""; M.comp = false; M.to = "";
   toast(push ? (sent > 0 ? `Inviato · notifica a ${sent} telefon${sent === 1 ? "o" : "i"}` : sent < 0 ? "Inviato, ma la notifica non è partita" : "Inviato") : "Inviato");
   btn.disabled = false; renderMsg();
 }
@@ -3555,11 +3581,11 @@ const pushDoc = sub => Object.assign({sub: JSON.stringify(sub), staffId: meId() 
 /* dopo il salvataggio dei turni: notifica a chi l'ha attivata */
 function rngText(from, to){ const f = pd(from), t = pd(to); return from === to ? dateLong(from) : f.getMonth() === t.getMonth() ? `dal ${f.getDate()} al ${t.getDate()} ${MM[t.getMonth()]}` : `dal ${f.getDate()} ${MM[f.getMonth()]} al ${t.getDate()} ${MM[t.getMonth()]}`; }
 const sendPush = (from, to) => sendPushMsg("Nuovi turni caricati", `Turni ${rngText(from, to)}: apri l'app per vederli`, "./#me", "turni-nuovi");
-async function sendPushMsg(title, body, url, tag){
+async function sendPushMsg(title, body, url, tag, to){
   if (!PUSH_URL || DEMO) return 0;
   try {
     const r = await fetch(PUSH_URL, {method: "POST", headers: {"Content-Type": "application/json", Authorization: "Bearer " + await BK.auth.token()},
-      body: JSON.stringify({title, body, url, tag})});
+      body: JSON.stringify({title, body, url, tag, ...(to && to.length ? {to} : {})})});
     const j = await r.json().catch(() => ({}));
     (j.gone || []).forEach(id => S.db.doc("push/" + id).delete().catch(() => {}));
     return j.sent || 0;
@@ -3708,26 +3734,33 @@ const subKey = (b, sid) => { const g = blkGroup(b, sid); return g === "TS" ? blk
 function matesOptions(id, d, dayBl, people){
   const boss = isAdmin(), uG = usualGroup(id);
   const mine = sorted(dayBl).filter(b => blkGroup(b, id) !== "NEUTRO");
-  const dayG = [...new Set(mine.map(b => blkGroup(b, id)))];
+  const gm = {}; mine.forEach(b => { const g = blkGroup(b, id); gm[g] = (gm[g] || 0) + toMin(b.e) - toMin(b.s); });
+  const dayG = Object.keys(gm).sort((a, b) => gm[b] - gm[a]);          // il reparto dove sto di più quel giorno per primo
   const main = boss ? ["TS"] : dayG.length ? dayG : [uG];
   const all = boss || main.includes("REGIA");
   const opts = [], add = (v, l, test, n) => { if (!opts.some(o => o.v === v)) opts.push({v, l, test, n: n == null ? l : n}); };
   const sub = k => add("s:" + k, SUBN[k] || sigName(k), (b, sid) => subKey(b, sid) === k);
   const grp = (g, l) => add("g:" + g, l || grpName(g), (b, sid) => blkGroup(b, sid) === g);
-  /* il mio sotto-reparto di quel giorno (o quello di solito se riposo o formazione) */
-  const g0 = main.length === 1 && SUBS[main[0]] ? main[0] : "";
-  let mySubs = g0 ? [...new Set(mine.map(b => subKey(b, id)).filter(k => SUBS[g0].includes(k)))] : [];
-  if (g0 && !mySubs.length){ const u = g0 === "TS" ? usual(id) : sigKey(S.usualAlt && S.usualAlt[id]); if (SUBS[g0].includes(u)) mySubs = [u]; }
-  if (!all && g0 && mySubs.length === 1){
-    sub(mySubs[0]); grp(g0, `${grpName(g0)} insieme`); SUBS[g0].filter(k => k !== mySubs[0]).forEach(sub);
+  if (!all){
+    /* per tutti (non per il responsabile): 1 il mio reparto di quel giorno, 2 quello accanto, 3 tutti e due insieme, 4 Responsabili */
+    main.forEach(g => {
+      if (!SUBS[g]) return grp(g);
+      const sm = {}; mine.filter(b => blkGroup(b, id) === g).forEach(b => { const k = subKey(b, id); sm[k] = (sm[k] || 0) + toMin(b.e) - toMin(b.s); });
+      let my = Object.keys(sm).filter(k => SUBS[g].includes(k)).sort((a, b) => sm[b] - sm[a]);
+      /* a riposo o in formazione: il mio di solito */
+      if (!my.length){ const u = g === "TS" ? usual(id) : sigKey(S.usualAlt && S.usualAlt[id]); if (SUBS[g].includes(u)) my = [u]; }
+      if (!my.length) return grp(g);
+      my.forEach(sub); SUBS[g].filter(k => !my.includes(k)).forEach(sub); grp(g, `${grpName(g)} insieme`);
+    });
+    if (main.length > 1) add("g:" + main.join("+"), main.map(grpName).join(" + "), (b, sid) => main.includes(blkGroup(b, sid)));
+    /* reparti in più decisi dal responsabile per quel collega (si vedono solo insieme): dopo i suoi, prima dei Responsabili */
+    const st = staffById(id), extra = st && Array.isArray(st.vedi) ? st.vedi : [];
+    GRP_ORDER.filter(g => extra.includes(g) && g !== "REGIA" && !main.includes(g)).forEach(g => grp(g, SUBS[g] ? `${grpName(g)} insieme` : grpName(g)));
+    if (!main.includes(uG)) grp(uG, `Di solito: ${grpName(uG)}`);
+    /* tutti possono vedere quale responsabile è in turno */
+    grp("REGIA", "Responsabili in turno"); const o = opts.find(x => x.v === "g:REGIA"); o.n = "Regia"; o.e = "Nessun responsabile segnato";
   } else {
     add("g:" + main.join("+"), main.map(grpName).join(", "), (b, sid) => main.includes(blkGroup(b, sid)));
-    if (!all) main.forEach(g => (SUBS[g] || []).forEach(sub));
-  }
-  if (!all && !main.includes(uG)) grp(uG, `Di solito: ${grpName(uG)}`);
-  /* tutti possono vedere quale responsabile è in turno */
-  if (!all){ grp("REGIA", "Responsabili in turno"); const o = opts.find(x => x.v === "g:REGIA"); o.n = "Regia"; o.e = "Nessun responsabile segnato"; }
-  if (all){
     const here = new Set(); people.forEach(x => x.bl.forEach(b => { const g = blkGroup(b, x.st.id); if (g !== "NEUTRO" && g !== "ALT") here.add(g); }));
     [...GRP_ORDER, ...[...here].filter(g => !GRP_ORDER.includes(g)).sort()].forEach(g => grp(g));
     add("tutti", "Tutto il negozio", () => true, "");
@@ -3766,7 +3799,16 @@ function renderMe(){
   const ppl = matesPeople(id, d), opts = matesOptions(id, d, dayBl, ppl);
   const pick = P.mSel && P.mSel.d === d && opts.some(o => o.v === P.mSel.v) ? P.mSel.v : opts[0].v;
   const pickO = opts.find(o => o.v === pick);
-  const mates = ppl.map(x => ({st: x.st, bl: sorted(x.bl).filter(b => pickO.test(b, x.st.id))})).filter(x => x.bl.length).sort((a, b) => toMin(a.bl[0].s) - toMin(b.bl[0].s) || showName(a.st).localeCompare(showName(b.st)));
+  const myS = dayBl.length ? toMin(dayBl[0].s) : 0;
+  const ovl = bl => dayBl.reduce((s, a) => s + bl.reduce((t, b) => t + Math.max(0, Math.min(toMin(a.e), toMin(b.e)) - Math.max(toMin(a.s), toMin(b.s))), 0), 0);
+  /* «con te»: almeno metà del turno più corto dei due insieme; «per poco»: qualche minuto; poi chi non incroci */
+  const myM = mins(dayBl), bucket = (m, bl) => !dayBl.length ? 0 : m > 0 && m >= Math.min(myM, mins(bl)) / 2 ? 0 : m > 0 ? 1 : 2;
+  const mates = ppl.map(x => ({st: x.st, bl: sorted(x.bl).filter(b => pickO.test(b, x.st.id))})).filter(x => x.bl.length)
+    .map(x => (x.ov = ovl(x.bl), x.bk = bucket(x.ov, x.bl), x))
+    .sort((a, b) => a.bk - b.bk || (a.bk === 0 ? Math.round(b.ov / 30) - Math.round(a.ov / 30) || Math.abs(toMin(a.bl[0].s) - myS) - Math.abs(toMin(b.bl[0].s) - myS) : 0)
+      || (a.bk === 1 ? b.ov - a.ov : 0) || toMin(a.bl[0].s) - toMin(b.bl[0].s) || showName(a.st).localeCompare(showName(b.st)));
+  const bkN = new Set(mates.map(x => x.bk)).size;
+  const BKL = ["Con te", "Vi incrociate per poco", "Non vi incrociate"];
   const mtPick = known(d) && opts.length > 1 ? `<label class="mt-pick"><select data-mates-d="${d}" aria-label="Quale reparto vedere">${opts.map(o => `<option value="${esc(o.v)}" ${o.v === pick ? "selected" : ""}>${esc(o.l)}</option>`).join("")}</select></label>` : "";
   const wdays = [...Array(7)].map((_, i) => addDays(P.week, i));
   const wTot = wdays.reduce((s, d) => s + mins(myRows(d, id)), 0);
@@ -3784,7 +3826,7 @@ function renderMe(){
   const cmp = !contr ? "Puoi impostare le ore da contratto nelle impostazioni" : wTot === contr * 60 ? `In linea con il contratto (${contr} h)` : wTot > contr * 60 ? `${hm(wTot - contr * 60)} in più del contratto (${contr} h)` : `${hm(contr * 60 - wTot)} in meno del contratto (${contr} h)`;
   const col = d => d === "alt" ? "ink-3" : d;
   const matesTitle = isT ? "In turno oggi" : `In turno ${relShort(d) === "Domani" || relShort(d) === "Ieri" ? relShort(d).toLowerCase() : dayShort(d).toLowerCase()}`;
-  const matesCard = mates.length || !isT || mtPick ? `<section class="card mates-c${isT ? "" : " silver"}${P.anim ? " in-" + P.anim : ""}"><h2>${esc(matesTitle)}${mates.length ? `<small>${mates.length}</small>` : ""}</h2>${mtPick}${mates.length ? `<ul class="mates">${mates.map(x => { const w = dayBl.some(a => x.bl.some(b => { const ga = blkGroup(a, id), gb = blkGroup(b, x.st.id); return ga !== "NEUTRO" && (ga === gb || ga === "REGIA" || gb === "REGIA") && toMin(a.s) < toMin(b.e) && toMin(b.s) < toMin(a.e); })); return `<li>${S.avatars[x.st.id] ? `<button type="button" class="av me-av ${dCls(deptsOf(x.bl, x.st.id)[0])}" data-act="av-zoom" data-sid="${esc(x.st.id)}" aria-label="Guarda la foto di ${esc(showName(x.st))}">${avIn(x.st.id, showName(x.st))}</button>` : `<span class="av ${dCls(deptsOf(x.bl, x.st.id)[0])}">${avIn(x.st.id, showName(x.st))}</span>`}<b>${esc(showName(x.st))}</b><span class="num">${fasceNb(x.bl)}</span><small style="color:var(--ink-3)">${esc(deptsLabel(x.bl, x.st.id))}${w ? ` · <span style="color:var(--ok)">con te</span>` : ""}</small></li>`; }).join("")}</ul>`
+  const matesCard = mates.length || !isT || mtPick ? `<section class="card mates-c${isT ? "" : " silver"}${P.anim ? " in-" + P.anim : ""}"><h2>${esc(matesTitle)}${mates.length ? `<small>${mates.length}</small>` : ""}</h2>${mtPick}${mates.length ? `<ul class="mates">${mates.map((x, k) => { const sep = bkN > 1 && (k === 0 || mates[k - 1].bk !== x.bk) ? `<li class="mt-sep${x.bk ? " k" + x.bk : ""}" aria-hidden="true">${BKL[x.bk]}</li>` : ""; const w = dayBl.some(a => x.bl.some(b => { const ga = blkGroup(a, id), gb = blkGroup(b, x.st.id); return ga !== "NEUTRO" && (ga === gb || ga === "REGIA" || gb === "REGIA") && toMin(a.s) < toMin(b.e) && toMin(b.s) < toMin(a.e); })); return `${sep}<li>${S.avatars[x.st.id] ? `<button type="button" class="av me-av ${dCls(deptsOf(x.bl, x.st.id)[0])}" data-act="av-zoom" data-sid="${esc(x.st.id)}" aria-label="Guarda la foto di ${esc(showName(x.st))}">${avIn(x.st.id, showName(x.st))}</button>` : `<span class="av ${dCls(deptsOf(x.bl, x.st.id)[0])}">${avIn(x.st.id, showName(x.st))}</span>`}<b>${esc(showName(x.st))}</b><span class="num">${fasceNb(x.bl)}</span><small style="color:var(--ink-3)">${esc(deptsLabel(x.bl, x.st.id))}${w && x.bk === 0 ? ` · <span style="color:var(--ok)">con te</span>` : x.bk === 1 && dayBl.length ? ` · ${hm(x.ov)} insieme` : ""}</small></li>`; }).join("")}</ul>`
       : `<p class="mut">${known(d) ? `${pickO.e || `Nessun altro collega ${pickO.n ? "in " + esc(pickO.n) + " " : ""}`.trim()} ${isT ? "oggi" : "quel giorno"}.` : "I turni di quel giorno non sono ancora stati caricati."}</p>`}</section>` : "";
   const fabWas = !!el.querySelector(".today-fab");
   el.innerHTML = `<div class="ph${P.browse ? " browsing" : ""}">
@@ -3907,6 +3949,7 @@ function renderSet(){
         const s = r.s, a = r.a, i = r.i, me = r.me, full = r.full || (i && i.name) || "";
         return `<li data-grp="${esc(r.grp)}" data-q="${q}"><span class="av ${dCls(usual(s.id))}">${avIn(s.id, r.name)}</span><div class="acc-t"><b>${esc(r.name)}${me ? " (tu)" : ""}</b>
           ${a || me || twoWords(full) ? (a && full && norm(full) !== norm(r.name) ? `<small class="acc-full-t">${esc(full)}</small>` : "") : `<input class="acc-full" data-full="${esc(s.id)}" value="${esc(twoWords(full) ? full : "")}" placeholder="Nome e cognome" aria-label="Nome e cognome di ${esc(s.name)}" maxlength="60" autocapitalize="words" spellcheck="false">`}
+          ${a && !me ? `<button class="acc-vedi" data-act="adm-vedi" data-id="${esc(s.id)}">${Array.isArray(s.vedi) && s.vedi.length ? `${ICO.eye}Vede anche: ${esc(s.vedi.map(grpName).join(", "))}` : `${ICO.eye}Reparti in più`}</button>` : ""}
           <small>${esc(grpName(r.grp))} · ${a ? `<span class="acc-on">Accesso attivo</span>` : i ? `Codice <b class="num code">${esc(i.id)}</b> · scade il ${fmtExp(i.exp)}` : "Nessun accesso"}</small></div>
           <div class="acc-a">${me ? "" : a ? `<button class="btn ghost" data-act="adm-reset" data-id="${esc(s.id)}" data-confirm="Sì, azzera">Azzera accesso</button>` : `<button class="btn" data-act="adm-code" data-id="${esc(s.id)}">${i ? "Nuovo codice" : "Crea codice"}</button>`}</div></li>`; }).join("")}</ul>
       <p class="mut acc-none" hidden>Nessun collega trovato.</p>
@@ -4014,7 +4057,23 @@ async function adminAct(act, el){
       await S.db.batch([...old.map(i => ({op: "delete", path: "invites/" + i.id})), {op: "set", path: "invites/" + code, data: {role: "banco", at: new Date().toISOString(), exp: 4102444800000}}]);
       return renderSet();
     }
-    if (act === "adm-reload"){ AD.loadErr = false; stopAdmin(); loadAdminData(); renderSet(); return; }
+    if (act === "adm-vedi"){
+    const st = (S.staffAll || S.staff).find(x => x.id === el.dataset.id); if (!st) return;
+    const has = new Set(Array.isArray(st.vedi) ? st.vedi : []), uG = usualGroup(st.id);
+    openSheet(`${sheetHead("Reparti in più")}
+      <form id="fVedi" novalidate>
+        <p style="margin:0;color:var(--ink-2)">Oltre al suo reparto, <b>${esc(st.full || st.name)}</b> nel menu «In turno» potrà vedere anche questi reparti (sempre insieme, tutti e due i lati). I Responsabili li vedono già tutti.</p>
+        <div class="vedi-l">${GRP_ORDER.filter(g => g !== "REGIA").map(g => `<label><input type="checkbox" value="${g}" ${has.has(g) ? "checked" : ""} ${g === uG ? "disabled" : ""}>${esc(grpName(g))}${g === uG ? `<small>il suo di solito</small>` : ""}</label>`).join("")}</div>
+        <div class="actions"><button type="button" class="btn" data-act="close">Annulla</button><button type="submit" class="btn primary">Salva</button></div>
+      </form>`, root => root.querySelector("#fVedi").addEventListener("submit", async e => {
+        e.preventDefault(); if (!needDb()) return;
+        const v = [...root.querySelectorAll(".vedi-l input:checked:not(:disabled)")].map(i => i.value);
+        try { await S.db.doc("staff/" + st.id).update({vedi: v}); closeSheet(); toast(v.length ? `${st.name} vede anche ${v.map(grpName).join(", ")}` : `${st.name} vede solo il suo reparto`); }
+        catch (er) { writeErr(er); }
+      }));
+    return;
+  }
+  if (act === "adm-reload"){ AD.loadErr = false; stopAdmin(); loadAdminData(); renderSet(); return; }
     if (act === "adm-banco-off"){ if (!armed(el)) return; await S.db.batch((AD.members || []).filter(m => m.role === "banco").map(m => ({op: "delete", path: "members/" + m.id}))); toast("PC scollegati"); return renderSet(); }
     if (act === "adm-showkey"){ AD.showKey = !AD.showKey; const k = $("#aiKey"); if (k){ AI.draft = k.value; } return renderSet(); }
     if (act === "adm-copylink"){ try { await navigator.clipboard.writeText(APP_URL); toast("Link copiato"); } catch { toast(APP_URL); } return; }

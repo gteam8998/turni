@@ -8,6 +8,7 @@
   3. mando a ogni telefono la notifica, cifrata come chiede lo standard Web Push (RFC 8291 + VAPID RFC 8292)
   Modo "admin" (un collega scrive al responsabile): con il gettone del collega controllo che sia nell'elenco,
   leggo il telefono del responsabile e la sua chiave dedicata (config/pushAdmin): funziona solo verso di lui.
+  Campo "to" (elenco di colleghi): la notifica va solo ai loro telefoni (messaggio personale del responsabile).
 */
 const PROJECT = "turni-arese";
 const ORIGINS = ["https://gteam8998.github.io"];
@@ -101,8 +102,10 @@ export default {
       let adm = null; try { adm = keyOf(await fsGet("config/pushAdmin", token)); } catch {}
       const list = await fsGet("push?pageSize=300", token);
       /* il telefono del responsabile ha la sua chiave: riceve gli avvisi per tutti solo se l'ha chiesto ("all") */
-      const subs = (list.documents || []).map(d => { try { return {id: d.name.split("/").pop(), sub: JSON.parse(fsStr(d, "sub")), adm: fsStr(d, "key") === "admin", all: fsStr(d, "all") === "1"}; } catch { return null; } })
-        .filter(x => x && x.sub && x.sub.endpoint && (!x.adm || (x.all && adm && adm.jwk)));
+      /* messaggio per qualcuno in particolare: solo ai telefoni di quei colleghi */
+      const to = Array.isArray(msg.to) ? msg.to.map(String).slice(0, 50) : null;
+      const subs = (list.documents || []).map(d => { try { return {id: d.name.split("/").pop(), sub: JSON.parse(fsStr(d, "sub")), adm: fsStr(d, "key") === "admin", all: fsStr(d, "all") === "1", staff: fsStr(d, "staffId")}; } catch { return null; } })
+        .filter(x => x && x.sub && x.sub.endpoint && (to ? to.includes(x.staff) : (!x.adm || (x.all && adm && adm.jwk))));
       const res = await Promise.all(subs.map(async s => { try { return {id: s.id, status: await sendOne(s.sub, payload, s.adm ? adm : cfg)}; } catch (e) { return {id: s.id, status: 0}; } }));
       return json(req, {sent: res.filter(r => r.status >= 200 && r.status < 300).length, total: subs.length, gone: res.filter(r => r.status === 404 || r.status === 410).map(r => r.id), results: res});
     } catch (e) {
