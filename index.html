@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
 <title>Turni Arese</title>
-<!-- versione 2026.11.17-62 -->
+<!-- versione 2026.11.18-63 -->
 <meta name="description" content="Turni e agenda del reparto Telefonia &amp; Service, MediaWorld Arese">
 <meta name="theme-color" content="#FFFFFF" media="(prefers-color-scheme: light)">
 <meta name="theme-color" content="#0B0F17" media="(prefers-color-scheme: dark)">
@@ -1007,7 +1007,8 @@ html,body{background:var(--bg);transition:background-color .2s}
 .dn-c small{font-size:13px;font-weight:700;color:var(--ink-2);display:inline-flex;align-items:center;gap:6px}
 .dn-dot{width:8px;height:8px;border-radius:50%;background:var(--now)}
 /* tasto per tornare a oggi: rosso come il segno di oggi */
-.today-fab{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(24px + env(safe-area-inset-bottom,0px));z-index:45;display:inline-flex;align-items:center;gap:8px;height:50px;padding:0 22px 0 16px;border-radius:999px;border:0;background:#D92D20;color:#fff;font:700 16px var(--f-body);white-space:nowrap;cursor:pointer;box-shadow:0 12px 28px -10px rgba(217,45,32,.75),0 0 0 4px rgba(217,45,32,.16);animation:fab-in .25s ease}
+.today-fab{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(24px + env(safe-area-inset-bottom,0px));z-index:45;display:inline-flex;align-items:center;gap:8px;height:50px;padding:0 22px 0 16px;border-radius:999px;border:0;background:#D92D20;color:#fff;font:700 16px var(--f-body);white-space:nowrap;cursor:pointer;box-shadow:0 12px 28px -10px rgba(217,45,32,.75),0 0 0 4px rgba(217,45,32,.16)}
+.today-fab.fab-new{animation:fab-in .25s ease}
 .today-fab svg{width:22px;height:22px}
 .today-fab:active{transform:translateX(-50%) scale(.96)}
 .today-fab:focus-visible{outline:3px solid var(--focus);outline-offset:3px}
@@ -1029,10 +1030,11 @@ html,body{background:var(--bg);transition:background-color .2s}
 .daylist li.is-view{background:var(--now-fill);box-shadow:inset 3px 0 0 var(--now)}
 .daylist li.is-view .d{color:var(--now)}
 /* cambio giorno: la scheda scorre dal lato giusto */
-.in-r{animation:in-r .22s ease}.in-l{animation:in-l .22s ease}
-@keyframes in-r{from{opacity:.2;transform:translateX(22px)}}
-@keyframes in-l{from{opacity:.2;transform:translateX(-22px)}}
-@media (prefers-reduced-motion:reduce){.next-c.live::after,.next-c.live .go svg,.in-r,.in-l,.today-fab{animation:none}.next-c.live::after{opacity:.6}}
+/* cambio giorno: la scheda resta ferma e piena (lo sfondo non deve mai trasparire), scorre solo quello che c'è dentro */
+.in-r>:not(.hn-arr){animation:in-r .22s ease both}.in-l>:not(.hn-arr){animation:in-l .22s ease both}
+@keyframes in-r{from{opacity:0;transform:translateX(18px)}}
+@keyframes in-l{from{opacity:0;transform:translateX(-18px)}}
+@media (prefers-reduced-motion:reduce){.next-c.live::after,.next-c.live .go svg,.in-r>*,.in-l>*,.today-fab{animation:none}.next-c.live::after{opacity:.6}}
 /* ---------- messaggi ---------- */
 @media (max-width:759px){ .msg-top{display:none} }
 .comp-h{display:flex;align-items:center;gap:10px;width:100%;border:0;background:none;padding:0;font:600 18px var(--f-head);color:var(--ink);cursor:pointer;text-align:left}
@@ -1422,7 +1424,7 @@ function qrSvg(text, color = "#0B1220", bg = "#FFFFFF") {
 if (typeof module !== "undefined") module.exports = { QRGEN, qrSvg };
 
 </script>
-<script src="firebase-config.js?v=2026.11.17-62"></script>
+<script src="firebase-config.js?v=2026.11.18-63"></script>
 <script>
 (() => {
 "use strict";
@@ -3784,6 +3786,7 @@ function renderMe(){
   const matesTitle = isT ? "In turno oggi" : `In turno ${relShort(d) === "Domani" || relShort(d) === "Ieri" ? relShort(d).toLowerCase() : dayShort(d).toLowerCase()}`;
   const matesCard = mates.length || !isT || mtPick ? `<section class="card mates-c${isT ? "" : " silver"}${P.anim ? " in-" + P.anim : ""}"><h2>${esc(matesTitle)}${mates.length ? `<small>${mates.length}</small>` : ""}</h2>${mtPick}${mates.length ? `<ul class="mates">${mates.map(x => { const w = dayBl.some(a => x.bl.some(b => { const ga = blkGroup(a, id), gb = blkGroup(b, x.st.id); return ga !== "NEUTRO" && (ga === gb || ga === "REGIA" || gb === "REGIA") && toMin(a.s) < toMin(b.e) && toMin(b.s) < toMin(a.e); })); return `<li>${S.avatars[x.st.id] ? `<button type="button" class="av me-av ${dCls(deptsOf(x.bl, x.st.id)[0])}" data-act="av-zoom" data-sid="${esc(x.st.id)}" aria-label="Guarda la foto di ${esc(showName(x.st))}">${avIn(x.st.id, showName(x.st))}</button>` : `<span class="av ${dCls(deptsOf(x.bl, x.st.id)[0])}">${avIn(x.st.id, showName(x.st))}</span>`}<b>${esc(showName(x.st))}</b><span class="num">${fasceNb(x.bl)}</span><small style="color:var(--ink-3)">${esc(deptsLabel(x.bl, x.st.id))}${w ? ` · <span style="color:var(--ok)">con te</span>` : ""}</small></li>`; }).join("")}</ul>`
       : `<p class="mut">${known(d) ? `${pickO.e || `Nessun altro collega ${pickO.n ? "in " + esc(pickO.n) + " " : ""}`.trim()} ${isT ? "oggi" : "quel giorno"}.` : "I turni di quel giorno non sono ancora stati caricati."}</p>`}</section>` : "";
+  const fabWas = !!el.querySelector(".today-fab");
   el.innerHTML = `<div class="ph${P.browse ? " browsing" : ""}">
     <div class="ph-top">${isAdmin() ? `<button class="btn back ph-back" data-act="nav" data-to="agenda">${ICO.back}Agenda</button>` : ""}<span class="ph-date">${esc(capitalize(dateLong(t)))}</span>${msgBtn()}${gearBtn()}</div>
     <header class="me-id">${S.avatars[id] ? `<button type="button" class="av me-av ${dCls(todayD[0] || usual(id))}" data-act="av-zoom" aria-label="Guarda la tua foto profilo">${avIn(id, st.name)}</button>` : `<span class="av ${dCls(todayD[0] || usual(id))}">${avIn(id, st.name)}</span>`}
@@ -3813,7 +3816,7 @@ function renderMe(){
     </section>` : ""}
     <p class="foot">In caso di dubbio fa fede il foglio orari appeso in negozio.</p>
   </div>
-  ${P.browse && !isT ? `<button type="button" class="today-fab" data-act="me-today">${ICO.today}Torna a oggi</button>` : ""}`;
+  ${P.browse && !isT ? `<button type="button" class="today-fab${fabWas ? "" : " fab-new"}" data-act="me-today">${ICO.today}Torna a oggi</button>` : ""}`;
 }
 
 /* ---------- impostazioni (ingranaggio) ---------- */
