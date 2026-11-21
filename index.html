@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
 <title>Turni Arese</title>
-<!-- versione 2026.11.18-66 -->
+<!-- versione 2026.11.22-67 -->
 <meta name="description" content="Turni e agenda del reparto Telefonia &amp; Service, MediaWorld Arese">
 <meta name="theme-color" content="#FFFFFF" media="(prefers-color-scheme: light)">
 <meta name="theme-color" content="#0B0F17" media="(prefers-color-scheme: dark)">
@@ -1461,7 +1461,7 @@ function qrSvg(text, color = "#0B1220", bg = "#FFFFFF") {
 if (typeof module !== "undefined") module.exports = { QRGEN, qrSvg };
 
 </script>
-<script src="firebase-config.js?v=2026.11.18-66"></script>
+<script src="firebase-config.js?v=2026.11.22-67"></script>
 <script>
 (() => {
 "use strict";
@@ -3533,11 +3533,23 @@ const PUSH_URL = (CFG.push || "").trim();
 const unb64u = x => { x = String(x).replace(/-/g, "+").replace(/_/g, "/"); while (x.length % 4) x += "="; return Uint8Array.from(atob(x), c => c.charCodeAt(0)); };
 const b64u = buf => btoa(String.fromCharCode(...new Uint8Array(buf))).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
 const isIOS = () => /iP(hone|ad|od)/.test(navigator.userAgent) || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
+/* quale browser: su Android le notifiche funzionano bene con Chrome (o Samsung Internet / Firefox); altri browser spesso no */
+const andBrowser = () => { const u = navigator.userAgent; if (!/Android/i.test(u)) return "";
+  return navigator.brave ? "Brave" : /MiuiBrowser|XiaoMi/i.test(u) ? "Mi Browser" : /HuaweiBrowser/i.test(u) ? "Huawei Browser" : /HeyTapBrowser|OppoBrowser/i.test(u) ? "il browser Oppo" : /DuckDuckGo/i.test(u) ? "DuckDuckGo" : /OPR\/|Opera/i.test(u) ? "Opera" : /EdgA/i.test(u) ? "Edge" : /SamsungBrowser/i.test(u) ? "Samsung Internet" : /Firefox/i.test(u) ? "Firefox" : /; wv\)/.test(u) ? "un'app (non un browser)" : "Chrome"; };
+function subErrMsg(e){
+  const det = e && e.code ? " (il telefono non ha risposto in tempo)" : e && (e.name || e.message) ? ` (dettaglio: ${String(e.name || "")}${e.message ? " – " + String(e.message).slice(0, 80) : ""})` : "";
+  if (isIOS()) return "Il telefono non ha accettato l'iscrizione: su iPhone serve aprire l'app dalla schermata Home (non da Safari)." + det;
+  const b = andBrowser();
+  if (!b) return "Il browser non ha accettato l'iscrizione alle notifiche: prova con Chrome." + det;
+  if (b === "Brave") return "Su Brave le notifiche sono spente di serie: Impostazioni › Privacy e sicurezza › attiva «Usa i servizi Google per i messaggi push», poi riprova." + det;
+  if (b === "Chrome" || b === "Samsung Internet" || b === "Firefox") return `Il telefono non ha accettato l'iscrizione. Controlla che ${b} possa mandare notifiche (Impostazioni del telefono › App › ${b} › Notifiche) e che i Google Play Services siano aggiornati, poi riprova. Sui telefoni senza servizi Google (alcuni Huawei/Honor) le notifiche non funzionano.` + det;
+  return `L'app è aperta con ${b}, che non gestisce le notifiche: apri il link dell'app con Chrome, aggiungila alla schermata Home da lì e riprova.` + det;
+}
 const isStandalone = () => (window.matchMedia && matchMedia("(display-mode: standalone)").matches) || navigator.standalone === true;
 P.push = "";   // on | off | denied | home (iPhone: prima va aggiunta alla Home) | no (non supportate) | "" (non ancora controllato)
 async function pushCheck(){
   if (!PUSH_URL){ P.push = "no"; return; }
-  if (!("serviceWorker" in navigator) || !("PushManager" in window) || !("Notification" in window)){ P.push = isIOS() && !isStandalone() ? "home" : "no"; return rerenderPush(); }
+  if (!("serviceWorker" in navigator) || !("PushManager" in window) || !("Notification" in window)){ P.push = isIOS() && !isStandalone() ? "home" : andBrowser() && andBrowser() !== "Chrome" ? "chrome" : "no"; return rerenderPush(); }
   if (Notification.permission === "denied"){ P.push = "denied"; return rerenderPush(); }
   try { const reg = await navigator.serviceWorker.ready, sub = await reg.pushManager.getSubscription();
     P.push = sub && Notification.permission === "granted" ? "on" : "off";
@@ -3576,8 +3588,8 @@ async function pushOn(btn){
   } catch (e) {
     P.push = Notification.permission === "denied" ? "denied" : "off";
     P.pushMsg = {perm: "Il telefono non ha risposto alla richiesta: riprova.", key: "Non riesco a collegarmi: controlla la connessione e riprova.", sw: "L'app non è pronta: chiudila del tutto, riaprila dalla Home e riprova.",
-      sub: "Il telefono non ha accettato l'iscrizione: su iPhone serve aprire l'app dalla schermata Home (non da Safari).", save: "Non riesco a salvare l'iscrizione: controlla la connessione e riprova."}[step] || "Non riesco ad attivare le notifiche.";
-  } finally { P.pushBusy = false; if (P.pushMsg && P.pushMsg !== "ok") toast(P.pushMsg); rerenderPush(); }
+      sub: subErrMsg(e), save: "Non riesco a salvare l'iscrizione: controlla la connessione e riprova."}[step] || "Non riesco ad attivare le notifiche.";
+  } finally { P.pushBusy = false; if (P.pushMsg && P.pushMsg !== "ok" && !document.querySelector(".push-c")) toast(P.pushMsg); rerenderPush(); }
 }
 async function pushOff(){
   try { const reg = await navigator.serviceWorker.ready, sub = await reg.pushManager.getSubscription(); if (sub) await sub.unsubscribe(); } catch {}
@@ -3631,6 +3643,7 @@ function pushCardHtml(where){
   if (!PUSH_URL || isBanco() || !st || st === "no" || st === "on" && where === "me" && P.pushMsg !== "ok") return "";
   if (where === "me" && (lsGet("push-later") > new Date(Date.now() - 7 * 864e5).toISOString() || st === "denied" || isAdmin())) return "";
   const txt = st === "home" ? "Per ricevere una notifica quando escono i turni nuovi, aggiungi l'app alla schermata Home: tocca Condividi e poi «Aggiungi alla schermata Home». Poi aprila da lì."
+    : st === "chrome" ? `Questo browser (${esc(andBrowser())}) non può ricevere le notifiche. Per averle apri il link dell'app con Chrome, aggiungila alla schermata Home da lì e aprila da quell'icona.`
     : st === "denied" ? "Le notifiche sono bloccate per questa app. Riattivale dalle impostazioni del telefono (Notifiche) e torna qui."
     : st === "on" ? `<b class="push-ok">✓ Notifiche attive su questo telefono.</b> ${isAdmin() ? "Quando un collega ti scrive un'idea o un errore ti arriva un avviso, anche con l'app chiusa." : "Quando escono turni nuovi o novità ti arriva un avviso, anche con l'app chiusa."}`
     : isAdmin() ? "Ricevi una notifica su questo telefono quando un collega ti scrive un'idea o un errore." : "Ricevi una notifica su questo telefono quando escono turni nuovi o novità.";
