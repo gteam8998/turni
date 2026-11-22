@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
 <title>Turni Arese</title>
-<!-- versione 2026.11.22-70 -->
+<!-- versione 2026.11.22-71 -->
 <meta name="description" content="Turni e agenda del reparto Telefonia &amp; Service, MediaWorld Arese">
 <meta name="theme-color" content="#FFFFFF" media="(prefers-color-scheme: light)">
 <meta name="theme-color" content="#0B0F17" media="(prefers-color-scheme: dark)">
@@ -1464,7 +1464,7 @@ function qrSvg(text, color = "#0B1220", bg = "#FFFFFF") {
 if (typeof module !== "undefined") module.exports = { QRGEN, qrSvg };
 
 </script>
-<script src="firebase-config.js?v=2026.11.22-70"></script>
+<script src="firebase-config.js?v=2026.11.22-71"></script>
 <script>
 (() => {
 "use strict";
@@ -1642,12 +1642,12 @@ const deptsLabel = (bl, sid) => { const k = {}; (bl || []).forEach(b => { const 
 const tsStaff = (st, worked) => worked || usualGroup(st.id) === "TS";
 function visibleStaff(date){
   if (S.dept === "all") return S.staff.filter(st => tsStaff(st, sorted(rowsFor(date)[st.id]).length));
-  return S.staff.filter(st => { const bl = sorted(rowsFor(date)[st.id]); return bl.length ? deptsOf(bl, st.id).includes(S.dept) : (!usual(st.id) || usual(st.id) === S.dept); });
+  return S.staff.filter(st => { const bl = sorted(rowsFor(date)[st.id]); return bl.length ? deptsOf(bl, st.id).includes(S.dept) : usualGroup(st.id) === "TS" && (!usual(st.id) || usual(st.id) === S.dept); });
 }
 function visibleWeek(mon){
   const days = [...Array(7)].map((_, i) => addDays(mon, i));
   if (S.dept === "all") return S.staff.filter(st => tsStaff(st, days.some(d => sorted(rowsFor(d)[st.id]).length)));
-  return S.staff.filter(st => { const worked = days.filter(d => sorted(rowsFor(d)[st.id]).length); return worked.length ? worked.some(d => deptsOf(sorted(rowsFor(d)[st.id]), st.id).includes(S.dept)) : (!usual(st.id) || usual(st.id) === S.dept); });
+  return S.staff.filter(st => { const worked = days.filter(d => sorted(rowsFor(d)[st.id]).length); return worked.length ? worked.some(d => deptsOf(sorted(rowsFor(d)[st.id]), st.id).includes(S.dept)) : usualGroup(st.id) === "TS" && (!usual(st.id) || usual(st.id) === S.dept); });
 }
 const deptLabel = () => S.dept === "tel" ? " di Telefonia" : S.dept === "srv" ? " di Service" : "";
 function onShiftAt(date, minute, list){
