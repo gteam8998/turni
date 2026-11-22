@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
 <title>Turni Arese</title>
-<!-- versione 2026.11.22-69 -->
+<!-- versione 2026.11.22-70 -->
 <meta name="description" content="Turni e agenda del reparto Telefonia &amp; Service, MediaWorld Arese">
 <meta name="theme-color" content="#FFFFFF" media="(prefers-color-scheme: light)">
 <meta name="theme-color" content="#0B0F17" media="(prefers-color-scheme: dark)">
@@ -575,6 +575,7 @@ button.nofoto{justify-self:start;padding:0;border:0;background:none;font:inherit
 .row-act .nofoto{align-self:center;margin:0 0 0 10px}
 .push-ok{color:var(--ok)}
 .no-shift [data-act="edit-shift"]{cursor:default}
+.no-shift button.who:hover,.no-shift .wt .cell:hover{background:transparent;border-color:transparent}
 .inst-c a.btn{text-decoration:none}
 .push-err{margin:8px 0 0;padding:10px 12px;border-radius:12px;background:var(--now-fill);color:var(--now);font-weight:700;font-size:15px}
 .cu-acc{display:grid;gap:8px;margin-top:14px}
@@ -1463,7 +1464,7 @@ function qrSvg(text, color = "#0B1220", bg = "#FFFFFF") {
 if (typeof module !== "undefined") module.exports = { QRGEN, qrSvg };
 
 </script>
-<script src="firebase-config.js?v=2026.11.22-69"></script>
+<script src="firebase-config.js?v=2026.11.22-70"></script>
 <script>
 (() => {
 "use strict";
@@ -1763,7 +1764,7 @@ function dayTimeline(isToday){
     const sub = off ? `<small class="off">riposo</small>`
       : `<small>${deptsLabel(bl, st.id)} · <span class="hrs">${bl.map(fmtR).join(", ")}</span><br>${fmtHs(mins(bl))}${pauses.length ? ` · pausa ${pauses.join(", ")}` : ""}</small>${FA ? `<em class="fwhen ${FA.k}"><i class="fi">${FICO[FA.k]}</i>${fasciaText(bl, FA.k)}</em>` : ""}`;
     h += `<div class="tl-row">
-      <button class="who" data-act="edit-shift" data-sid="${st.id}" data-date="${S.sel}" ${S.canShift ? "" : "disabled"} title="Modifica turno di ${esc(st.name)}">
+      <button class="who" data-act="edit-shift" data-sid="${st.id}" data-date="${S.sel}" ${S.canWrite ? "" : "disabled"} title="Modifica turno di ${esc(st.name)}">
         <span class="av ${dp}">${esc(initials(st.name))}</span>
         <span class="who-txt"><b>${esc(st.name)} ${fxTag(bl)}</b>${sub}</span>
       </button>
@@ -1798,7 +1799,7 @@ function weekTable(){
       tot += mins(bl);
       const fin = FA ? inFascia(bl, FA.k).length : 1;
       const inner = bl.length ? bl.map(b => `<span class="blk ${blkDept(b, st.id)}">${fmtR(b)}</span>`).join("") + (FA ? (fin ? `<em class="fwhen ${FA.k}">${fasciaText(bl, FA.k)}</em>` : `<em class="fwhen none">non ${FA.di}</em>`) : fxTag(bl, true)) : "Riposo";
-      cells += `<td class="${d===S.sel?"selc":""}"><button class="cell${bl.length?"":" off"}${FA && bl.length && !fin ? " fno" : ""}" data-act="edit-shift" data-sid="${st.id}" data-date="${d}" ${S.canShift ? "" : "disabled"} aria-label="${esc(st.name)}, ${esc(dateLong(d))}: ${esc(blocksText(bl))}">${inner}</button></td>`;
+      cells += `<td class="${d===S.sel?"selc":""}"><button class="cell${bl.length?"":" off"}${FA && bl.length && !fin ? " fno" : ""}" data-act="edit-shift" data-sid="${st.id}" data-date="${d}" ${S.canWrite ? "" : "disabled"} aria-label="${esc(st.name)}, ${esc(dateLong(d))}: ${esc(blocksText(bl))}">${inner}</button></td>`;
     }
     h += `<tr><th class="name"><span class="who" style="padding:0"><span class="av ${usual(st.id) || "none"}">${esc(initials(st.name))}</span><span class="who-txt"><b>${esc(st.name)}</b><small class="tot">${fmtHs(tot)} in settimana${usual(st.id) ? ` · ${usualText(st.id)}` : ""}</small></span></span></th>${cells}</tr>`;
   }
