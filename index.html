@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
 <title>Turni Arese</title>
-<!-- versione 2026.11.22-67 -->
+<!-- versione 2026.11.22-68 -->
 <meta name="description" content="Turni e agenda del reparto Telefonia &amp; Service, MediaWorld Arese">
 <meta name="theme-color" content="#FFFFFF" media="(prefers-color-scheme: light)">
 <meta name="theme-color" content="#0B0F17" media="(prefers-color-scheme: dark)">
@@ -574,6 +574,7 @@ button.nofoto{justify-self:start;padding:0;border:0;background:none;font:inherit
 .nofoto.del{color:var(--danger,#D92D20)}
 .row-act .nofoto{align-self:center;margin:0 0 0 10px}
 .push-ok{color:var(--ok)}
+.inst-c a.btn{text-decoration:none}
 .push-err{margin:8px 0 0;padding:10px 12px;border-radius:12px;background:var(--now-fill);color:var(--now);font-weight:700;font-size:15px}
 .cu-acc{display:grid;gap:8px;margin-top:14px}
 .cu-bg{display:grid;gap:8px;margin:16px 0 0;padding-top:14px;border-top:1px solid var(--line-2)}
@@ -1461,7 +1462,7 @@ function qrSvg(text, color = "#0B1220", bg = "#FFFFFF") {
 if (typeof module !== "undefined") module.exports = { QRGEN, qrSvg };
 
 </script>
-<script src="firebase-config.js?v=2026.11.22-67"></script>
+<script src="firebase-config.js?v=2026.11.22-68"></script>
 <script>
 (() => {
 "use strict";
@@ -3545,6 +3546,25 @@ function subErrMsg(e){
   if (b === "Chrome" || b === "Samsung Internet" || b === "Firefox") return `Il telefono non ha accettato l'iscrizione. Controlla che ${b} possa mandare notifiche (Impostazioni del telefono › App › ${b} › Notifiche) e che i Google Play Services siano aggiornati, poi riprova. Sui telefoni senza servizi Google (alcuni Huawei/Honor) le notifiche non funzionano.` + det;
   return `L'app è aperta con ${b}, che non gestisce le notifiche: apri il link dell'app con Chrome, aggiungila alla schermata Home da lì e riprova.` + det;
 }
+/* installazione dell'app sul telefono: su Android con Chrome un tasto «Installa» (evento del browser);
+   aperta dentro WhatsApp/Instagram o con un altro browser → tasto «Apri con Chrome» */
+let INST = null;
+window.addEventListener("beforeinstallprompt", e => { e.preventDefault(); INST = e; rerenderInst(); });
+window.addEventListener("appinstalled", () => { INST = null; lsSet("inst-ok", "1"); toast("App installata: aprila dall'icona Turni"); rerenderInst(); });
+function rerenderInst(){ if (ROUTE === "login") renderLogin(); else if (ROUTE === "me") renderMe(); }
+const inAppUA = () => /FBAN|FBAV|Instagram|Line\/|Telegram|GSA\/|; wv\)/i.test(navigator.userAgent);   // GSA = app Google (la ricerca apre le pagine al suo interno)
+function installCardHtml(where){
+  const and = /Android/i.test(navigator.userAgent), ios = isIOS();
+  if ((!and && !ios) || isStandalone() || isBanco()) return "";
+  if (where === "me" && lsGet("inst-later") > new Date(Date.now() - 7 * 864e5).toISOString()) return "";
+  const b = and ? andBrowser() : "", later = where === "me" ? `<button class="btn ghost" data-act="inst-later">Non ora</button>` : "";
+  let txt, btn = "";
+  if (ios) txt = /CriOS|FxiOS|EdgiOS|Instagram|FBAN/.test(navigator.userAgent) ? "Per averla come app apri questo link con <b>Safari</b>, poi tocca Condividi › <b>Aggiungi alla schermata Home</b>." : "Tocca Condividi (il quadrato con la freccia) › <b>Aggiungi alla schermata Home</b>, poi apri Turni dall'icona.";
+  else if (INST){ txt = "Mettila tra le app del telefono: si apre dall'icona, a schermo intero, e può mandarti le notifiche."; btn = `<button class="btn primary" data-act="inst-go">${ICO.dl}Installa l'app</button>`; }
+  else if (inAppUA() || (b !== "Chrome" && b !== "Samsung Internet")){ txt = `Stai usando ${/GSA\//.test(navigator.userAgent) ? "l'app Google" : inAppUA() ? "il browser interno di un'altra app" : esc(b)}: da qui non si installa. Aprila con Chrome e installala da lì.`; btn = `<a class="btn primary" href="intent://${esc(location.host + location.pathname)}#Intent;scheme=https;package=com.android.chrome;end">Apri con Chrome</a>`; }
+  else txt = b === "Samsung Internet" ? "Tocca il menu (☰) › <b>Aggiungi pagina a</b> › <b>Schermata Home</b>." : "Tocca i tre puntini (⋮) in alto › <b>Aggiungi a schermata Home</b> › <b>Installa</b>. Se l'icona non compare: Impostazioni del telefono › App › Chrome › Autorizzazioni › consenti <b>Scorciatoie della schermata Home</b> (su Xiaomi, Redmi, Oppo, Realme è spento di serie).";
+  return `<section class="card inst-c"><h2>${ICO.dl}Installa Turni sul telefono</h2><p class="mut">${txt}</p>${btn || later ? `<div class="row-act">${btn}${later}</div>` : ""}</section>`;
+}
 const isStandalone = () => (window.matchMedia && matchMedia("(display-mode: standalone)").matches) || navigator.standalone === true;
 P.push = "";   // on | off | denied | home (iPhone: prima va aggiunta alla Home) | no (non supportate) | "" (non ancora controllato)
 async function pushCheck(){
@@ -3881,7 +3901,7 @@ function renderMe(){
     <div class="ph-top">${isAdmin() ? `<button class="btn back ph-back" data-act="nav" data-to="agenda">${ICO.back}Agenda</button>` : ""}<span class="ph-date">${esc(capitalize(dateLong(t)))}</span>${msgBtn()}${gearBtn()}</div>
     <header class="me-id">${S.avatars[id] ? `<button type="button" class="av me-av ${dCls(todayD[0] || usual(id))}" data-act="av-zoom" aria-label="Guarda la tua foto profilo">${avIn(id, st.name)}</button>` : `<span class="av ${dCls(todayD[0] || usual(id))}">${avIn(id, st.name)}</span>`}
       <div><small class="me-gr">${greet()}</small><h1>${esc(firstName(st))}</h1></div>${pill}</header>
-    ${pushCardHtml("me")}
+    ${installCardHtml("me") || pushCardHtml("me")}
     ${heroDay(id, d)}
     ${ap.length ? `<section class="card"><h2>Appuntamenti da fare<small>${ap.length}</small></h2>
       <ul class="myap">${ap.map(a => `<li><div class="ma">
@@ -4254,6 +4274,7 @@ function renderLogin(){
     <section class="hero lg-hero"><div class="hero-k">MediaWorld Arese<span class="chip-st">Telefonia &amp; Service</span></div>
       <div class="hero-big txt">Turni</div><div class="hero-meta">${greet()}! I tuoi orari, sempre in tasca.</div></section>
     <form class="lock" id="fLogin" novalidate autocomplete="on"><div class="lk-h"><span class="li" aria-hidden="true">${ICO.lock}</span><div>${body.replace("</p>", "</p></div></div>")}</form>
+    ${installCardHtml("login")}
     ${BK.mode === "demo" ? `<p class="foot">Modalità prova: i dati restano solo su questo dispositivo.</p>` : ""}
   </div>`;
   if (keep && $("#" + keep)) $("#" + keep).focus();
@@ -4498,6 +4519,8 @@ document.addEventListener("click", async e => {
     return setMode(["light", "dark"].includes(to) ? to : "light");
   }
   if (act === "theme-flip") return setMode(getTheme() === "dark" ? "light" : "dark");
+  if (act === "inst-go"){ if (!INST) return; const ev = INST; INST = null; try { ev.prompt(); const r = await ev.userChoice; if (r && r.outcome !== "accepted") INST = ev; } catch {} return rerenderInst(); }
+  if (act === "inst-later"){ lsSet("inst-later", new Date().toISOString()); return renderMe(); }
   if (act === "lg-mode"){ LG.mode = el.dataset.m; LG.err = ""; renderLogin(); const f = $("#lgName") || $("#lgCode"); f && f.focus(); return; }
   if (act === "lg-eye"){ LG.show = !LG.show; ["lgPw", "lgPw2"].forEach(id => { const f = $("#" + id); if (f) f.type = LG.show ? "text" : "password"; }); document.querySelectorAll('[data-act="lg-eye"]').forEach(b => { b.setAttribute("aria-pressed", LG.show); b.setAttribute("aria-label", (LG.show ? "Nascondi" : "Mostra") + " la password"); }); return; }
   if (act === "logout") return logout();
