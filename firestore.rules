@@ -7,7 +7,7 @@ rules_version = '2';
 //   (un nome alla volta, senza poter vedere l'elenco), usare un codice di primo accesso
 // - i balordi leggono turni, nomi, foto profilo e appuntamenti; cambiano solo le proprie ore
 //   da contratto e la propria foto
-// - il responsabile e il PC del banco scrivono agenda, turni, appuntamenti e note
+// - il responsabile scrive i turni; responsabile e PC del negozio scrivono appuntamenti e note
 // - solo il responsabile gestisce accessi, codici e chiave di Gemini
 service cloud.firestore {
   match /databases/{database}/documents {
@@ -115,8 +115,9 @@ service cloud.firestore {
       allow delete: if isAdmin() || (isMember() && myStaff() == id);
     }
 
-    // turni e appuntamenti: li leggono tutti, li scrivono responsabile e PC del banco
-    match /shifts/{id} { allow read: if isMember(); allow write: if canAgenda(); }
+    // turni: li leggono tutti, li scrive solo il responsabile (i PC del negozio no)
+    match /shifts/{id} { allow read: if isMember(); allow write: if isAdmin(); }
+    // appuntamenti: li leggono tutti, li scrivono responsabile e PC del negozio
     match /appts/{id}  { allow read: if isMember(); allow write: if canAgenda(); }
     // note dell'agenda: solo responsabile e PC del banco
     match /notes/{id}  { allow read, write: if canAgenda(); }

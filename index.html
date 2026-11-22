@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
 <title>Turni Arese</title>
-<!-- versione 2026.11.22-68 -->
+<!-- versione 2026.11.22-69 -->
 <meta name="description" content="Turni e agenda del reparto Telefonia &amp; Service, MediaWorld Arese">
 <meta name="theme-color" content="#FFFFFF" media="(prefers-color-scheme: light)">
 <meta name="theme-color" content="#0B0F17" media="(prefers-color-scheme: dark)">
@@ -574,6 +574,7 @@ button.nofoto{justify-self:start;padding:0;border:0;background:none;font:inherit
 .nofoto.del{color:var(--danger,#D92D20)}
 .row-act .nofoto{align-self:center;margin:0 0 0 10px}
 .push-ok{color:var(--ok)}
+.no-shift [data-act="edit-shift"]{cursor:default}
 .inst-c a.btn{text-decoration:none}
 .push-err{margin:8px 0 0;padding:10px 12px;border-radius:12px;background:var(--now-fill);color:var(--now);font-weight:700;font-size:15px}
 .cu-acc{display:grid;gap:8px;margin-top:14px}
@@ -1304,7 +1305,7 @@ try{var m=localStorage.getItem("ui-mode"),r=document.documentElement,c=null;if(m
             <button data-act="view" data-v="week" aria-pressed="false">Settimana</button>
           </div>
           <button class="btn ghost adm-only" data-act="staff"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="9" cy="8" r="3.5"/><path d="M2.5 20c.8-3.5 3.4-5.5 6.5-5.5s5.7 2 6.5 5.5"/><path d="M16 4.5a3.5 3.5 0 0 1 0 7M18 14.8c1.8.7 3 2.4 3.5 5.2"/></svg>Balordi</button>
-          <button class="btn ghost w-only" data-act="copy-week" data-confirm="Sì, copia nei giorni vuoti" hidden>Copia settimana scorsa</button>
+          <button class="btn ghost" data-act="copy-week" data-confirm="Sì, copia nei giorni vuoti" hidden>Copia settimana scorsa</button>
         </div>
         <div id="nowBar"></div>
         <div class="p-body"><div class="tl-scroll" id="shiftBody"></div><div id="restBody"></div></div>
@@ -1462,7 +1463,7 @@ function qrSvg(text, color = "#0B1220", bg = "#FFFFFF") {
 if (typeof module !== "undefined") module.exports = { QRGEN, qrSvg };
 
 </script>
-<script src="firebase-config.js?v=2026.11.22-68"></script>
+<script src="firebase-config.js?v=2026.11.22-69"></script>
 <script>
 (() => {
 "use strict";
@@ -1694,7 +1695,7 @@ function renderShifts(){
     ? (isToday ? "Chi lavora oggi" : `Chi lavora ${GG[pd(S.sel).getDay()].toLowerCase()} ${pd(S.sel).getDate()}`) + (S.fascia !== "all" ? ` ${fascia(S.fascia).di}` : "")
     : `Turni dal ${pd(mon).getDate()} ${MM[pd(mon).getMonth()].slice(0,3)} al ${pd(sun).getDate()} ${MM[pd(sun).getMonth()].slice(0,3)}`;
   document.querySelectorAll('[data-act="view"]').forEach(b => b.setAttribute("aria-pressed", String(b.dataset.v === S.view)));
-  const cw = document.querySelector('[data-act="copy-week"]'); if (cw) cw.hidden = S.view !== "week" || !S.canWrite;
+  const cw = document.querySelector('[data-act="copy-week"]'); if (cw) cw.hidden = S.view !== "week" || !S.canShift;
 
   let nb = "";
   if (isToday && S.view === "day" && S.staff.length){
@@ -1708,7 +1709,7 @@ function renderShifts(){
   const body = $("#shiftBody");
   if (!S.staff.length){
     $("#restBody").innerHTML = "";
-    body.innerHTML = `<div class="empty"><h3>Nessun balordo in elenco</h3><p>Aggiungi i balordi di Telefonia e Service, oppure leggi le foto dei fogli orari: i nomi vengono aggiunti da soli.</p>${S.canWrite ? `<button class="btn primary" data-act="staff">Aggiungi balordi</button>` : ""}</div>`;
+    body.innerHTML = `<div class="empty"><h3>Nessun balordo in elenco</h3><p>Aggiungi i balordi di Telefonia e Service, oppure leggi le foto dei fogli orari: i nomi vengono aggiunti da soli.</p>${S.canShift ? `<button class="btn primary" data-act="staff">Aggiungi balordi</button>` : ""}</div>`;
     return;
   }
   body.innerHTML = S.view === "day" ? dayTimeline(isToday) : weekTable();
@@ -1716,7 +1717,7 @@ function renderShifts(){
   const fs2 = $("#fasciaFilter"); if (fs2) fs2.value = S.fascia;
   const FA = S.fascia !== "all" ? fascia(S.fascia) : null;
   const rest = S.view === "day" ? visibleStaff(S.sel).filter(st => { const bl = sorted(rowsFor(S.sel)[st.id]); return FA ? !inFascia(bl, FA.k).length : !bl.length; }).sort((a, b) => a.name.localeCompare(b.name)) : [];
-  $("#restBody").innerHTML = rest.length ? `<div class="rest"><b>${FA ? `Non ci sono ${FA.di}:` : "Non in turno:"}</b>${rest.map(st => S.canWrite
+  $("#restBody").innerHTML = rest.length ? `<div class="rest"><b>${FA ? `Non ci sono ${FA.di}:` : "Non in turno:"}</b>${rest.map(st => S.canShift
     ? `<button class="chip rest" data-act="edit-shift" data-sid="${st.id}" data-date="${S.sel}" title="Aggiungi turno a ${esc(st.name)}"><i class="dot ${usual(st.id) || "none"}"></i>${esc(st.name)}</button>`
     : `<span class="chip rest"><i class="dot ${usual(st.id) || "none"}"></i>${esc(st.name)}</span>`).join("")}</div>` : "";
 }
@@ -1744,7 +1745,7 @@ function dayTimeline(isToday){
     <div class="tl-row tl-fasce"><div></div><div class="track">${fbands}</div></div>
     <div class="tl-row tl-hours"><div></div><div class="track">${ticks}${nowTag}</div></div>`;
   const working = staff.filter(st => { const bl = sorted(rows[st.id]); return FA ? inFascia(bl, FA.k).length : bl.length; });
-  if (!working.length) return `<div class="empty"><h3>Nessun balordo${deptLabel()} in turno ${FA ? FA.di + " " : ""}questo giorno</h3><p>Carica la foto del foglio orari, oppure clicca su un nome qui sotto per scrivere il turno a mano.</p>${S.canWrite ? `<button class="btn primary" data-act="go-upload">${ICON.cam}Carica foto dei turni</button>` : ""}</div>`;
+  if (!working.length) return `<div class="empty"><h3>Nessun balordo${deptLabel()} in turno ${FA ? FA.di + " " : ""}questo giorno</h3>${S.canShift ? `<p>Carica la foto del foglio orari, oppure clicca su un nome qui sotto per scrivere il turno a mano.</p>` : `<p>I turni di questo giorno non sono ancora stati caricati.</p>`}${S.canShift ? `<button class="btn primary" data-act="go-upload">${ICON.cam}Carica foto dei turni</button>` : ""}</div>`;
   for (const st of working){
     const bl = sorted(rows[st.id]);
     const off = !bl.length, dp = deptOn(st, S.sel);
@@ -1762,11 +1763,11 @@ function dayTimeline(isToday){
     const sub = off ? `<small class="off">riposo</small>`
       : `<small>${deptsLabel(bl, st.id)} · <span class="hrs">${bl.map(fmtR).join(", ")}</span><br>${fmtHs(mins(bl))}${pauses.length ? ` · pausa ${pauses.join(", ")}` : ""}</small>${FA ? `<em class="fwhen ${FA.k}"><i class="fi">${FICO[FA.k]}</i>${fasciaText(bl, FA.k)}</em>` : ""}`;
     h += `<div class="tl-row">
-      <button class="who" data-act="edit-shift" data-sid="${st.id}" data-date="${S.sel}" ${S.canWrite ? "" : "disabled"} title="Modifica turno di ${esc(st.name)}">
+      <button class="who" data-act="edit-shift" data-sid="${st.id}" data-date="${S.sel}" ${S.canShift ? "" : "disabled"} title="Modifica turno di ${esc(st.name)}">
         <span class="av ${dp}">${esc(initials(st.name))}</span>
         <span class="who-txt"><b>${esc(st.name)} ${fxTag(bl)}</b>${sub}</span>
       </button>
-      <div class="track${off ? " off" : ""}" ${off && S.canWrite ? `data-act="edit-shift" data-sid="${st.id}" data-date="${S.sel}"` : ""}>${inner}${now}</div>
+      <div class="track${off ? " off" : ""}" ${off && S.canShift ? `data-act="edit-shift" data-sid="${st.id}" data-date="${S.sel}"` : ""}>${inner}${now}</div>
     </div>`;
   }
   const slots = (H1 - H0) * 2;
@@ -1797,7 +1798,7 @@ function weekTable(){
       tot += mins(bl);
       const fin = FA ? inFascia(bl, FA.k).length : 1;
       const inner = bl.length ? bl.map(b => `<span class="blk ${blkDept(b, st.id)}">${fmtR(b)}</span>`).join("") + (FA ? (fin ? `<em class="fwhen ${FA.k}">${fasciaText(bl, FA.k)}</em>` : `<em class="fwhen none">non ${FA.di}</em>`) : fxTag(bl, true)) : "Riposo";
-      cells += `<td class="${d===S.sel?"selc":""}"><button class="cell${bl.length?"":" off"}${FA && bl.length && !fin ? " fno" : ""}" data-act="edit-shift" data-sid="${st.id}" data-date="${d}" ${S.canWrite ? "" : "disabled"} aria-label="${esc(st.name)}, ${esc(dateLong(d))}: ${esc(blocksText(bl))}">${inner}</button></td>`;
+      cells += `<td class="${d===S.sel?"selc":""}"><button class="cell${bl.length?"":" off"}${FA && bl.length && !fin ? " fno" : ""}" data-act="edit-shift" data-sid="${st.id}" data-date="${d}" ${S.canShift ? "" : "disabled"} aria-label="${esc(st.name)}, ${esc(dateLong(d))}: ${esc(blocksText(bl))}">${inner}</button></td>`;
     }
     h += `<tr><th class="name"><span class="who" style="padding:0"><span class="av ${usual(st.id) || "none"}">${esc(initials(st.name))}</span><span class="who-txt"><b>${esc(st.name)}</b><small class="tot">${fmtHs(tot)} in settimana${usual(st.id) ? ` · ${usualText(st.id)}` : ""}</small></span></span></th>${cells}</tr>`;
   }
@@ -1863,7 +1864,7 @@ function renderNotes(){
   $("#noteBody").innerHTML = h;
 }
 
-function applyWriteGate(){ document.querySelectorAll(".w-only").forEach(el => { el.hidden = !S.canWrite; }); }
+function applyWriteGate(){ document.querySelectorAll(".w-only").forEach(el => { el.hidden = !S.canWrite; }); document.body.classList.toggle("no-shift", !S.canShift); }
 function render(){ renderHeader(); renderMiniCal(); renderShifts(); renderAppts(); renderNotes(); applyWriteGate(); }
 
 /* ---------- names ---------- */
@@ -1922,7 +1923,7 @@ const sheetHead = t => `<header><h3>${t}</h3><button class="icon-btn" type="butt
 
 /* shift editor */
 function openShift(sid, date){
-  if (!S.canWrite) return;
+  if (!S.canShift) return;
   const st = staffById(sid); if (!st) return;
   let blocks = sorted(rawRows(date)[sid]).map(b => ({...b, d: blkDept(b, sid)}));
   const wasOff = !blocks.length;
@@ -1981,12 +1982,12 @@ async function writeRows(date, rowsPatch){
   else await ref.set({date, rows: rowsPatch});
 }
 async function saveShift(sid, date, bl){
-  if (!needDb()) return;
+  if (!S.canShift || !needDb()) return;
   try { await writeRows(date, {[sid]: bl}); closeSheet(); toast(bl.length ? "Turno salvato" : "Segnato riposo"); }
   catch (e) { writeErr(e); }
 }
 async function copyLastWeek(){
-  if (!needDb()) return;
+  if (!S.canShift || !needDb()) return;
   const mon = monday(S.sel); let n = 0;
   try {
     for (let i = 0; i < 7; i++){
@@ -4413,7 +4414,8 @@ function startSession(u, data){
   lsPut("turni-me-" + u.uid, {role: data.role, staffId: data.staffId || ""});
   SES.staffId = SES.member.staffId || "";
   S.me = isBanco() ? "banco" : SES.staffId;
-  S.canWrite = isAdmin() || isBanco();
+  S.canWrite = isAdmin() || isBanco();   // agenda: appuntamenti e note
+  S.canShift = isAdmin();                // turni: solo il responsabile (i PC del negozio li vedono e basta)
   document.body.dataset.role = SES.member.role;
   startData();
   if (SES.memberUnsub) SES.memberUnsub();
@@ -4576,7 +4578,7 @@ document.addEventListener("click", async e => {
   if (act === "copy-week"){ if (armed(el)) await copyLastWeek(); return; }
   if (act === "new-appt") return openAppt(null);
   if (act === "edit-appt") return openAppt(el.dataset.id);
-  if (act === "go-upload"){ location.hash = "carica"; return; }
+  if (act === "go-upload"){ if (S.canShift) location.hash = "carica"; return; }
   if (act === "go-agenda"){ location.hash = "agenda"; return; }
   if (act === "go-agenda-day"){ const d = U.lastDate; location.hash = "agenda"; if (d){ S.view = "day"; setSel(d); } return; }
   if (act === "up-read") return readPhotos();
