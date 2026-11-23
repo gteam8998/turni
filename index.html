@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
 <title>Turni Arese</title>
-<!-- versione 2026.11.23-73 -->
+<!-- versione 2026.11.23-74 -->
 <meta name="description" content="Turni e agenda del reparto Telefonia &amp; Service, MediaWorld Arese">
 <meta name="theme-color" content="#FFFFFF" media="(prefers-color-scheme: light)">
 <meta name="theme-color" content="#0B0F17" media="(prefers-color-scheme: dark)">
@@ -1014,11 +1014,13 @@ html,body{background:var(--bg);transition:background-color .2s}
 @keyframes arr-rel{0%{transform:scale(.84)}36%{transform:scale(1.07)}60%{transform:scale(.975)}80%{transform:scale(1.012)}100%{transform:scale(1)}}
 @keyframes arr-nudge{0%{translate:0 0}32%{translate:calc(var(--dir,1) * 5px) 0}100%{translate:0 0}}
 @media (prefers-reduced-motion:reduce){.arr-rel,.arr-rel svg{animation:none}}
-.tap-rip{position:fixed;z-index:80;pointer-events:none;width:var(--s);height:var(--s);margin:calc(var(--s) / -2) 0 0 calc(var(--s) / -2);border-radius:50%;
-  background:radial-gradient(circle,color-mix(in srgb,var(--c) 42%,transparent) 0 46%,color-mix(in srgb,var(--c) 0%,transparent) 71%);
-  box-shadow:0 0 0 2.5px color-mix(in srgb,var(--c) 85%,transparent) inset,0 0 16px color-mix(in srgb,var(--c) 45%,transparent);animation:tap-rip .52s cubic-bezier(.15,.75,.3,1) forwards}
-@keyframes tap-rip{0%{transform:scale(.3);opacity:1}60%{opacity:.75}100%{transform:scale(1.55);opacity:0}}
-@media (prefers-reduced-motion:reduce){.tap-rip{animation-duration:.25s}}
+/* il cerchio resta dentro la scheda (stessi angoli arrotondati) e si allarga fino agli angoli dal lato della freccia, senza bordo */
+.tap-box{position:fixed;z-index:80;pointer-events:none;overflow:hidden;isolation:isolate}
+.tap-rip{position:absolute;width:var(--s);height:var(--s);margin:calc(var(--s) / -2) 0 0 calc(var(--s) / -2);border-radius:50%;
+  background:radial-gradient(circle,color-mix(in srgb,var(--c) 25%,transparent) 0,color-mix(in srgb,var(--c) 17%,transparent) 50%,color-mix(in srgb,var(--c) 6%,transparent) 70.7%);
+  animation:tap-rip .75s cubic-bezier(.2,.7,.25,1) forwards}
+@keyframes tap-rip{0%{transform:scale(.06);opacity:1}50%{opacity:.9}100%{transform:scale(1);opacity:0}}
+@media (prefers-reduced-motion:reduce){.tap-rip{animation-duration:.3s}}
 .hn-arr.flip svg{transform:rotate(180deg)}
 .hn-arr:focus-visible{outline:3px solid var(--focus);outline-offset:3px}
 .hn-c{display:grid;justify-items:center;gap:3px;text-align:center;min-width:0}
@@ -1494,7 +1496,7 @@ function qrSvg(text, color = "#0B1220", bg = "#FFFFFF") {
 if (typeof module !== "undefined") module.exports = { QRGEN, qrSvg };
 
 </script>
-<script src="firebase-config.js?v=2026.11.23-73"></script>
+<script src="firebase-config.js?v=2026.11.23-74"></script>
 <script>
 (() => {
 "use strict";
@@ -4559,9 +4561,16 @@ const RIP_SEL = ".hn-arr, .dn-arr, [data-act=prev-day], [data-act=next-day], [da
 document.addEventListener("pointerdown", e => {
   const b = e.target.closest && e.target.closest(RIP_SEL); if (!b || b.disabled) return;
   b.dataset.rip = "1";
-  const r = b.getBoundingClientRect(), o = document.createElement("span"), sz = Math.max(r.width, r.height) * 1.9;
-  o.className = "tap-rip"; o.style.cssText = `left:${r.left + r.width / 2}px;top:${r.top + r.height / 2}px;--s:${sz.toFixed(0)}px;--c:${getComputedStyle(b).color}`;
-  document.body.appendChild(o); o.addEventListener("animationend", () => o.remove()); setTimeout(() => o.remove(), 900);
+  /* la «scheda» che contiene la freccia: il cerchio parte dal tasto, ritagliato dentro di lei */
+  const r = b.getBoundingClientRect(), tab = b.closest(".me-hero, .card, .mc-head, header") || b, tr = tab.getBoundingClientRect(), cs = getComputedStyle(tab);
+  const cx = r.left + r.width / 2 - tr.left, cy = r.top + r.height / 2 - tr.top;
+  /* arriva sempre ai due angoli dal lato della freccia, mai a quelli dal lato opposto (nelle schede alte al massimo a metà) */
+  const side = cx < tr.width / 2 ? 0 : tr.width, near = Math.hypot(side - cx, Math.max(cy, tr.height - cy));
+  const far = tab === b ? r.width : tab.classList.contains("me-hero") ? near : Math.min(near, tr.width / 2);
+  const box = document.createElement("span"), o = document.createElement("span");
+  box.className = "tap-box"; box.style.cssText = `left:${tr.left}px;top:${tr.top}px;width:${tr.width}px;height:${tr.height}px;border-radius:${tab === b ? "50%" : cs.borderRadius}`;
+  o.className = "tap-rip"; o.style.cssText = `left:${cx}px;top:${cy}px;--s:${(far * 2 + 4).toFixed(0)}px;--c:${getComputedStyle(b).color}`;
+  box.appendChild(o); document.body.appendChild(box); o.addEventListener("animationend", () => box.remove()); setTimeout(() => box.remove(), 1200);
   try { navigator.vibrate && navigator.vibrate(8); } catch {}
 }, {passive: true});
 /* al rilascio il tasto (anche quello nuovo, se la scheda si è ridisegnata) torna su con il rimbalzo */
