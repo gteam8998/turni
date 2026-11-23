@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
 <title>Turni Arese</title>
-<!-- versione 2026.11.22-71 -->
+<!-- versione 2026.11.23-72 -->
 <meta name="description" content="Turni e agenda del reparto Telefonia &amp; Service, MediaWorld Arese">
 <meta name="theme-color" content="#FFFFFF" media="(prefers-color-scheme: light)">
 <meta name="theme-color" content="#0B0F17" media="(prefers-color-scheme: dark)">
@@ -980,6 +980,24 @@ html,body{background:var(--bg);transition:background-color .2s}
 .me-hero .hn-c small{padding-left:.1em}
 /* una fascia per riga, senza la «e» in mezzo: si legge al volo */
 .me-hero .hero-big .and{display:none}
+/* due reparti nello stesso giorno: etichetta del reparto sopra le sue fasce */
+.me-hero .hero-big.multi{font-size:clamp(22px,calc(100cqw / var(--w,6)),34px);row-gap:calc(.22em + 2px)}
+.dtag{justify-self:start;display:inline-flex;align-items:center;gap:6px;margin:0 0 -.05em calc(-.8em);font:800 11.5px/1 var(--f-body);font-style:normal;letter-spacing:.09em;text-transform:uppercase;
+  padding:5px 10px 5px 8px;border-radius:999px;color:var(--hero-ink);background:rgba(255,255,255,.10);box-shadow:inset 0 0 0 1px rgba(255,255,255,.2)}
+.dtag::before{content:"";width:8px;height:8px;border-radius:50%;background:var(--dc,#C9D3EA);box-shadow:0 0 0 3px color-mix(in srgb,var(--dc,#C9D3EA) 28%,transparent)}
+.dtag.dt-tel{--dc:#7FA6FF} .dtag.dt-srv{--dc:#FF8A3D} .dtag.dt-alt{--dc:#5FD0B4}
+.hero-big .nb + .dtag{margin-top:calc(.3em + 4px)}
+/* AVIS: goccia rossa, giornata pagata ma non in turno */
+.nbt.avis{display:inline-flex;align-items:center;gap:.22em}
+.nbt.avis i{display:inline-grid;width:.72em;height:.72em;color:#FF4D5E;filter:drop-shadow(0 0 10px rgba(255,77,94,.55))}
+.nbt.avis i svg{width:100%;height:100%}
+.sd.avis .bar i{background:#E5484D}
+.sd.avis .hh{color:#D92D3A;font-weight:800;letter-spacing:.02em}
+.dl-avis{display:inline-flex;align-items:center;gap:6px;color:#C8283A;font-family:var(--f-body)}
+.dl-avis svg{width:15px;height:15px}
+#sAvis svg{color:#E5484D}
+.avis-t{display:inline-flex;align-items:center;gap:3px;margin-left:6px;font:800 10.5px/1 var(--f-body);font-style:normal;letter-spacing:.06em;color:#C8283A}
+.avis-t svg{width:11px;height:11px}
 .me-hero .hero-meta{justify-self:stretch;text-wrap:balance}
 .me-hero .dayline{justify-self:stretch;margin:0 -38px}
 /* telefono: cerchi delle frecce più piccoli, con un po' d'aria verso il bordo e verso gli orari */
@@ -987,6 +1005,14 @@ html,body{background:var(--bg);transition:background-color .2s}
 @media (max-width:360px){ .me-hero .chip-st{font-size:11.5px;padding:4px 9px;white-space:nowrap} .me-hero{padding-left:44px;padding-right:44px} .me-hero .hn-arr{width:32px;height:48px;margin-top:-24px} .me-hero .hn-arr.l{left:6px} .me-hero .hn-arr.r{right:6px} .me-hero .hn-arr svg{width:30px;height:30px} .me-hero .dayline{margin:0 -22px} }
 .hn-arr{width:46px;height:46px;border-radius:50%;border:0;display:grid;place-items:center;background:var(--hero-ink);color:var(--hero);cursor:pointer;box-shadow:0 8px 18px -8px rgba(0,0,0,.6);-webkit-tap-highlight-color:transparent;transition:transform .12s ease}
 .hn-arr svg{width:26px;height:26px}
+/* tocco sulle frecce: il tasto si schiaccia e un cerchio si allarga (fuori dalla scheda, così resta anche se la scheda si ridisegna) */
+.hn-arr:active,[data-rip]:active{transform:scale(.86)}
+.icon-btn[data-rip]{transition:transform .12s ease}
+.tap-rip{position:fixed;z-index:80;pointer-events:none;width:var(--s);height:var(--s);margin:calc(var(--s) / -2) 0 0 calc(var(--s) / -2);border-radius:50%;
+  background:radial-gradient(circle,color-mix(in srgb,var(--c) 42%,transparent) 0 46%,color-mix(in srgb,var(--c) 0%,transparent) 71%);
+  box-shadow:0 0 0 2.5px color-mix(in srgb,var(--c) 85%,transparent) inset,0 0 16px color-mix(in srgb,var(--c) 45%,transparent);animation:tap-rip .52s cubic-bezier(.15,.75,.3,1) forwards}
+@keyframes tap-rip{0%{transform:scale(.3);opacity:1}60%{opacity:.75}100%{transform:scale(1.55);opacity:0}}
+@media (prefers-reduced-motion:reduce){.tap-rip{animation-duration:.25s}}
 .hn-arr.flip svg{transform:rotate(180deg)}
 .hn-arr:active{transform:scale(.9)}
 .hn-arr:focus-visible{outline:3px solid var(--focus);outline-offset:3px}
@@ -1464,7 +1490,7 @@ function qrSvg(text, color = "#0B1220", bg = "#FFFFFF") {
 if (typeof module !== "undefined") module.exports = { QRGEN, qrSvg };
 
 </script>
-<script src="firebase-config.js?v=2026.11.22-71"></script>
+<script src="firebase-config.js?v=2026.11.23-72"></script>
 <script>
 (() => {
 "use strict";
@@ -1719,8 +1745,8 @@ function renderShifts(){
   const FA = S.fascia !== "all" ? fascia(S.fascia) : null;
   const rest = S.view === "day" ? visibleStaff(S.sel).filter(st => { const bl = sorted(rowsFor(S.sel)[st.id]); return FA ? !inFascia(bl, FA.k).length : !bl.length; }).sort((a, b) => a.name.localeCompare(b.name)) : [];
   $("#restBody").innerHTML = rest.length ? `<div class="rest"><b>${FA ? `Non ci sono ${FA.di}:` : "Non in turno:"}</b>${rest.map(st => S.canShift
-    ? `<button class="chip rest" data-act="edit-shift" data-sid="${st.id}" data-date="${S.sel}" title="Aggiungi turno a ${esc(st.name)}"><i class="dot ${usual(st.id) || "none"}"></i>${esc(st.name)}</button>`
-    : `<span class="chip rest"><i class="dot ${usual(st.id) || "none"}"></i>${esc(st.name)}</span>`).join("")}</div>` : "";
+    ? `<button class="chip rest" data-act="edit-shift" data-sid="${st.id}" data-date="${S.sel}" title="Aggiungi turno a ${esc(st.name)}"><i class="dot ${usual(st.id) || "none"}"></i>${esc(st.name)}${absOf(S.sel, st.id) === "AVIS" ? `<em class="avis-t">${ICO.drop}AVIS</em>` : ""}</button>`
+    : `<span class="chip rest"><i class="dot ${usual(st.id) || "none"}"></i>${esc(st.name)}${absOf(S.sel, st.id) === "AVIS" ? `<em class="avis-t">${ICO.drop}AVIS</em>` : ""}</span>`).join("")}</div>` : "";
 }
 
 function dayTimeline(isToday){
@@ -1940,6 +1966,7 @@ function openShift(sid, date){
       <p class="err" id="sErr"></p>
       <div class="actions">
         ${wasOff ? "" : `<button type="button" class="btn danger left" id="sOff" data-confirm="Sì, metti a riposo">Metti a riposo</button>`}
+        <button type="button" class="btn ${wasOff ? "left" : ""}" id="sAvis" title="Donazione del sangue: giornata pagata (${hm(AVIS_MIN)}), non in turno">${ICO.drop}AVIS</button>
         <button type="button" class="btn" data-act="close">Annulla</button>
         <button type="submit" class="btn primary">Salva turno</button>
       </div>
@@ -1964,6 +1991,7 @@ function openShift(sid, date){
       $("#sAdd", root).onclick = () => { read(); const last = blocks[blocks.length-1]; const s = last ? fromMin(Math.min(toMin(last.e) + 30, 21*60)) : "09:00"; blocks.push({s, e: fromMin(Math.min(toMin(s) + 180, 22*60)), d: last ? last.d : defD()}); draw(); };
       const off = $("#sOff", root);
       if (off) off.onclick = async () => { if (!armed(off)) return; await saveShift($("#sStaff", root).value, date, []); };
+      $("#sAvis", root).onclick = () => saveShift($("#sStaff", root).value, date, [], "AVIS");
       $("#fShift", root).onsubmit = async e => {
         e.preventDefault(); read();
         // fasce attaccate dello stesso reparto diventano una sola
@@ -1976,15 +2004,16 @@ function openShift(sid, date){
       };
     });
 }
-async function writeRows(date, rowsPatch){
-  const ref = S.db.doc("shifts/" + date);
+async function writeRows(date, rowsPatch, absPatch){
+  const ref = S.db.doc("shifts/" + date), up = {rows: rowsPatch, ...(absPatch ? {abs: absPatch} : {})};
   const cur = S.shifts[date] ? {exists: true} : await ref.get();
-  if (cur.exists) await ref.update({rows: rowsPatch});
-  else await ref.set({date, rows: rowsPatch});
+  if (cur.exists) await ref.update(up);
+  else await ref.set({date, ...up});
 }
-async function saveShift(sid, date, bl){
+async function saveShift(sid, date, bl, abs = ""){
   if (!S.canShift || !needDb()) return;
-  try { await writeRows(date, {[sid]: bl}); closeSheet(); toast(bl.length ? "Turno salvato" : "Segnato riposo"); }
+  const had = ((S.shifts[date] || {}).abs || {})[sid];
+  try { await writeRows(date, {[sid]: bl}, abs || had ? {[sid]: abs} : null); closeSheet(); toast(abs === "AVIS" ? "Segnato AVIS (donazione)" : bl.length ? "Turno salvato" : "Segnato riposo"); }
   catch (e) { writeErr(e); }
 }
 async function copyLastWeek(){
@@ -2380,13 +2409,15 @@ function parseClaude(t){
     let f = line.split("|").map(x => x.trim()); if (f.length < 3 || !(f[0] || f[1])) continue;
     /* formato senza REP (Nome | Cognome | orari | celle): il reparto del giorno lo dicono le celle */
     const off = x => /^(r|f|riposo|ferie)$/i.test(String(x || "").trim());   // R = riposo, F = ferie
-    if (rng.test(f[2]) || off(f[2])) f = [f[0], f[1], "", ...f.slice(2)];
+    const avis = x => /^avis$/i.test(String(x || "").trim());   // AVIS = donazione del sangue (pagata, non in turno)
+    if (rng.test(f[2]) || off(f[2]) || avis(f[2])) f = [f[0], f[1], "", ...f.slice(2)];
     f[3] = f[3] || "";
     if (!day){ day = {data: null, rows: []}; out.days.push(day); }
     const da = [], a = [], celle = [];
     if (!off(f[3])) f[3].split(/[,;]/).forEach(x => { const m = x.match(rng); if (m){ da.push(m[1]); a.push(m[2]); } });
     (f[4] || "").split(/[,;]/).forEach(x => { const m = x.trim().match(new RegExp(`^([A-Za-zÀ-ú]+)\\s+${tm}\\s*[-–—]\\s*${tm}`)); if (m) celle.push([m[1].toUpperCase(), m[2], m[3]]); });
-    day.rows.push({nome: f[0], cognome: f[1], rep: (f[2] || "").toUpperCase(), da: da.length ? da : ["R"], a: a.length ? a : ["R"], celle});
+    const isAvis = avis(f[3]) || /^avis$/i.test(String(f[4] || "").trim()) || celle.some(c => c[0] === "AVIS");
+    day.rows.push({nome: f[0], cognome: f[1], rep: (f[2] || "").toUpperCase(), da: da.length && !isAvis ? da : ["R"], a: a.length && !isAvis ? a : ["R"], celle: isAvis ? [] : celle, ...(isAvis ? {abs: "AVIS"} : {})});
   }
   out.days = out.days.filter(d => d.rows.length);
   return out;
@@ -2630,7 +2661,7 @@ async function claimArchive(sid, full, quiet){
       if (!v.date || !v.ext || (v.rows && v.rows[sid])) continue;
       const hits = Object.values(v.ext).filter(x => x && fw.every(w => words(x.n).includes(w)));
       if (hits.length !== 1) continue;
-      ops.push({op: "update", path: "shifts/" + v.id, data: {rows: {[sid]: hits[0].bl || []}}});
+      ops.push({op: "update", path: "shifts/" + v.id, data: {rows: {[sid]: hits[0].bl || []}, ...(hits[0].abs ? {abs: {...(v.abs || {}), [sid]: hits[0].abs}} : {})}});
     }
     for (let i = 0; i < ops.length; i += 400) await S.db.batch(ops.slice(i, i + 400));
     n = ops.length;
@@ -2647,11 +2678,13 @@ function ingest(results){
     out.dubbi.forEach(x => U.doubts.push(results.length > 1 ? `Foto ${fi + 1} · ${x}` : x));
     out.days.forEach(day => {
       const own = validDate(day.data), d = own || firstDate || todayStr();
-      if (!groups.has(d)) groups.set(d, {date: d, detected: !!(own || firstDate), people: new Map(), excluded: new Map(), archive: new Map()});
+      if (!groups.has(d)) groups.set(d, {date: d, detected: !!(own || firstDate), people: new Map(), excluded: new Map(), archive: new Map(), abs: new Map()});
       const g = groups.get(d);
       day.rows.forEach(row => {
         const nome = String(row.nome || "").trim(), cognome = String(row.cognome || "").trim();
         const full = titleCase([nome, cognome].filter(Boolean).join(" ")), k = norm(full); if (!k) return;
+        /* AVIS: niente fasce, si segna a parte (giornata pagata, non in turno) */
+        if (row.abs === "AVIS"){ g.abs.set(k, {full, match: matchStaff(full, true)}); return; }
         const first = titleCase((nome || cognome).split(/\s+/)[0]);
         const segs = (Array.isArray(row.celle) ? row.celle : []).map(c => Array.isArray(c) ? {sig: SIGLA(c[0]), s: fixTime(c[1]), e: fixTime(c[2])} : null)
           .filter(x => x && x.sig && x.sig !== "R" && x.s && x.e && toMin(x.e) > toMin(x.s));
@@ -2700,7 +2733,7 @@ function ingest(results){
   const firstStart = p => toMin(parseDayText(p.text).blocks?.[0]?.s || "23:59");
   U.groups = [...groups.values()].sort((a, b) => a.date.localeCompare(b.date)).map((g, i, all) => {
     const people = [...g.people.values()].sort((a, b) => (b.flags.length ? 1 : 0) - (a.flags.length ? 1 : 0) || a.dept.localeCompare(b.dept) || firstStart(a) - firstStart(b) || a.full.localeCompare(b.full));
-    return {date: g.date, detected: g.detected, excluded: [...g.excluded.values()], archive: [...g.archive.values()], people, open: all.length <= 2 || !g.detected || people.some(p => p.flags.length)};
+    return {date: g.date, detected: g.detected, excluded: [...g.excluded.values()], archive: [...g.archive.values()], abs: [...g.abs.values()], people, open: all.length <= 2 || !g.detected || people.some(p => p.flags.length)};
   });
   U.doubts = [...new Set(U.doubts)].slice(0, 20);
 }
@@ -2785,6 +2818,7 @@ function reviewHtml(){
       <p class="${g.detected ? "okline" : "warnline"}">${g.detected ? `Data letta dal foglio: <b>${esc(dateLong(g.date).toLowerCase())}</b>` : "Non ho trovato la data sul foglio: controllala qui sopra."}</p>
       <div class="plist">${g.people.map(p => personHtml(p, gi)).join("")}</div>
       ${g.excluded.length ? `<p class="excl"><b>Non salvati:</b> ${g.excluded.map(esc).join(", ")}</p>` : ""}
+      ${(g.abs || []).length ? `<p class="excl"><b>AVIS (donazione, giornata pagata da ${hm(AVIS_MIN)}):</b> ${g.abs.map(a => esc(a.full)).join(", ")}</p>` : ""}
       ${g.archive && g.archive.length ? `<p class="excl"><b>Altri reparti, messi da parte (${g.archive.length}):</b> ${g.archive.map(a => `${esc(a.first)} (${esc(a.sig || "R")})`).join(", ")}. Non compaiono finché non li aggiungi in elenco: allora prendono da soli questi turni.</p>` : ""}</div></details>`;
   });
   const nInc = U.groups.reduce((n, g) => n + g.people.filter(p => p.include).length, 0);
@@ -2876,13 +2910,16 @@ async function saveUpload(btn){
       };
       (perDate[g.date] = perDate[g.date] || {})[sid] = r.blocks.flatMap(split); n++;
     }
-    const perExt = {};
+    const perExt = {}, perAbs = {};
     U.groups.forEach(g => (g.archive || []).forEach(a => { (perExt[g.date] = perExt[g.date] || {})[slugOf(a.full)] = {n: a.full, bl: a.bl}; }));
+    U.groups.forEach(g => (g.abs || new Map()).forEach(a => { perAbs[g.date] = perAbs[g.date] || {};
+      if (a.match) perAbs[g.date][a.match] = "AVIS"; else (perExt[g.date] = perExt[g.date] || {})[slugOf(a.full)] = {n: a.full, bl: [], abs: "AVIS"}; }));
     const dates = Object.keys(perDate).sort(), all = [...new Set([...dates, ...Object.keys(perExt)])].sort();
     for (const [i, d] of all.entries()){
       if (all.length > 3) btn.textContent = `Salvo… ${i + 1} di ${all.length}`;
       const ref = S.db.doc("shifts/" + d), cur = await ref.get(), up = {};
       if (perDate[d]) up.rows = perDate[d]; if (perExt[d]) up.ext = perExt[d];
+      if (perDate[d] || perAbs[d]) up.abs = perAbs[d] || {};
       if (cur.exists) await ref.update(up); else await ref.set({date: d, rows: {}, ...up});
     }
     for (const [sid, full] of Object.entries(newFull)) await claimArchive(sid, full);
@@ -3066,6 +3103,7 @@ const P = {week: monday(todayStr()), month: todayStr().slice(0, 7), shifts: {}, 
 const THEME_KEY = "ui-mode";
 const sv = p => `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${p}</svg>`;
 const ICO = {
+  drop: `<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2.6c.4 0 .7.2.9.5 1.6 2.4 6.1 8.3 6.1 12a7 7 0 0 1-14 0c0-3.7 4.5-9.6 6.1-12 .2-.3.5-.5.9-.5z"/></svg>`,
   me: sv(`<circle cx="12" cy="8" r="4"/><path d="M4 21c1.2-4.2 4.3-6.5 8-6.5s6.8 2.3 8 6.5"/>`),
   cal: sv(`<rect x="3" y="5" width="18" height="16" rx="2.5"/><path d="M3 10h18M8 3v4M16 3v4"/>`),
   bell: sv(`<path d="M6 8a6 6 0 0 1 12 0c0 7 3 8 3 8H3s3-1 3-8"/><path d="M10.3 20a1.9 1.9 0 0 0 3.4 0"/>`),
@@ -3712,6 +3750,10 @@ function myAppts(id, day){
 const relDay = d => { const t = todayStr(); if (d === t) return "Oggi"; if (d === addDays(t, 1)) return "Domani"; const x = pd(d); return `${capitalize(GS[x.getDay()])} ${x.getDate()}`; };
 const myRows = (date, id) => { const d = P.shifts[date] || S.shifts[date]; return (d && d.rows && d.rows[id]) || []; };
 const known = date => !!(P.shifts[date] || S.shifts[date]);
+/* AVIS (donazione del sangue): giornata pagata, di solito 8 ore, ma non sei in turno (sta in shifts/{giorno}.abs) */
+const AVIS_MIN = 8 * 60;
+const absOf = (date, id) => { const d = P.shifts[date] || S.shifts[date] || {}; return (d.abs && d.abs[id]) || ""; };
+const paidMins = (date, id) => mins(myRows(date, id)) || (absOf(date, id) === "AVIS" ? AVIS_MIN : 0);
 const hm = m => { const h = Math.floor(m / 60), r = m % 60; return r ? `${h} h ${pad(r)}` : `${h} h`; };
 const hmShort = m => { const h = Math.floor(m / 60), r = m % 60; return r ? `${h}:${pad(r)}` : `${h}`; };
 /* orari con l'icona della fascia (mattino, pomeriggio, sera), come nella scheda del turno */
@@ -3733,7 +3775,8 @@ const dCls = d => d === "tel" || d === "srv" || d === "alt" ? d : "none";
 function heroDay(id, d){
   const t = todayStr(), isT = d === t, bl = sorted(myRows(d, id)), nm = isT ? nowMin() : -1, g = dayGap(d);
   const dept = deptsOf(bl, id)[0] || usual(id) || "tel";
-  let chip = "", big = "", meta = "", line = "";
+  let chip = "", big = "", meta = "", line = "", multi = false;
+  const avis = !bl.length && absOf(d, id) === "AVIS";
   if (bl.length){
     const s0 = toMin(bl[0].s), e1 = toMin(bl[bl.length - 1].e);
     if (isT){
@@ -3744,7 +3787,12 @@ function heroDay(id, d){
       else if (nxt) chip = `<i style="background:#F5C451;box-shadow:0 0 0 4px rgba(245,196,81,.2)"></i>In pausa fino alle ${fmtT(nxt.s)}`;
       else if (nm >= e1) chip = "Turno finito";
     } else chip = esc(relGap(d));
-    big = bl.map(b => { const f = (fasceOf([b]) || {main: "mat"}).main; return `<span class="nb"><i class="hfi ${f}" title="${fascia(f).lbl}" aria-label="${fascia(f).di}">${FICO[f]}</i>${fmtR(b)}</span>`; }).join(` <span class="and">e</span> `);
+    const nbOf = b => { const f = (fasceOf([b]) || {main: "mat"}).main; return `<span class="nb"><i class="hfi ${f}" title="${fascia(f).lbl}" aria-label="${fascia(f).di}">${FICO[f]}</i>${fmtR(b)}</span>`; };
+    /* due reparti nello stesso giorno: le fasce si raggruppano sotto il nome del reparto, nell'ordine in cui le fai */
+    const runs = []; bl.forEach(b => { const n = blkName(b, id), l = runs[runs.length - 1]; if (l && l.n === n) l.bl.push(b); else runs.push({n, k: blkDept(b, id), bl: [b]}); });
+    multi = new Set(runs.map(r => r.n)).size > 1;
+    big = multi ? runs.map(r => `<em class="dtag dt-${dCls(r.k)}">${esc(r.n)}</em>${r.bl.map(nbOf).join("")}`).join("")
+      : bl.map(nbOf).join(` <span class="and">e</span> `);
     const pz = pauseText(bl);
     meta = `${hm(mins(bl))} di lavoro${pz.length ? ` · pausa ${pz.join(", ")}` : ""}`;
     const a = Math.min(8 * 60, Math.floor(s0 / 60) * 60), z = Math.max(22 * 60, Math.ceil(e1 / 60) * 60), W = z - a;
@@ -3752,7 +3800,8 @@ function heroDay(id, d){
     line = `<div class="dayline" aria-hidden="true"><span class="tr"></span>${bl.map(b => `<span class="bk ${dCls(blkDept(b, id))}" style="left:${x(toMin(b.s))};width:calc(${x(toMin(b.e))} - ${x(toMin(b.s))})"></span>`).join("")}
       ${isT && nm >= a && nm <= z ? `<span class="nw" style="left:calc(${x(nm)} - 1.5px)"></span>` : ""}
       <span class="tk" style="left:0">${a / 60}</span><span class="tk" style="left:50%">${(a + W / 2) / 60 | 0}</span><span class="tk l" style="left:100%">${z / 60}</span></div>`;
-  } else if (known(d)){ chip = ""; big = `<span class="nbt">Riposo</span>`; meta = isT ? "Oggi non sei in turno. Goditela." : g > 0 ? "Quel giorno non sei in turno." : "Quel giorno eri a riposo."; }
+  } else if (avis){ big = `<span class="nbt avis"><i aria-hidden="true">${ICO.drop}</i>AVIS</span>`; meta = `Donazione del sangue · giornata pagata (${hm(AVIS_MIN)}), non sei in turno`; }
+  else if (known(d)){ chip = ""; big = `<span class="nbt">Riposo</span>`; meta = isT ? "Oggi non sei in turno. Goditela." : g > 0 ? "Quel giorno non sei in turno." : "Quel giorno eri a riposo."; }
   else { chip = ""; big = `<span class="nbt dash">—</span>`; meta = isT ? "I turni di oggi non sono ancora stati caricati." : "I turni di quel giorno non sono ancora stati caricati."; }
   /* riposo o non caricato: la barra del giorno resta, vuota, così la scheda ha sempre la stessa forma */
   if (!bl.length){ const a = 8 * 60, z = 22 * 60, x = m => ((m - a) / (z - a) * 100).toFixed(2) + "%";
@@ -3765,7 +3814,7 @@ function heroDay(id, d){
         <div class="hn-c" aria-live="polite">${isT ? `<span class="hk-l is-today">Oggi</span>` : `<small>${esc(relGap(d))}</small><b>${esc(capitalize(dateLong(d)))}</b>`}</div>
         ${isT && chip ? `<div class="hero-k"><span class="chip-st">${chip}</span></div>` : ""}
       </div>
-      <div class="hero-big"${bl.length ? ` style="--w:${(Math.max(...bl.map(b => fmtR(b).length)) * .62 + 1.7).toFixed(2)}"` : ""}>${big}</div>
+      <div class="hero-big${multi ? " multi" : ""}"${bl.length ? ` style="--w:${(Math.max(...bl.map(b => fmtR(b).length)) * .62 + 1.7).toFixed(2)}"` : ""}>${big}</div>
       <div class="hero-bot"><div class="hero-meta">${esc(meta)}</div>${line}</div>
     </section>`;
 }
@@ -3881,15 +3930,15 @@ function renderMe(){
   const BKL = ["Con te", "Vi incrociate per poco", "Non vi incrociate"];
   const mtPick = known(d) && opts.length > 1 ? `<label class="mt-pick"><select data-mates-d="${d}" aria-label="Quale reparto vedere">${opts.map(o => `<option value="${esc(o.v)}" ${o.v === pick ? "selected" : ""}>${esc(o.l)}</option>`).join("")}</select></label>` : "";
   const wdays = [...Array(7)].map((_, i) => addDays(P.week, i));
-  const wTot = wdays.reduce((s, d) => s + mins(myRows(d, id)), 0);
-  const wMaxDay = Math.max(9 * 60, ...wdays.map(d => mins(myRows(d, id))));
+  const wTot = wdays.reduce((s, d) => s + paidMins(d, id), 0);
+  const wMaxDay = Math.max(9 * 60, ...wdays.map(d => paidMins(d, id)));
   const contr = Number(st.contratto) || 0;
   const wa = pd(P.week), wb = pd(addDays(P.week, 6));
   const wLabel = wa.getMonth() === wb.getMonth() ? `${wa.getDate()}–${wb.getDate()} ${MM[wb.getMonth()]}` : `${wa.getDate()} ${MM[wa.getMonth()].slice(0, 3)} – ${wb.getDate()} ${MM[wb.getMonth()].slice(0, 3)}`;
   const [y, m] = P.month.split("-").map(Number), nDays = new Date(y, m, 0).getDate();
   const mdays = [...Array(nDays)].map((_, i) => `${P.month}-${pad(i + 1)}`);
-  const mTot = mdays.reduce((s, d) => s + mins(myRows(d, id)), 0), mWorked = mdays.filter(d => myRows(d, id).length).length;
-  const weeks = []; mdays.forEach(d => { const w = monday(d); let o = weeks.find(x => x.w === w); if (!o) weeks.push(o = {w, min: 0}); o.min += mins(myRows(d, id)); });
+  const mTot = mdays.reduce((s, d) => s + paidMins(d, id), 0), mWorked = mdays.filter(d => myRows(d, id).length).length;
+  const weeks = []; mdays.forEach(d => { const w = monday(d); let o = weeks.find(x => x.w === w); if (!o) weeks.push(o = {w, min: 0}); o.min += paidMins(d, id); });
   const wMax = Math.max(60, ...weeks.map(w => w.min), contr * 60);
   const mLoaded = mdays.some(d => known(d));
   const R = 36, C = 2 * Math.PI * R, frac = contr ? Math.min(1, wTot / (contr * 60)) : (wTot ? 1 : 0);
@@ -3914,8 +3963,8 @@ function renderMe(){
     ${matesCard}
     <section class="card">
       <div class="me-nav"><button class="icon-btn" data-act="me-wprev" aria-label="Settimana prima">${ICO.back}</button><h2>Settimana ${esc(wLabel)}</h2><button class="icon-btn flip" data-act="me-wnext" aria-label="Settimana dopo">${ICO.back}</button></div>
-      <div class="strip">${wdays.map(x => { const bl = sorted(myRows(x, id)), dt = pd(x), mm = mins(bl); return `<button type="button" class="sd ${dCls(deptsOf(bl, id)[0] || dept)} ${x === t ? "today" : ""} ${P.browse && x === d && !isT ? "vw" : ""} ${!bl.length && !known(x) ? "unk" : ""}" data-act="me-day" data-d="${x}" aria-label="${esc(capitalize(dateLong(x)))}${bl.length ? ", " + bl.map(fmtR).join(" e ") : ""}" ${P.browse && x === d ? `aria-current="date"` : ""}><span class="dl">${GS[dt.getDay()].toUpperCase()}</span><span class="dn">${dt.getDate()}</span><span class="bar"><i style="height:${Math.round(mm / wMaxDay * 100)}%"></i></span><span class="hh">${mm ? hmShort(mm) : ""}</span></button>`; }).join("")}</div>
-      <ul class="daylist">${wdays.map(d0 => { const d = d0, bl = sorted(myRows(d, id)), dt = pd(d), oth = bl.some(b => blkDept(b, id) === "alt"); return `<li class="${d === t ? "is-today" : ""} ${P.browse && d === viewDay() && d !== t ? "is-view" : ""} ${bl.length ? "" : "off"}" data-act="me-day" data-d="${d}"><span class="d">${GS[dt.getDay()]} ${dt.getDate()}</span><span class="h">${bl.length ? nbList(bl) + (oth ? `<small class="dl-dep">${esc(deptsLabel(bl, id))}</small>` : "") : known(d) ? "Riposo" : "Non ancora caricato"}</span><span class="t">${bl.length ? hm(mins(bl)) : ""}</span></li>`; }).join("")}</ul>
+      <div class="strip">${wdays.map(x => { const bl = sorted(myRows(x, id)), dt = pd(x), mm = paidMins(x, id), av = !bl.length && mm > 0; return `<button type="button" class="sd ${dCls(deptsOf(bl, id)[0] || dept)}${av ? " avis" : ""} ${x === t ? "today" : ""} ${P.browse && x === d && !isT ? "vw" : ""} ${!bl.length && !known(x) ? "unk" : ""}" data-act="me-day" data-d="${x}" aria-label="${esc(capitalize(dateLong(x)))}${bl.length ? ", " + bl.map(fmtR).join(" e ") : av ? ", donazione AVIS" : ""}" ${P.browse && x === d ? `aria-current="date"` : ""}><span class="dl">${GS[dt.getDay()].toUpperCase()}</span><span class="dn">${dt.getDate()}</span><span class="bar"><i style="height:${Math.round(mm / wMaxDay * 100)}%"></i></span><span class="hh">${av ? "AVIS" : mm ? hmShort(mm) : ""}</span></button>`; }).join("")}</div>
+      <ul class="daylist">${wdays.map(d0 => { const d = d0, bl = sorted(myRows(d, id)), dt = pd(d), oth = bl.some(b => blkDept(b, id) === "alt"); return `<li class="${d === t ? "is-today" : ""} ${P.browse && d === viewDay() && d !== t ? "is-view" : ""} ${bl.length || absOf(d, id) ? "" : "off"}" data-act="me-day" data-d="${d}"><span class="d">${GS[dt.getDay()]} ${dt.getDate()}</span><span class="h">${bl.length ? nbList(bl) + (oth ? `<small class="dl-dep">${esc(deptsLabel(bl, id))}</small>` : "") : absOf(d, id) === "AVIS" ? `<span class="dl-avis">${ICO.drop}Donazione AVIS</span>` : known(d) ? "Riposo" : "Non ancora caricato"}</span><span class="t">${bl.length ? hm(mins(bl)) : absOf(d, id) === "AVIS" ? hm(AVIS_MIN) : ""}</span></li>`; }).join("")}</ul>
       <div class="wtot"><svg class="ring" viewBox="0 0 84 84" aria-hidden="true"><circle class="bgc" cx="42" cy="42" r="${R}"/><circle class="fg" cx="42" cy="42" r="${R}" style="stroke:var(--${col(dept)})" stroke-dasharray="${(C * frac).toFixed(1)} ${C.toFixed(1)}"/></svg>
         <div><span>Monte ore della settimana</span><b>${hm(wTot)}</b><span>${esc(cmp)}</span></div></div>
       ${P.week !== monday(t) && !P.browse ? `<button class="btn ghost" data-act="me-wtoday">Torna a questa settimana</button>` : ""}
@@ -4501,6 +4550,16 @@ function renderTabbar(){
 }
 
 /* ---------- events ---------- */
+/* frecce direzionali: cerchio che si allarga dal tasto + vibrazione cortissima (solo Android) */
+const RIP_SEL = ".hn-arr, [data-act=prev-day], [data-act=next-day], [data-act=me-wprev], [data-act=me-wnext], [data-act=me-mprev], [data-act=me-mnext], [data-act=cal-prev], [data-act=cal-next]";
+document.addEventListener("pointerdown", e => {
+  const b = e.target.closest && e.target.closest(RIP_SEL); if (!b || b.disabled) return;
+  b.dataset.rip = "1";
+  const r = b.getBoundingClientRect(), o = document.createElement("span"), sz = Math.max(r.width, r.height) * 1.9;
+  o.className = "tap-rip"; o.style.cssText = `left:${r.left + r.width / 2}px;top:${r.top + r.height / 2}px;--s:${sz.toFixed(0)}px;--c:${getComputedStyle(b).color}`;
+  document.body.appendChild(o); o.addEventListener("animationend", () => o.remove()); setTimeout(() => o.remove(), 900);
+  try { navigator.vibrate && navigator.vibrate(8); } catch {}
+}, {passive: true});
 document.addEventListener("click", async e => {
   const el = e.target.closest("[data-act]"); if (!el) return;
   const act = el.dataset.act;
