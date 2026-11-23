@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
 <title>Turni Arese</title>
-<!-- versione 2026.11.23-72 -->
+<!-- versione 2026.11.23-73 -->
 <meta name="description" content="Turni e agenda del reparto Telefonia &amp; Service, MediaWorld Arese">
 <meta name="theme-color" content="#FFFFFF" media="(prefers-color-scheme: light)">
 <meta name="theme-color" content="#0B0F17" media="(prefers-color-scheme: dark)">
@@ -1006,15 +1006,20 @@ html,body{background:var(--bg);transition:background-color .2s}
 .hn-arr{width:46px;height:46px;border-radius:50%;border:0;display:grid;place-items:center;background:var(--hero-ink);color:var(--hero);cursor:pointer;box-shadow:0 8px 18px -8px rgba(0,0,0,.6);-webkit-tap-highlight-color:transparent;transition:transform .12s ease}
 .hn-arr svg{width:26px;height:26px}
 /* tocco sulle frecce: il tasto si schiaccia e un cerchio si allarga (fuori dalla scheda, così resta anche se la scheda si ridisegna) */
-.hn-arr:active,[data-rip]:active{transform:scale(.86)}
-.icon-btn[data-rip]{transition:transform .12s ease}
+/* pressione «fisica»: il tasto affonda piano e al rilascio torna su con un piccolo rimbalzo morbido; la freccia scivola un attimo verso dove vai */
+.hn-arr,.dn-arr,.icon-btn[data-rip]{transition:transform .26s cubic-bezier(.33,1,.68,1)}
+.hn-arr:active,.dn-arr:active,[data-rip]:active{transform:scale(.84)}
+.arr-rel{animation:arr-rel .75s cubic-bezier(.22,.8,.32,1) both}
+.arr-rel svg{animation:arr-nudge .75s cubic-bezier(.22,.8,.32,1) both}
+@keyframes arr-rel{0%{transform:scale(.84)}36%{transform:scale(1.07)}60%{transform:scale(.975)}80%{transform:scale(1.012)}100%{transform:scale(1)}}
+@keyframes arr-nudge{0%{translate:0 0}32%{translate:calc(var(--dir,1) * 5px) 0}100%{translate:0 0}}
+@media (prefers-reduced-motion:reduce){.arr-rel,.arr-rel svg{animation:none}}
 .tap-rip{position:fixed;z-index:80;pointer-events:none;width:var(--s);height:var(--s);margin:calc(var(--s) / -2) 0 0 calc(var(--s) / -2);border-radius:50%;
   background:radial-gradient(circle,color-mix(in srgb,var(--c) 42%,transparent) 0 46%,color-mix(in srgb,var(--c) 0%,transparent) 71%);
   box-shadow:0 0 0 2.5px color-mix(in srgb,var(--c) 85%,transparent) inset,0 0 16px color-mix(in srgb,var(--c) 45%,transparent);animation:tap-rip .52s cubic-bezier(.15,.75,.3,1) forwards}
 @keyframes tap-rip{0%{transform:scale(.3);opacity:1}60%{opacity:.75}100%{transform:scale(1.55);opacity:0}}
 @media (prefers-reduced-motion:reduce){.tap-rip{animation-duration:.25s}}
 .hn-arr.flip svg{transform:rotate(180deg)}
-.hn-arr:active{transform:scale(.9)}
 .hn-arr:focus-visible{outline:3px solid var(--focus);outline-offset:3px}
 .hn-c{display:grid;justify-items:center;gap:3px;text-align:center;min-width:0}
 .hn-c .hk-l{font-size:13px;font-weight:700;letter-spacing:.12em;text-transform:uppercase}
@@ -1043,7 +1048,6 @@ html,body{background:var(--bg);transition:background-color .2s}
 .dn-arr{width:48px;height:48px;border-radius:50%;border:0;display:grid;place-items:center;background:var(--ink);color:var(--bg);box-shadow:0 6px 16px -6px rgba(0,0,0,.45);cursor:pointer;-webkit-tap-highlight-color:transparent;transition:transform .12s ease}
 .dn-arr svg{width:26px;height:26px}
 .dn-arr.flip svg{transform:rotate(180deg)}
-.dn-arr:active{transform:scale(.92)}
 .dn-arr:focus-visible{outline:3px solid var(--focus);outline-offset:3px}
 .dn-c{display:grid;justify-items:center;text-align:center;gap:1px;min-width:0}
 .dn-c b{font-family:var(--f-head);font-size:clamp(15px,4.4vw,18px);font-weight:700;line-height:1.2;text-wrap:balance;overflow-wrap:anywhere}
@@ -1490,7 +1494,7 @@ function qrSvg(text, color = "#0B1220", bg = "#FFFFFF") {
 if (typeof module !== "undefined") module.exports = { QRGEN, qrSvg };
 
 </script>
-<script src="firebase-config.js?v=2026.11.23-72"></script>
+<script src="firebase-config.js?v=2026.11.23-73"></script>
 <script>
 (() => {
 "use strict";
@@ -4551,7 +4555,7 @@ function renderTabbar(){
 
 /* ---------- events ---------- */
 /* frecce direzionali: cerchio che si allarga dal tasto + vibrazione cortissima (solo Android) */
-const RIP_SEL = ".hn-arr, [data-act=prev-day], [data-act=next-day], [data-act=me-wprev], [data-act=me-wnext], [data-act=me-mprev], [data-act=me-mnext], [data-act=cal-prev], [data-act=cal-next]";
+const RIP_SEL = ".hn-arr, .dn-arr, [data-act=prev-day], [data-act=next-day], [data-act=me-wprev], [data-act=me-wnext], [data-act=me-mprev], [data-act=me-mnext], [data-act=cal-prev], [data-act=cal-next]";
 document.addEventListener("pointerdown", e => {
   const b = e.target.closest && e.target.closest(RIP_SEL); if (!b || b.disabled) return;
   b.dataset.rip = "1";
@@ -4560,6 +4564,15 @@ document.addEventListener("pointerdown", e => {
   document.body.appendChild(o); o.addEventListener("animationend", () => o.remove()); setTimeout(() => o.remove(), 900);
   try { navigator.vibrate && navigator.vibrate(8); } catch {}
 }, {passive: true});
+/* al rilascio il tasto (anche quello nuovo, se la scheda si è ridisegnata) torna su con il rimbalzo */
+document.addEventListener("click", e => {
+  const b = e.target.closest && e.target.closest(RIP_SEL); if (!b || b.disabled) return;
+  const act = b.dataset.act, dir = /prev/.test(act || "") ? -1 : 1;
+  requestAnimationFrame(() => { const nb = (act && document.querySelector(`[data-act="${act}"]`)) || b; if (!nb) return;
+    nb.style.setProperty("--dir", dir); nb.classList.remove("arr-rel"); void nb.offsetWidth; nb.classList.add("arr-rel");
+    const h = ev => { if (ev.target !== nb) return; nb.classList.remove("arr-rel"); nb.removeEventListener("animationend", h); };
+    nb.addEventListener("animationend", h); });
+});
 document.addEventListener("click", async e => {
   const el = e.target.closest("[data-act]"); if (!el) return;
   const act = el.dataset.act;
