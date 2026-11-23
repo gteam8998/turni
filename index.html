@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
 <title>Turni Arese</title>
-<!-- versione 2026.11.23-74 -->
+<!-- versione 2026.11.23-75 -->
 <meta name="description" content="Turni e agenda del reparto Telefonia &amp; Service, MediaWorld Arese">
 <meta name="theme-color" content="#FFFFFF" media="(prefers-color-scheme: light)">
 <meta name="theme-color" content="#0B0F17" media="(prefers-color-scheme: dark)">
@@ -1496,7 +1496,7 @@ function qrSvg(text, color = "#0B1220", bg = "#FFFFFF") {
 if (typeof module !== "undefined") module.exports = { QRGEN, qrSvg };
 
 </script>
-<script src="firebase-config.js?v=2026.11.23-74"></script>
+<script src="firebase-config.js?v=2026.11.23-75"></script>
 <script>
 (() => {
 "use strict";
@@ -4072,7 +4072,7 @@ function renderSet(){
           <small>${esc(grpName(r.grp))} · <span class="acc-new">Non è ancora in elenco</span></small></div>
           <div class="acc-a"><button class="btn" data-act="adm-code-ext" data-name="${esc(r.name)}" data-grp="${esc(r.grp)}">Crea codice</button></div></li>`;
         const s = r.s, a = r.a, i = r.i, me = r.me, full = r.full || (i && i.name) || "";
-        return `<li data-grp="${esc(r.grp)}" data-q="${q}"><span class="av ${dCls(usual(s.id))}">${avIn(s.id, r.name)}</span><div class="acc-t"><b>${esc(r.name)}${me ? " (tu)" : ""}</b>
+        return `<li data-grp="${esc(r.grp)}" data-q="${q}">${S.avatars[s.id] ? `<button type="button" class="av me-av ${dCls(usual(s.id))}" data-act="av-zoom" data-sid="${esc(s.id)}" aria-label="Guarda la foto di ${esc(r.name)}">${avIn(s.id, r.name)}</button>` : `<span class="av ${dCls(usual(s.id))}">${avIn(s.id, r.name)}</span>`}<div class="acc-t"><b>${esc(r.name)}${me ? " (tu)" : ""}</b>
           ${a || me || twoWords(full) ? (a && full && norm(full) !== norm(r.name) ? `<small class="acc-full-t">${esc(full)}</small>` : "") : `<input class="acc-full" data-full="${esc(s.id)}" value="${esc(twoWords(full) ? full : "")}" placeholder="Nome e cognome" aria-label="Nome e cognome di ${esc(s.name)}" maxlength="60" autocapitalize="words" spellcheck="false">`}
           ${a && !me ? `<button class="acc-vedi" data-act="adm-vedi" data-id="${esc(s.id)}">${Array.isArray(s.vedi) && s.vedi.length ? `${ICO.eye}Vede anche: ${esc(s.vedi.map(grpName).join(", "))}` : `${ICO.eye}Reparti in più`}</button>` : ""}
           <small>${esc(grpName(r.grp))} · ${a ? `<span class="acc-on">Accesso attivo</span>` : i ? `Codice <b class="num code">${esc(i.id)}</b> · scade il ${fmtExp(i.exp)}` : "Nessun accesso"}</small></div>
