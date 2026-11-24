@@ -103,7 +103,7 @@ export default {
       const list = await fsGet("push?pageSize=300", token);
       /* il telefono del responsabile ha la sua chiave: riceve gli avvisi per tutti solo se l'ha chiesto ("all") */
       /* messaggio per qualcuno in particolare: solo ai telefoni di quei colleghi */
-      const to = Array.isArray(msg.to) ? msg.to.map(String).slice(0, 50) : null;
+      const to = msg.to == null ? null : (Array.isArray(msg.to) ? msg.to : [msg.to]).map(String).filter(Boolean).slice(0, 50);   // con "to" mai a tutti
       const subs = (list.documents || []).map(d => { try { return {id: d.name.split("/").pop(), sub: JSON.parse(fsStr(d, "sub")), adm: fsStr(d, "key") === "admin", all: fsStr(d, "all") === "1", staff: fsStr(d, "staffId")}; } catch { return null; } })
         .filter(x => x && x.sub && x.sub.endpoint && (to ? to.includes(x.staff) : (!x.adm || (x.all && adm && adm.jwk))));
       const res = await Promise.all(subs.map(async s => { try { return {id: s.id, status: await sendOne(s.sub, payload, s.adm ? adm : cfg)}; } catch (e) { return {id: s.id, status: 0}; } }));
