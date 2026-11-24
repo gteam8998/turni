@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
 <title>Turni Arese</title>
-<!-- versione 2026.11.24-76 -->
+<!-- versione 2026.11.24-77 -->
 <meta name="description" content="Turni e agenda del reparto Telefonia &amp; Service, MediaWorld Arese">
 <meta name="theme-color" content="#FFFFFF" media="(prefers-color-scheme: light)">
 <meta name="theme-color" content="#0B0F17" media="(prefers-color-scheme: dark)">
@@ -640,6 +640,10 @@ button.nofoto{justify-self:start;padding:0;border:0;background:none;font:inherit
 .vedi-l input{width:20px;height:20px;accent-color:var(--primary)}
 .vedi-l small{margin-left:auto;color:var(--ink-3);font-weight:700}
 
+.nt{display:inline-grid;place-items:center;width:20px;height:20px;margin-left:6px;vertical-align:-3px;border-radius:50%;font-style:normal}
+.nt svg{width:14px;height:14px}
+.nt.on{color:#fff;background:#2E9BE6}
+.nt.off{color:var(--ink-3);background:color-mix(in srgb,var(--ink-3) 14%,transparent)}
 .acc-on{color:var(--ok);font-weight:700}
 .acc-new{color:var(--ink-3);font-weight:700}
 .acc li[hidden]{display:none}
@@ -1496,7 +1500,7 @@ function qrSvg(text, color = "#0B1220", bg = "#FFFFFF") {
 if (typeof module !== "undefined") module.exports = { QRGEN, qrSvg };
 
 </script>
-<script src="firebase-config.js?v=2026.11.24-76"></script>
+<script src="firebase-config.js?v=2026.11.24-77"></script>
 <script>
 (() => {
 "use strict";
@@ -3113,6 +3117,7 @@ const ICO = {
   me: sv(`<circle cx="12" cy="8" r="4"/><path d="M4 21c1.2-4.2 4.3-6.5 8-6.5s6.8 2.3 8 6.5"/>`),
   cal: sv(`<rect x="3" y="5" width="18" height="16" rx="2.5"/><path d="M3 10h18M8 3v4M16 3v4"/>`),
   bell: sv(`<path d="M6 8a6 6 0 0 1 12 0c0 7 3 8 3 8H3s3-1 3-8"/><path d="M10.3 20a1.9 1.9 0 0 0 3.4 0"/>`),
+  bellOff: sv(`<path d="M8.7 3.6A6 6 0 0 1 18 8c0 2.6.4 4.4.9 5.6M17 17H3s3-1 3-8c0-.6.1-1.2.3-1.8"/><path d="M10.3 20a1.9 1.9 0 0 0 3.4 0"/><path d="m3 3 18 18"/>`),
   back: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg>`,
   moon: sv(`<path d="M20 14.5A8 8 0 1 1 9.5 4a6.5 6.5 0 0 0 10.5 10.5z"/>`),
   auto: sv(`<circle cx="12" cy="12" r="8.5"/><path d="M12 3.5v17"/><path d="M12 3.5a8.5 8.5 0 0 1 0 17z" fill="currentColor" stroke="none"/>`),
@@ -4012,6 +4017,7 @@ function loadAdminData(){
   if (AD.subs || !S.db || !isAdmin()) return; AD.loadErr = false;
   const got = {}, fail = () => { if (AD.members !== null) return; clearTimeout(tm); AD.loadErr = true; stopAdmin(); if (ROUTE === "set") renderSet(); };
   const tm = setTimeout(fail, 15000);
+  loadPushList();
   AD.subs = ["members", "invites", "logins"].map(c => S.db.collection(c).onSnapshot(s => {
     if (!got[c] && s.metadata.fromCache) return;          // aspetto la prima risposta del server
     const prev = c === "members" && AD.members; got[c] = docs(s);
@@ -4024,7 +4030,13 @@ function loadAdminData(){
     refreshSet();
   }, fail));
 }
-function stopAdmin(){ (AD.subs || []).forEach(u => { try { u(); } catch {} }); AD.subs = null; }
+function stopAdmin(){ (AD.subs || []).forEach(u => { try { u(); } catch {} }); AD.subs = null; if (AD.pushSub){ try { AD.pushSub(); } catch {} AD.pushSub = null; } }
+/* chi ha le notifiche attive: c'è il suo documento in push/ (id = utente, con il suo staffId) */
+function loadPushList(){
+  if (AD.pushSub || !S.db || !isAdmin()) return;
+  AD.pushSub = S.db.collection("push").onSnapshot(s => { const u = new Set(), st = new Set(); docs(s).forEach(d => { u.add(d.id); if (d.staffId) st.add(d.staffId); }); AD.push = {u, st}; refreshSet(); }, () => { AD.push = null; });
+}
+const pushOnFor = (sid, uid) => AD.push ? AD.push.st.has(sid) || (uid && AD.push.u.has(uid)) : null;
 /* ridisegno le impostazioni, ma non mentre stai scrivendo in un campo: lo faccio appena esci */
 function refreshSet(){ if (ROUTE !== "set") return; if (typingIn("#scr-set")){ AD.pending = true; return; } AD.pending = false; renderSet(); }
 document.addEventListener("focusout", () => setTimeout(() => { if (AD.pending) refreshSet(); }, 0));
@@ -4080,7 +4092,7 @@ function renderSet(){
       const banco = AD.invites.find(i => i.role === "banco"), bancos = AD.members.filter(m => m.role === "banco");
       adm = `
     <section class="card"><h2>${ICO.users}Accessi dei balordi</h2>
-      <p class="mut">Scegli il reparto o cerca un nome. Per far entrare un collega crea il <b>codice di primo accesso</b> e daglielo: apre l'app, tocca «Primo accesso», scrive nome, cognome e codice e sceglie la sua password. Il codice vale 14 giorni.</p>
+      <p class="mut">Scegli il reparto o cerca un nome. Per far entrare un collega crea il <b>codice di primo accesso</b> e daglielo: apre l'app, tocca «Primo accesso», scrive nome, cognome e codice e sceglie la sua password. Il codice vale 14 giorni. La campanella accanto al nome ti dice se ha le notifiche attive (azzurra) o no (grigia).</p>
       <div class="acc-tools">
         <label class="acc-q">${ICO.search}<input type="search" id="accQ" value="${esc(AD.accQ)}" placeholder="Cerca un collega" autocomplete="off" spellcheck="false" aria-label="Cerca un collega"></label>
         <label class="mt-pick acc-dep"><select id="accDept" aria-label="Reparto">${deps.map(k => `<option value="${k}" ${k === AD.accDept ? "selected" : ""}>${k === "tutti" ? "Tutti i reparti" : k === "ALTRI" ? "Altri reparti" : esc(grpName(k))} (${k === "tutti" ? rows.length : cnt(k)})</option>`).join("")}</select></label>
@@ -4091,7 +4103,7 @@ function renderSet(){
           <small>${esc(grpName(r.grp))} · <span class="acc-new">Non è ancora in elenco</span></small></div>
           <div class="acc-a"><button class="btn" data-act="adm-code-ext" data-name="${esc(r.name)}" data-grp="${esc(r.grp)}">Crea codice</button></div></li>`;
         const s = r.s, a = r.a, i = r.i, me = r.me, full = r.full || (i && i.name) || "";
-        return `<li data-grp="${esc(r.grp)}" data-q="${q}">${S.avatars[s.id] ? `<button type="button" class="av me-av ${dCls(usual(s.id))}" data-act="av-zoom" data-sid="${esc(s.id)}" aria-label="Guarda la foto di ${esc(r.name)}">${avIn(s.id, r.name)}</button>` : `<span class="av ${dCls(usual(s.id))}">${avIn(s.id, r.name)}</span>`}<div class="acc-t"><b>${esc(r.name)}${me ? " (tu)" : ""}</b>
+        return `<li data-grp="${esc(r.grp)}" data-q="${q}">${S.avatars[s.id] ? `<button type="button" class="av me-av ${dCls(usual(s.id))}" data-act="av-zoom" data-sid="${esc(s.id)}" aria-label="Guarda la foto di ${esc(r.name)}">${avIn(s.id, r.name)}</button>` : `<span class="av ${dCls(usual(s.id))}">${avIn(s.id, r.name)}</span>`}<div class="acc-t"><b>${esc(r.name)}${me ? " (tu)" : ""}${(a || me) && pushOnFor(s.id, a && a.id) !== null ? (pushOnFor(s.id, a && a.id) ? `<i class="nt on" title="Notifiche attive" aria-label="Notifiche attive">${ICO.bell}</i>` : `<i class="nt off" title="Notifiche non attive" aria-label="Notifiche non attive">${ICO.bellOff}</i>`) : ""}</b>
           ${a || me || twoWords(full) ? (a && full && norm(full) !== norm(r.name) ? `<small class="acc-full-t">${esc(full)}</small>` : "") : `<input class="acc-full" data-full="${esc(s.id)}" value="${esc(twoWords(full) ? full : "")}" placeholder="Nome e cognome" aria-label="Nome e cognome di ${esc(s.name)}" maxlength="60" autocapitalize="words" spellcheck="false">`}
           ${a && !me ? `<button class="acc-vedi" data-act="adm-vedi" data-id="${esc(s.id)}">${Array.isArray(s.vedi) && s.vedi.length ? `${ICO.eye}Vede anche: ${esc(s.vedi.map(grpName).join(", "))}` : `${ICO.eye}Reparti in più`}</button>` : ""}
           <small>${esc(grpName(r.grp))} · ${a ? `<span class="acc-on">Accesso attivo</span>` : i ? `Codice <b class="num code">${esc(i.id)}</b> · scade il ${fmtExp(i.exp)}` : "Nessun accesso"}</small></div>
