@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
 <title>Turni Arese</title>
-<!-- versione 2026.11.23-75 -->
+<!-- versione 2026.11.24-76 -->
 <meta name="description" content="Turni e agenda del reparto Telefonia &amp; Service, MediaWorld Arese">
 <meta name="theme-color" content="#FFFFFF" media="(prefers-color-scheme: light)">
 <meta name="theme-color" content="#0B0F17" media="(prefers-color-scheme: dark)">
@@ -1496,7 +1496,7 @@ function qrSvg(text, color = "#0B1220", bg = "#FFFFFF") {
 if (typeof module !== "undefined") module.exports = { QRGEN, qrSvg };
 
 </script>
-<script src="firebase-config.js?v=2026.11.23-75"></script>
+<script src="firebase-config.js?v=2026.11.24-76"></script>
 <script>
 (() => {
 "use strict";
@@ -3628,22 +3628,40 @@ async function pushCheck(){
 }
 function rerenderPush(){ if (ROUTE === "me") renderMe(); else if (ROUTE === "set" && !typingIn("#scr-set")) renderSet(); }
 const within = (pr, ms, code) => Promise.race([pr, new Promise((_, rej) => setTimeout(() => rej({code}), ms))]);
+/* dove si riattivano le notifiche quando il telefono non mostra più la richiesta */
+function permHelp(){
+  if (isIOS()) return "Su iPhone: Impostazioni › Notifiche › Turni › attiva «Consenti notifiche», poi torna qui e tocca di nuovo «Attiva le notifiche».";
+  const b = andBrowser() || "Chrome";
+  return isStandalone() ? `Tieni premuta l'icona di Turni › Informazioni app › Notifiche › attivale (se non c'è, in ${b}: ⋮ › Impostazioni › Impostazioni sito › Notifiche › consenti questo sito), poi torna qui e tocca di nuovo «Attiva le notifiche».`
+    : `In ${b}: tocca il lucchetto o i tre puntini accanto all'indirizzo › Autorizzazioni › Notifiche › Consenti, poi tocca di nuovo «Attiva le notifiche».`;
+}
 async function pushOn(btn){
-  if (P.pushBusy) return; P.pushBusy = true;
-  const say = t => { if (btn){ btn.disabled = true; btn.textContent = t; } };
-  say("Attivo…");
+  /* ogni tocco riparte da capo: se un tentativo prima è rimasto appeso, non blocca più il tasto */
+  const gen = P.pushGen = (P.pushGen || 0) + 1; P.pushBusy = "perm"; P.pushMsg = "";
+  const say = t => { const b = btn && btn.isConnected ? btn : document.querySelector('[data-act="push-on"]'); if (b){ b.disabled = t === "Attivo…"; b.textContent = t === "Attivo…" ? t : t + " (tocca per riprovare)"; } };
   let step = "perm";
   try {
-    const perm = await within(Notification.requestPermission(), 60000, "perm");
-    if (perm !== "granted"){ P.push = perm === "denied" ? "denied" : "off"; P.pushMsg = perm === "denied" ? "Hai detto di no: le notifiche sono bloccate. Riattivale da Impostazioni del telefono › Notifiche › Turni." : "Non hai dato il permesso: riprova e scegli «Consenti»."; return; }
+    const t0 = Date.now(), already = Notification.permission === "granted";
+    say(already ? "Attivo…" : "Rispondi alla richiesta del telefono…");
+    const perm = already ? "granted" : await within(Notification.requestPermission(), 60000, "perm");
+    if (gen !== P.pushGen) return;
+    if (perm !== "granted"){
+      P.push = perm === "denied" ? "denied" : "off";
+      /* risposta immediata senza che si veda nulla: il telefono ha bloccato la richiesta (succede dopo un paio di «no» o con le notifiche spente) */
+      P.pushMsg = perm === "denied" ? "Le notifiche sono bloccate per Turni. " + permHelp()
+        : Date.now() - t0 < 1500 ? "Il telefono non ha mostrato la richiesta. " + permHelp()
+        : "Non hai dato il permesso: tocca di nuovo «Attiva le notifiche» e scegli «Consenti».";
+      return;
+    }
+    P.pushBusy = "sub"; say("Attivo…");
     step = "key";
     const pub = await within(pushKeyFor(), 15000, "key");
     if (!pub){ P.pushMsg = "Le notifiche non sono ancora pronte: chiedi al responsabile di aprire l'app una volta."; return; }
     step = "sw";
     const reg = await within(navigator.serviceWorker.ready, 10000, "sw");
     step = "sub";
-    let sub = await reg.pushManager.getSubscription();
-    if (sub && sub.options && sub.options.applicationServerKey && b64u(sub.options.applicationServerKey) !== pub){ await sub.unsubscribe(); sub = null; }
+    let sub = await within(reg.pushManager.getSubscription(), 10000, "sub");
+    if (sub && sub.options && sub.options.applicationServerKey && b64u(sub.options.applicationServerKey) !== pub){ await within(sub.unsubscribe(), 10000, "sub").catch(() => {}); sub = null; }
     if (!sub) sub = await within(reg.pushManager.subscribe({userVisibleOnly: true, applicationServerKey: unb64u(pub)}), 20000, "sub");
     step = "save";
     await within(S.db.doc("push/" + SES.user.uid).set(pushDoc(sub)), 15000, "save");
@@ -3652,10 +3670,11 @@ async function pushOn(btn){
     try { await reg.showNotification("Notifiche attive ✓", {body: isAdmin() ? "Ti avviso qui quando un collega ti scrive." : "Ti avviso qui quando escono i turni nuovi e le novità.", icon: "icons/logo-192.png", badge: "icons/logo-badge-96.png", tag: "turni-prova"}); } catch {}
     toast("Notifiche attive su questo telefono");
   } catch (e) {
+    if (gen !== P.pushGen) return;
     P.push = Notification.permission === "denied" ? "denied" : "off";
     P.pushMsg = {perm: "Il telefono non ha risposto alla richiesta: riprova.", key: "Non riesco a collegarmi: controlla la connessione e riprova.", sw: "L'app non è pronta: chiudila del tutto, riaprila dalla Home e riprova.",
       sub: subErrMsg(e), save: "Non riesco a salvare l'iscrizione: controlla la connessione e riprova."}[step] || "Non riesco ad attivare le notifiche.";
-  } finally { P.pushBusy = false; if (P.pushMsg && P.pushMsg !== "ok" && !document.querySelector(".push-c")) toast(P.pushMsg); rerenderPush(); }
+  } finally { if (gen === P.pushGen){ P.pushBusy = false; if (P.pushMsg && P.pushMsg !== "ok" && !document.querySelector(".push-c")) toast(P.pushMsg); rerenderPush(); } }
 }
 async function pushOff(){
   try { const reg = await navigator.serviceWorker.ready, sub = await reg.pushManager.getSubscription(); if (sub) await sub.unsubscribe(); } catch {}
@@ -3707,14 +3726,14 @@ async function sendPushMsg(title, body, url, tag, to){
 function pushCardHtml(where){
   const st = P.push;
   if (!PUSH_URL || isBanco() || !st || st === "no" || st === "on" && where === "me" && P.pushMsg !== "ok") return "";
-  if (where === "me" && (lsGet("push-later") > new Date(Date.now() - 7 * 864e5).toISOString() || st === "denied" || isAdmin())) return "";
+  if (where === "me" && (lsGet("push-later") > new Date(Date.now() - 7 * 864e5).toISOString() || st === "denied" && !P.pushMsg || isAdmin())) return "";
   const txt = st === "home" ? "Per ricevere una notifica quando escono i turni nuovi, aggiungi l'app alla schermata Home: tocca Condividi e poi «Aggiungi alla schermata Home». Poi aprila da lì."
     : st === "chrome" ? `Questo browser (${esc(andBrowser())}) non può ricevere le notifiche. Per averle apri il link dell'app con Chrome, aggiungila alla schermata Home da lì e aprila da quell'icona.`
-    : st === "denied" ? "Le notifiche sono bloccate per questa app. Riattivale dalle impostazioni del telefono (Notifiche) e torna qui."
+    : st === "denied" ? "Le notifiche sono bloccate per questa app. " + esc(permHelp())
     : st === "on" ? `<b class="push-ok">✓ Notifiche attive su questo telefono.</b> ${isAdmin() ? "Quando un collega ti scrive un'idea o un errore ti arriva un avviso, anche con l'app chiusa." : "Quando escono turni nuovi o novità ti arriva un avviso, anche con l'app chiusa."}`
     : isAdmin() ? "Ricevi una notifica su questo telefono quando un collega ti scrive un'idea o un errore." : "Ricevi una notifica su questo telefono quando escono turni nuovi o novità.";
-  const btn = st === "off" ? `<button class="btn primary" data-act="push-on">Attiva le notifiche</button>` : st === "on" ? `<button class="btn" data-act="push-test">Manda una prova</button><button class="btn ghost" data-act="push-off">Spegni</button>` : "";
-  const err = P.pushMsg && P.pushMsg !== "ok" && st !== "on" ? `<p class="push-err">${esc(P.pushMsg)}</p>` : "";
+  const btn = st === "off" || st === "denied" ? `<button class="btn primary" data-act="push-on">${P.pushBusy === "perm" ? "Rispondi alla richiesta del telefono… (tocca per riprovare)" : P.pushBusy ? "Attivo…" : "Attiva le notifiche"}</button>` : st === "on" ? `<button class="btn" data-act="push-test">Manda una prova</button><button class="btn ghost" data-act="push-off">Spegni</button>` : "";
+  const err = P.pushMsg && P.pushMsg !== "ok" && st !== "on" && st !== "denied" ? `<p class="push-err">${esc(P.pushMsg)}</p>` : "";
   const later = where === "me" && st !== "on" ? `<button class="btn ghost" data-act="push-later">Non ora</button>` : "";
   return `<section class="card push-c"><h2>${ICO.bell}Notifiche${st === "on" ? ` <span class="pill soft">attive</span>` : ""}</h2><p class="mut">${txt}</p>${err}${btn || later ? `<div class="row-act">${btn}${later}</div>` : ""}</section>`;
 }
