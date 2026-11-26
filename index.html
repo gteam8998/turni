@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
 <title>Turni Arese</title>
-<!-- versione 2026.11.26-82 -->
+<!-- versione 2026.11.26-83 -->
 <meta name="description" content="Turni e agenda del reparto Telefonia &amp; Service, MediaWorld Arese">
 <meta name="theme-color" content="#FFFFFF" media="(prefers-color-scheme: light)">
 <meta name="theme-color" content="#0B0F17" media="(prefers-color-scheme: dark)">
@@ -1532,7 +1532,7 @@ function qrSvg(text, color = "#0B1220", bg = "#FFFFFF") {
 if (typeof module !== "undefined") module.exports = { QRGEN, qrSvg };
 
 </script>
-<script src="firebase-config.js?v=2026.11.26-82"></script>
+<script src="firebase-config.js?v=2026.11.26-83"></script>
 <script>
 (() => {
 "use strict";
@@ -3485,8 +3485,8 @@ function avvisoHtml(){
 /* ---------- messaggi: novità del responsabile, nuovi turni, idee e segnalazioni dei colleghi ---------- */
 const M = {news: [], fb: [], nUnsub: null, fUnsub: null, kind: "idea", seen: "", busy: false, fbOk: false, open: false, boss: ""};
 /* bozza pronta per Gerti: le novità in poche parole (si invia una volta sola) */
-const NEWS_DRAFT = {id: "novita-16-novembre", title: "Novità nell'app ✨",
-  body: "‹ › Frecce sulla scheda del turno: scorri i giorni\n🔴 «Torna a oggi» in basso per rientrare\n👥 In turno: prima il tuo reparto, dal menu l'altro reparto, tutti e due insieme o i responsabili\n☀️ 🌇 🌙 Mattina, pomeriggio e sera accanto agli orari\n🔍 Tocca una foto per vederla grande, tocca ovunque per chiudere\n⚙️ Foto profilo e sfondo si cambiano in Impostazioni\n💬 Idee o errori? Scrivili qui in Messaggi"};
+const NEWS_DRAFT = {id: "novita-26-novembre", title: "Novità in «In turno» 🎨",
+  body: "Ora i colleghi sono divisi per colore:\n🟢 Con te · 🟡 Vi incrociate per poco · 🔴 Non vi incrociate\nSotto ogni nome trovi le ore che fate insieme.\n\nIn fondo c'è anche «Non in turno»: chi del tuo reparto quel giorno non c'è e perché (riposo, ferie, AVIS, inventario…)."};
 const msgKey = () => "msg-read-" + (SES.user ? SES.user.uid : "");
 function msgReadAt(){ let v = lsGet(msgKey()); if (!v){ v = new Date(Date.now() - 14 * 864e5).toISOString(); lsSet(msgKey(), v); } return v; }
 const hidKey = () => "msg-hidden-" + (SES.user ? SES.user.uid : "");
@@ -3555,7 +3555,7 @@ function renderMsg(){
           : `<label class="acc-q to-q">${ICO.search}<input type="search" id="nToQ" placeholder="Cerca il collega" autocomplete="off" spellcheck="false" aria-label="Cerca il collega a cui scrivere"></label><ul class="to-res" id="nToRes"></ul>`}
       </div>
       <input id="nTitle" maxlength="80" value="${esc(draftOpen ? NEWS_DRAFT.title : "")}" placeholder="Titolo" aria-label="Titolo">
-      <textarea id="nBody" rows="${draftOpen && M.toMode !== "one" ? 17 : 5}" maxlength="800" placeholder="Messaggio" aria-label="Messaggio">${esc(draftOpen ? NEWS_DRAFT.body : "")}</textarea>
+      <textarea id="nBody" rows="${draftOpen && M.toMode !== "one" ? 11 : 5}" maxlength="800" placeholder="Messaggio" aria-label="Messaggio">${esc(draftOpen ? NEWS_DRAFT.body : "")}</textarea>
       <label class="chk-row"><input type="checkbox" id="nPush" checked> Manda anche la notifica</label>
       <div class="row-act"><button class="btn primary" data-act="news-send">${ICO.send}${M.toMode === "one" ? (M.to ? "Invia a " + esc((msgPeople().find(x => x.id === M.to) || {}).name || staffName(M.to) || "lei/lui") : "Scegli a chi scrivere") : "Invia a tutti"}</button></div>` : ""}</section>` : "";
   /* da colleghi a Gerti: un riquadro che si fa notare */
