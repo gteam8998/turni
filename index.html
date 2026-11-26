@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
 <title>Turni Arese</title>
-<!-- versione 2026.11.26-79 -->
+<!-- versione 2026.11.26-80 -->
 <meta name="description" content="Turni e agenda del reparto Telefonia &amp; Service, MediaWorld Arese">
 <meta name="theme-color" content="#FFFFFF" media="(prefers-color-scheme: light)">
 <meta name="theme-color" content="#0B0F17" media="(prefers-color-scheme: dark)">
@@ -911,6 +911,9 @@ html,body{background:var(--bg);transition:background-color .2s}
 .rest-l .why.rip{color:var(--ink-3);background:color-mix(in srgb,var(--ink-3) 13%,transparent)}
 .rest-l .why.fer{color:#0E7490;background:color-mix(in srgb,#0E7490 13%,transparent)}
 .rest-l .why.avis{color:#C8283A;background:color-mix(in srgb,#C8283A 12%,transparent)}
+.rest-l .why.neu{color:#B45309;background:color-mix(in srgb,#B45309 13%,transparent)}
+.rest-l .why.oth{color:#4F46E5;background:color-mix(in srgb,#4F46E5 12%,transparent)}
+:root[data-ui="dark"] .rest-l .why.neu{color:#FBBF24}:root[data-ui="dark"] .rest-l .why.oth{color:#A5B4FC}
 :root[data-ui="dark"] .rest-l .why.fer{color:#5EE0F0}:root[data-ui="dark"] .rest-l .why.avis{color:#FF7A86}
 .mates li.mt-sep:first-child{padding-top:0}
 .mates li.mt-sep + li{border-top:0}
@@ -1528,7 +1531,7 @@ function qrSvg(text, color = "#0B1220", bg = "#FFFFFF") {
 if (typeof module !== "undefined") module.exports = { QRGEN, qrSvg };
 
 </script>
-<script src="firebase-config.js?v=2026.11.26-79"></script>
+<script src="firebase-config.js?v=2026.11.26-80"></script>
 <script>
 (() => {
 "use strict";
@@ -1686,7 +1689,7 @@ const usual = sid => (S.usual[sid] && S.usual[sid].d) || "";
 const usualText = sid => S.usual[sid] ? `di solito ${deptName(S.usual[sid].d)}` : "";
 const blkDept = (b, sid) => b && (b.d === "tel" || b.d === "srv" || b.d === "alt") ? b.d : (usual(sid) || "tel");
 /* nome del reparto di una fascia: Telefonia, Service o la sigla dell'altro reparto (TV, PE...) */
-const SIGN = {REGIA: "Responsabile", NAS: "Facing", CS: "Centro servizi", PE: "Piccolo elettrodomestico", GE: "Grande elettrodomestico", CASS: "Cassa", MAGA: "Magazzino", MAGE: "Magazzino", RMAG: "Resp. magazzino", SEG: "Segreteria", RAMM: "Amministrazione", TRAIN: "Formazione", TV: "TV", PC: "PC"};
+const SIGN = {REGIA: "Responsabile", NAS: "Facing", CS: "Centro servizi", PE: "Piccolo elettrodomestico", GE: "Grande elettrodomestico", CASS: "Cassa", MAGA: "Magazzino", MAGE: "Magazzino", RMAG: "Resp. magazzino", SEG: "Segreteria", RAMM: "Amministrazione", TRAIN: "Inventario", TV: "TV", PC: "PC"};
 const sigName = g => SIGN[String(g || "").toUpperCase()] || SIGN[sigKey(g)] || g || "";
 const blkName = (b, sid) => { const d = blkDept(b, sid); return d === "alt" ? (sigName(b.g) || "altro reparto") : deptName(d); };
 /* reparti logici (chi lavora insieme): Telefonia+Service, PE+GE, CS+Casse, TV+PC, Magazzino (tutti i MAG), Responsabili (REGIA).
@@ -2448,15 +2451,16 @@ function parseClaude(t){
     /* formato senza REP (Nome | Cognome | orari | celle): il reparto del giorno lo dicono le celle */
     const off = x => /^(r|f|riposo|ferie)$/i.test(String(x || "").trim());   // R = riposo, F = ferie
     const avis = x => /^avis$/i.test(String(x || "").trim());   // AVIS = donazione del sangue (pagata, non in turno)
-    if (rng.test(f[2]) || off(f[2]) || avis(f[2])) f = [f[0], f[1], "", ...f.slice(2)];
+    const word = x => /^[a-zà-ú]{2,12}$/i.test(String(x || "").trim());
+    if (rng.test(f[2]) || off(f[2]) || avis(f[2]) || (f.length === 3 && word(f[2]))) f = [f[0], f[1], "", ...f.slice(2)];
     f[3] = f[3] || "";
     if (!day){ day = {data: null, rows: []}; out.days.push(day); }
     const da = [], a = [], celle = [];
     if (!off(f[3])) f[3].split(/[,;]/).forEach(x => { const m = x.match(rng); if (m){ da.push(m[1]); a.push(m[2]); } });
     (f[4] || "").split(/[,;]/).forEach(x => { const m = x.trim().match(new RegExp(`^([A-Za-zÀ-ú]+)\\s+${tm}\\s*[-–—]\\s*${tm}`)); if (m) celle.push([m[1].toUpperCase(), m[2], m[3]]); });
     const isAvis = avis(f[3]) || /^avis$/i.test(String(f[4] || "").trim()) || celle.some(c => c[0] === "AVIS");
-    const isF = !isAvis && /^(f|ferie)$/i.test(String(f[3] || "").trim());
-    day.rows.push({nome: f[0], cognome: f[1], rep: (f[2] || "").toUpperCase(), da: da.length && !isAvis ? da : ["R"], a: a.length && !isAvis ? a : ["R"], celle: isAvis ? [] : celle, ...(isAvis ? {abs: "AVIS"} : isF ? {abs: "F"} : {})});
+    const w3 = String(f[3] || "").trim(), absC = isAvis ? "AVIS" : !da.length && /^[a-zà-ú]{1,12}$/i.test(w3) && !/^r(iposo)?$/i.test(w3) ? (/^f(erie)?$/i.test(w3) ? "F" : w3.toUpperCase()) : "";
+    day.rows.push({nome: f[0], cognome: f[1], rep: (f[2] || "").toUpperCase(), da: da.length && !absC ? da : ["R"], a: a.length && !absC ? a : ["R"], celle: absC ? [] : celle, ...(absC ? {abs: absC} : {})});
   }
   out.days = out.days.filter(d => d.rows.length);
   return out;
@@ -2723,7 +2727,7 @@ function ingest(results){
         const nome = String(row.nome || "").trim(), cognome = String(row.cognome || "").trim();
         const full = titleCase([nome, cognome].filter(Boolean).join(" ")), k = norm(full); if (!k) return;
         /* AVIS: niente fasce, si segna a parte (giornata pagata, non in turno) */
-        if (row.abs === "AVIS" || row.abs === "F"){ g.abs.set(k, {full, match: matchStaff(full, true), abs: row.abs}); return; }
+        if (row.abs){ g.abs.set(k, {full, match: matchStaff(full, true), abs: row.abs}); return; }
         const first = titleCase((nome || cognome).split(/\s+/)[0]);
         const segs = (Array.isArray(row.celle) ? row.celle : []).map(c => Array.isArray(c) ? {sig: SIGLA(c[0]), s: fixTime(c[1]), e: fixTime(c[2])} : null)
           .filter(x => x && x.sig && x.sig !== "R" && x.s && x.e && toMin(x.e) > toMin(x.s));
@@ -2857,8 +2861,8 @@ function reviewHtml(){
       <p class="${g.detected ? "okline" : "warnline"}">${g.detected ? `Data letta dal foglio: <b>${esc(dateLong(g.date).toLowerCase())}</b>` : "Non ho trovato la data sul foglio: controllala qui sopra."}</p>
       <div class="plist">${g.people.map(p => personHtml(p, gi)).join("")}</div>
       ${g.excluded.length ? `<p class="excl"><b>Non salvati:</b> ${g.excluded.map(esc).join(", ")}</p>` : ""}
-      ${(g.abs || []).filter(a => a.abs !== "F").length ? `<p class="excl"><b>AVIS (donazione, giornata pagata da ${hm(AVIS_MIN)}):</b> ${g.abs.filter(a => a.abs !== "F").map(a => esc(a.full)).join(", ")}</p>` : ""}
-      ${(g.abs || []).filter(a => a.abs === "F").length ? `<p class="excl"><b>Ferie:</b> ${g.abs.filter(a => a.abs === "F").map(a => esc(a.full)).join(", ")}</p>` : ""}
+      ${(g.abs || []).filter(a => a.abs === "AVIS").length ? `<p class="excl"><b>AVIS (donazione, giornata pagata da ${hm(AVIS_MIN)}):</b> ${g.abs.filter(a => a.abs === "AVIS").map(a => esc(a.full)).join(", ")}</p>` : ""}
+      ${(g.abs || []).filter(a => a.abs !== "AVIS").length ? `<p class="excl"><b>Assenti:</b> ${g.abs.filter(a => a.abs !== "AVIS").map(a => `${esc(a.full)} (${esc(absName(a.abs))})`).join(", ")}</p>` : ""}
       ${g.archive && g.archive.length ? `<p class="excl"><b>Altri reparti, messi da parte (${g.archive.length}):</b> ${g.archive.map(a => `${esc(a.first)} (${esc(a.sig || "R")})`).join(", ")}. Non compaiono finché non li aggiungi in elenco: allora prendono da soli questi turni.</p>` : ""}</div></details>`;
   });
   const nInc = U.groups.reduce((n, g) => n + g.people.filter(p => p.include).length, 0);
@@ -3148,6 +3152,8 @@ const ICO = {
   ovNone: `<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="5.6" cy="12" r="4.4" fill="currentColor" fill-opacity=".28" stroke="currentColor" stroke-width="2"/><circle cx="18.4" cy="12" r="4.4" fill="currentColor" fill-opacity=".28" stroke="currentColor" stroke-width="2"/></svg>`,
   moon: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 14.5A8 8 0 1 1 9.5 4a6.5 6.5 0 0 0 10.5 10.5z"/></svg>`,
   palm: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3.5" y="7.5" width="17" height="12" rx="2.5"/><path d="M9 7.5V5.5A1.5 1.5 0 0 1 10.5 4h3A1.5 1.5 0 0 1 15 5.5v2"/><path d="M3.5 12.5h17"/></svg>`,
+  clip: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="5" y="4.5" width="14" height="16.5" rx="2"/><path d="M9 4.5V3.5h6v1"/><path d="M8.5 10h7M8.5 13.5h7M8.5 17h4"/></svg>`,
+  info: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 11v5.5M12 7.6v.1"/></svg>`,
   bed: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 18V6"/><path d="M3 14h18v4"/><path d="M21 14v-2.5A2.5 2.5 0 0 0 18.5 9H11v5"/><circle cx="7" cy="11" r="1.8"/></svg>`,
   drop: `<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2.6c.4 0 .7.2.9.5 1.6 2.4 6.1 8.3 6.1 12a7 7 0 0 1-14 0c0-3.7 4.5-9.6 6.1-12 .2-.3.5-.5.9-.5z"/></svg>`,
   me: sv(`<circle cx="12" cy="8" r="4"/><path d="M4 21c1.2-4.2 4.3-6.5 8-6.5s6.8 2.3 8 6.5"/>`),
@@ -3819,6 +3825,9 @@ const known = date => !!(P.shifts[date] || S.shifts[date]);
 /* AVIS (donazione del sangue): giornata pagata, di solito 8 ore, ma non sei in turno (sta in shifts/{giorno}.abs) */
 const AVIS_MIN = 8 * 60;
 const absOf = (date, id) => { const d = P.shifts[date] || S.shifts[date] || {}; return (d.abs && d.abs[id]) || ""; };
+/* motivo di un giorno senza turno, con la dicitura del foglio */
+const ABSN = {R: "Riposo", F: "Ferie", FER: "Ferie", AVIS: "AVIS", MAL: "Malattia", PERM: "Permesso", ROL: "ROL", CONG: "Congedo", MAT: "Maternità"};
+const absName = c => ABSN[c] || (c ? c.charAt(0) + c.slice(1).toLowerCase() : "Riposo");
 const paidMins = (date, id) => mins(myRows(date, id)) || (absOf(date, id) === "AVIS" ? AVIS_MIN : 0);
 const hm = m => { const h = Math.floor(m / 60), r = m % 60; return r ? `${h} h ${pad(r)}` : `${h} h`; };
 const hmShort = m => { const h = Math.floor(m / 60), r = m % 60; return r ? `${h}:${pad(r)}` : `${h}`; };
@@ -3867,7 +3876,7 @@ function heroDay(id, d){
       ${isT && nm >= a && nm <= z ? `<span class="nw" style="left:calc(${x(nm)} - 1.5px)"></span>` : ""}
       <span class="tk" style="left:0">${a / 60}</span><span class="tk" style="left:50%">${(a + W / 2) / 60 | 0}</span><span class="tk l" style="left:100%">${z / 60}</span></div>`;
   } else if (avis){ big = `<span class="nbt avis"><i aria-hidden="true">${ICO.drop}</i>AVIS</span>`; meta = `Donazione del sangue · giornata pagata (${hm(AVIS_MIN)}), non sei in turno`; }
-  else if (known(d)){ chip = ""; big = `<span class="nbt">Riposo</span>`; meta = isT ? "Oggi non sei in turno. Goditela." : g > 0 ? "Quel giorno non sei in turno." : "Quel giorno eri a riposo."; }
+  else if (known(d)){ chip = ""; big = `<span class="nbt">${esc(absOf(d, id) ? absName(absOf(d, id)) : "Riposo")}</span>`; meta = isT ? "Oggi non sei in turno. Goditela." : g > 0 ? "Quel giorno non sei in turno." : "Quel giorno eri a riposo."; }
   else { chip = ""; big = `<span class="nbt dash">—</span>`; meta = isT ? "I turni di oggi non sono ancora stati caricati." : "I turni di quel giorno non sono ancora stati caricati."; }
   /* riposo o non caricato: la barra del giorno resta, vuota, così la scheda ha sempre la stessa forma */
   if (!bl.length){ const a = 8 * 60, z = 22 * 60, x = m => ((m - a) / (z - a) * 100).toFixed(2) + "%";
@@ -4003,11 +4012,14 @@ function renderMe(){
     .sort((a, b) => a.bk - b.bk || (a.bk === 0 ? Math.round(b.ov / 30) - Math.round(a.ov / 30) || Math.abs(toMin(a.bl[0].s) - myS) - Math.abs(toMin(b.bl[0].s) - myS) : 0)
       || (a.bk === 1 ? b.ov - a.ov : 0) || toMin(a.bl[0].s) - toMin(b.bl[0].s) || showName(a.st).localeCompare(showName(b.st)));
   const bkN = new Set(mates.map(x => x.bk)).size;
-  const WHY = {AVIS: ["avis", "AVIS", ICO.drop], F: ["fer", "Ferie", ICO.palm], R: ["rip", "Riposo", ICO.bed]};
-  const rest = NEWMATES() && known(d) ? (S.staff || []).filter(o => o.id !== id && !o.hide && !myRows(d, o.id).length && optHas(pickO, o.id))
-    .map(o => ({st: o, why: WHY[absOf(d, o.id)] ? absOf(d, o.id) : "R"})).sort((a, b) => "AVIS F R".indexOf(a.why) - "AVIS F R".indexOf(b.why) || showName(a.st).localeCompare(showName(b.st))) : [];
+  const whyOf = sid => { const bl = sorted(myRows(d, sid));
+    if (bl.length) return bl.every(b => blkGroup(b, sid) === "NEUTRO") ? {c: "neu", l: sigName(sigKey(bl[0].g)) || "Formazione", ic: ICO.clip, o: 1} : null;   // inventario, formazione…
+    const a = absOf(d, sid); return a === "AVIS" ? {c: "avis", l: "AVIS", ic: ICO.drop, o: 0} : a === "F" || a === "FER" ? {c: "fer", l: "Ferie", ic: ICO.palm, o: 2}
+      : a ? {c: "oth", l: absName(a), ic: ICO.info, o: 3} : {c: "rip", l: "Riposo", ic: ICO.bed, o: 4}; };
+  const rest = NEWMATES() && known(d) ? (S.staff || []).filter(o => o.id !== id && !o.hide && optHas(pickO, o.id)).map(o => ({st: o, why: whyOf(o.id)})).filter(x => x.why && !mates.some(m => m.st.id === x.st.id))
+    .sort((a, b) => a.why.o - b.why.o || showName(a.st).localeCompare(showName(b.st))) : [];
   const restHtml = rest.length ? `<div class="mt-rest"><div class="mt-sep kr" aria-hidden="true"><span class="mt-lab"><i class="mt-ic">${ICO.bed}</i>Non in turno</span></div>
-    <ul class="rest-l">${rest.map(x => { const [c, l, ic] = WHY[x.why]; return `<li><span class="nm">${esc(showName(x.st))}</span><em class="why ${c}">${ic}${l}</em></li>`; }).join("")}</ul></div>` : "";
+    <ul class="rest-l">${rest.map(x => `<li><span class="nm">${esc(showName(x.st))}</span><em class="why ${x.why.c}">${x.why.ic}${esc(x.why.l)}</em></li>`).join("")}</ul></div>` : "";
   const BKL = ["Con te", "Vi incrociate per poco", "Non vi incrociate"];
   const mtPick = known(d) && opts.length > 1 ? `<label class="mt-pick"><select data-mates-d="${d}" aria-label="Quale reparto vedere">${opts.map(o => `<option value="${esc(o.v)}" ${o.v === pick ? "selected" : ""}>${esc(o.l)}</option>`).join("")}</select></label>` : "";
   const wdays = [...Array(7)].map((_, i) => addDays(P.week, i));
@@ -4045,7 +4057,7 @@ function renderMe(){
     <section class="card">
       <div class="me-nav"><button class="icon-btn" data-act="me-wprev" aria-label="Settimana prima">${ICO.back}</button><h2>Settimana ${esc(wLabel)}</h2><button class="icon-btn flip" data-act="me-wnext" aria-label="Settimana dopo">${ICO.back}</button></div>
       <div class="strip">${wdays.map(x => { const bl = sorted(myRows(x, id)), dt = pd(x), mm = paidMins(x, id), av = !bl.length && mm > 0; return `<button type="button" class="sd ${dCls(deptsOf(bl, id)[0] || dept)}${av ? " avis" : ""} ${x === t ? "today" : ""} ${P.browse && x === d && !isT ? "vw" : ""} ${!bl.length && !known(x) ? "unk" : ""}" data-act="me-day" data-d="${x}" aria-label="${esc(capitalize(dateLong(x)))}${bl.length ? ", " + bl.map(fmtR).join(" e ") : av ? ", donazione AVIS" : ""}" ${P.browse && x === d ? `aria-current="date"` : ""}><span class="dl">${GS[dt.getDay()].toUpperCase()}</span><span class="dn">${dt.getDate()}</span><span class="bar"><i style="height:${Math.round(mm / wMaxDay * 100)}%"></i></span><span class="hh">${av ? "AVIS" : mm ? hmShort(mm) : ""}</span></button>`; }).join("")}</div>
-      <ul class="daylist">${wdays.map(d0 => { const d = d0, bl = sorted(myRows(d, id)), dt = pd(d), oth = bl.some(b => blkDept(b, id) === "alt"); return `<li class="${d === t ? "is-today" : ""} ${P.browse && d === viewDay() && d !== t ? "is-view" : ""} ${bl.length || absOf(d, id) ? "" : "off"}" data-act="me-day" data-d="${d}"><span class="d">${GS[dt.getDay()]} ${dt.getDate()}</span><span class="h">${bl.length ? nbList(bl) + (oth ? `<small class="dl-dep">${esc(deptsLabel(bl, id))}</small>` : "") : absOf(d, id) === "AVIS" ? `<span class="dl-avis">${ICO.drop}Donazione AVIS</span>` : known(d) ? "Riposo" : "Non ancora caricato"}</span><span class="t">${bl.length ? hm(mins(bl)) : absOf(d, id) === "AVIS" ? hm(AVIS_MIN) : ""}</span></li>`; }).join("")}</ul>
+      <ul class="daylist">${wdays.map(d0 => { const d = d0, bl = sorted(myRows(d, id)), dt = pd(d), oth = bl.some(b => blkDept(b, id) === "alt"); return `<li class="${d === t ? "is-today" : ""} ${P.browse && d === viewDay() && d !== t ? "is-view" : ""} ${bl.length || absOf(d, id) ? "" : "off"}" data-act="me-day" data-d="${d}"><span class="d">${GS[dt.getDay()]} ${dt.getDate()}</span><span class="h">${bl.length ? nbList(bl) + (oth ? `<small class="dl-dep">${esc(deptsLabel(bl, id))}</small>` : "") : absOf(d, id) === "AVIS" ? `<span class="dl-avis">${ICO.drop}Donazione AVIS</span>` : known(d) ? esc(absOf(d, id) ? absName(absOf(d, id)) : "Riposo") : "Non ancora caricato"}</span><span class="t">${bl.length ? hm(mins(bl)) : absOf(d, id) === "AVIS" ? hm(AVIS_MIN) : ""}</span></li>`; }).join("")}</ul>
       <div class="wtot"><svg class="ring" viewBox="0 0 84 84" aria-hidden="true"><circle class="bgc" cx="42" cy="42" r="${R}"/><circle class="fg" cx="42" cy="42" r="${R}" style="stroke:var(--${col(dept)})" stroke-dasharray="${(C * frac).toFixed(1)} ${C.toFixed(1)}"/></svg>
         <div><span>Monte ore della settimana</span><b>${hm(wTot)}</b><span>${esc(cmp)}</span></div></div>
       ${P.week !== monday(t) && !P.browse ? `<button class="btn ghost" data-act="me-wtoday">Torna a questa settimana</button>` : ""}
