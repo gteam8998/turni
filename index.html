@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
 <title>Turni Arese</title>
-<!-- versione 2026.11.26-81 -->
+<!-- versione 2026.11.26-82 -->
 <meta name="description" content="Turni e agenda del reparto Telefonia &amp; Service, MediaWorld Arese">
 <meta name="theme-color" content="#FFFFFF" media="(prefers-color-scheme: light)">
 <meta name="theme-color" content="#0B0F17" media="(prefers-color-scheme: dark)">
@@ -1532,7 +1532,7 @@ function qrSvg(text, color = "#0B1220", bg = "#FFFFFF") {
 if (typeof module !== "undefined") module.exports = { QRGEN, qrSvg };
 
 </script>
-<script src="firebase-config.js?v=2026.11.26-81"></script>
+<script src="firebase-config.js?v=2026.11.26-82"></script>
 <script>
 (() => {
 "use strict";
@@ -3962,8 +3962,8 @@ function matesOptions(id, d, dayBl, people){
   }
   return opts;
 }
-/* prova delle novità della scheda «In turno» (gruppi a pillola piena, «Non in turno»): per ora solo il responsabile */
-const NEWMATES = () => isAdmin();
+/* novità della scheda «In turno» (gruppi a pillola piena, ore insieme, «Non in turno»): attive per tutti */
+const NEWMATES = () => true;
 /* chi non lavora quel giorno sta nella scelta del menu se è il suo reparto di solito */
 function optHas(o, sid){
   if (!o) return false; const v = o.v, ug = usualGroup(sid);
