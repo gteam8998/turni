@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
 <title>Turni Arese</title>
-<!-- versione 2026.11.24-78 -->
+<!-- versione 2026.11.26-79 -->
 <meta name="description" content="Turni e agenda del reparto Telefonia &amp; Service, MediaWorld Arese">
 <meta name="theme-color" content="#FFFFFF" media="(prefers-color-scheme: light)">
 <meta name="theme-color" content="#0B0F17" media="(prefers-color-scheme: dark)">
@@ -880,9 +880,38 @@ html,body{background:var(--bg);transition:background-color .2s}
 .b-v{text-align:right;font-weight:700;font-family:var(--f-num)}
 .mt-pick{display:block;min-width:0;margin:-2px 0 12px}
 /* separatori nell'elenco dei colleghi in turno: con te, per poco, non vi incrociate */
-.mates li.mt-sep{display:flex;align-items:center;gap:8px;padding:10px 0 2px;border:0;font-size:12px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:var(--ok);min-height:0;background:none}
-.mates li.mt-sep::after{content:"";flex:1;height:1px;background:var(--line-2)}
-.mates li.mt-sep.k1{color:var(--ink-2)}.mates li.mt-sep.k2{color:var(--ink-3)}
+/* gruppi dei colleghi in turno: colore e icona propri (due cerchi che si sovrappongono tanto, poco, niente) */
+:root{--k0:#15803D;--k1:#C2410C;--k2:#6D28D9}
+:root[data-ui="dark"]{--k0:#4ADE80;--k1:#FB923C;--k2:#B69CFF}
+.mt-sep.k0,.mates li.b0{--kc:var(--k0)} .mt-sep.k1,.mates li.b1{--kc:var(--k1)} .mt-sep.k2,.mates li.b2{--kc:var(--k2)} .mt-sep.kr{--kc:var(--ink-3)}
+.mates li.mt-sep,.mt-sep{display:flex;align-items:center;gap:8px;padding:12px 0 4px;border:0;font-size:12px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:var(--kc);min-height:0;background:none}
+.mt-sep::after{content:"";flex:1;height:1px;background:var(--line-2)}
+.mt-lab{display:inline-flex;align-items:center;gap:6px;white-space:nowrap}
+.mt-ic{display:inline-grid;font-style:normal}.mt-ic svg{width:20px;height:20px}
+/* senza prova attiva: come prima (scritta semplice, niente icona) */
+:root:not([data-sepv]) .mt-ic{display:none}
+:root:not([data-sepv]) .mt-sep.k0{--kc:var(--ok)} :root:not([data-sepv]) .mt-sep.k1{--kc:var(--ink-2)} :root:not([data-sepv]) .mt-sep.k2{--kc:var(--ink-3)}
+:root:not([data-sepv]) .mates .w0{color:var(--ok);font-weight:inherit} :root:not([data-sepv]) .mates .w1{color:inherit;font-weight:inherit}
+/* A: pillola colorata chiara */
+:root[data-sepv="a"] .mt-sep .mt-lab{padding:5px 11px 5px 7px;border-radius:999px;background:color-mix(in srgb,var(--kc) 14%,transparent)}
+/* B: scritta colorata e barra laterale sulle righe del gruppo */
+:root[data-sepv="b"] .mates li:is(.b0,.b1,.b2){box-shadow:inset 3px 0 0 var(--kc);padding-left:12px}
+:root[data-sepv="b"] .mt-sep .mt-ic svg{width:22px;height:22px}
+/* C: pillola piena */
+:root[data-sepv="c"] .mt-sep .mt-lab{padding:5px 11px 5px 7px;border-radius:999px;background:var(--kc);color:#fff}
+:root[data-sepv="c"][data-ui="dark"] .mt-sep .mt-lab{color:#0B1220}
+:root[data-sepv="c"] .mt-sep.kr .mt-lab{background:color-mix(in srgb,var(--kc) 16%,transparent);color:var(--kc)}
+.mates .w0{color:var(--k0);font-weight:800}.mates .w1{color:var(--k1);font-weight:800}
+/* non in turno: nome e motivo */
+.mt-rest{margin-top:6px}
+.rest-l{list-style:none;margin:6px 0 0;padding:0;display:flex;flex-wrap:wrap;gap:8px}
+.rest-l li{display:inline-flex;align-items:center;gap:8px;padding:7px 10px 7px 12px;border-radius:999px;border:1px solid var(--line);background:var(--bg-2,var(--bg));font-size:14px;font-weight:700;color:var(--ink-2)}
+.rest-l .why{display:inline-flex;align-items:center;gap:4px;font:800 11px/1 var(--f-body);font-style:normal;letter-spacing:.05em;text-transform:uppercase;padding:4px 7px;border-radius:999px}
+.rest-l .why svg{width:12px;height:12px}
+.rest-l .why.rip{color:var(--ink-3);background:color-mix(in srgb,var(--ink-3) 13%,transparent)}
+.rest-l .why.fer{color:#0E7490;background:color-mix(in srgb,#0E7490 13%,transparent)}
+.rest-l .why.avis{color:#C8283A;background:color-mix(in srgb,#C8283A 12%,transparent)}
+:root[data-ui="dark"] .rest-l .why.fer{color:#5EE0F0}:root[data-ui="dark"] .rest-l .why.avis{color:#FF7A86}
 .mates li.mt-sep:first-child{padding-top:0}
 .mates li.mt-sep + li{border-top:0}
 
@@ -1499,7 +1528,7 @@ function qrSvg(text, color = "#0B1220", bg = "#FFFFFF") {
 if (typeof module !== "undefined") module.exports = { QRGEN, qrSvg };
 
 </script>
-<script src="firebase-config.js?v=2026.11.24-78"></script>
+<script src="firebase-config.js?v=2026.11.26-79"></script>
 <script>
 (() => {
 "use strict";
@@ -2426,7 +2455,8 @@ function parseClaude(t){
     if (!off(f[3])) f[3].split(/[,;]/).forEach(x => { const m = x.match(rng); if (m){ da.push(m[1]); a.push(m[2]); } });
     (f[4] || "").split(/[,;]/).forEach(x => { const m = x.trim().match(new RegExp(`^([A-Za-zÀ-ú]+)\\s+${tm}\\s*[-–—]\\s*${tm}`)); if (m) celle.push([m[1].toUpperCase(), m[2], m[3]]); });
     const isAvis = avis(f[3]) || /^avis$/i.test(String(f[4] || "").trim()) || celle.some(c => c[0] === "AVIS");
-    day.rows.push({nome: f[0], cognome: f[1], rep: (f[2] || "").toUpperCase(), da: da.length && !isAvis ? da : ["R"], a: a.length && !isAvis ? a : ["R"], celle: isAvis ? [] : celle, ...(isAvis ? {abs: "AVIS"} : {})});
+    const isF = !isAvis && /^(f|ferie)$/i.test(String(f[3] || "").trim());
+    day.rows.push({nome: f[0], cognome: f[1], rep: (f[2] || "").toUpperCase(), da: da.length && !isAvis ? da : ["R"], a: a.length && !isAvis ? a : ["R"], celle: isAvis ? [] : celle, ...(isAvis ? {abs: "AVIS"} : isF ? {abs: "F"} : {})});
   }
   out.days = out.days.filter(d => d.rows.length);
   return out;
@@ -2693,7 +2723,7 @@ function ingest(results){
         const nome = String(row.nome || "").trim(), cognome = String(row.cognome || "").trim();
         const full = titleCase([nome, cognome].filter(Boolean).join(" ")), k = norm(full); if (!k) return;
         /* AVIS: niente fasce, si segna a parte (giornata pagata, non in turno) */
-        if (row.abs === "AVIS"){ g.abs.set(k, {full, match: matchStaff(full, true)}); return; }
+        if (row.abs === "AVIS" || row.abs === "F"){ g.abs.set(k, {full, match: matchStaff(full, true), abs: row.abs}); return; }
         const first = titleCase((nome || cognome).split(/\s+/)[0]);
         const segs = (Array.isArray(row.celle) ? row.celle : []).map(c => Array.isArray(c) ? {sig: SIGLA(c[0]), s: fixTime(c[1]), e: fixTime(c[2])} : null)
           .filter(x => x && x.sig && x.sig !== "R" && x.s && x.e && toMin(x.e) > toMin(x.s));
@@ -2827,7 +2857,8 @@ function reviewHtml(){
       <p class="${g.detected ? "okline" : "warnline"}">${g.detected ? `Data letta dal foglio: <b>${esc(dateLong(g.date).toLowerCase())}</b>` : "Non ho trovato la data sul foglio: controllala qui sopra."}</p>
       <div class="plist">${g.people.map(p => personHtml(p, gi)).join("")}</div>
       ${g.excluded.length ? `<p class="excl"><b>Non salvati:</b> ${g.excluded.map(esc).join(", ")}</p>` : ""}
-      ${(g.abs || []).length ? `<p class="excl"><b>AVIS (donazione, giornata pagata da ${hm(AVIS_MIN)}):</b> ${g.abs.map(a => esc(a.full)).join(", ")}</p>` : ""}
+      ${(g.abs || []).filter(a => a.abs !== "F").length ? `<p class="excl"><b>AVIS (donazione, giornata pagata da ${hm(AVIS_MIN)}):</b> ${g.abs.filter(a => a.abs !== "F").map(a => esc(a.full)).join(", ")}</p>` : ""}
+      ${(g.abs || []).filter(a => a.abs === "F").length ? `<p class="excl"><b>Ferie:</b> ${g.abs.filter(a => a.abs === "F").map(a => esc(a.full)).join(", ")}</p>` : ""}
       ${g.archive && g.archive.length ? `<p class="excl"><b>Altri reparti, messi da parte (${g.archive.length}):</b> ${g.archive.map(a => `${esc(a.first)} (${esc(a.sig || "R")})`).join(", ")}. Non compaiono finché non li aggiungi in elenco: allora prendono da soli questi turni.</p>` : ""}</div></details>`;
   });
   const nInc = U.groups.reduce((n, g) => n + g.people.filter(p => p.include).length, 0);
@@ -2922,7 +2953,7 @@ async function saveUpload(btn){
     const perExt = {}, perAbs = {};
     U.groups.forEach(g => (g.archive || []).forEach(a => { (perExt[g.date] = perExt[g.date] || {})[slugOf(a.full)] = {n: a.full, bl: a.bl}; }));
     U.groups.forEach(g => (g.abs || new Map()).forEach(a => { perAbs[g.date] = perAbs[g.date] || {};
-      if (a.match) perAbs[g.date][a.match] = "AVIS"; else (perExt[g.date] = perExt[g.date] || {})[slugOf(a.full)] = {n: a.full, bl: [], abs: "AVIS"}; }));
+      if (a.match) perAbs[g.date][a.match] = a.abs || "AVIS"; else (perExt[g.date] = perExt[g.date] || {})[slugOf(a.full)] = {n: a.full, bl: [], abs: a.abs || "AVIS"}; }));
     const dates = Object.keys(perDate).sort(), all = [...new Set([...dates, ...Object.keys(perExt)])].sort();
     for (const [i, d] of all.entries()){
       if (all.length > 3) btn.textContent = `Salvo… ${i + 1} di ${all.length}`;
@@ -3112,6 +3143,12 @@ const P = {week: monday(todayStr()), month: todayStr().slice(0, 7), shifts: {}, 
 const THEME_KEY = "ui-mode";
 const sv = p => `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${p}</svg>`;
 const ICO = {
+  ovFull: `<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="9.3" cy="12" r="6.2" fill="currentColor" fill-opacity=".28" stroke="currentColor" stroke-width="2"/><circle cx="14.7" cy="12" r="6.2" fill="currentColor" fill-opacity=".28" stroke="currentColor" stroke-width="2"/></svg>`,
+  ovSome: `<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="6.9" cy="12" r="5.4" fill="currentColor" fill-opacity=".28" stroke="currentColor" stroke-width="2"/><circle cx="17.1" cy="12" r="5.4" fill="currentColor" fill-opacity=".28" stroke="currentColor" stroke-width="2"/></svg>`,
+  ovNone: `<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="5.6" cy="12" r="4.4" fill="currentColor" fill-opacity=".28" stroke="currentColor" stroke-width="2"/><circle cx="18.4" cy="12" r="4.4" fill="currentColor" fill-opacity=".28" stroke="currentColor" stroke-width="2"/></svg>`,
+  moon: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 14.5A8 8 0 1 1 9.5 4a6.5 6.5 0 0 0 10.5 10.5z"/></svg>`,
+  palm: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3.5" y="7.5" width="17" height="12" rx="2.5"/><path d="M9 7.5V5.5A1.5 1.5 0 0 1 10.5 4h3A1.5 1.5 0 0 1 15 5.5v2"/><path d="M3.5 12.5h17"/></svg>`,
+  bed: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 18V6"/><path d="M3 14h18v4"/><path d="M21 14v-2.5A2.5 2.5 0 0 0 18.5 9H11v5"/><circle cx="7" cy="11" r="1.8"/></svg>`,
   drop: `<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2.6c.4 0 .7.2.9.5 1.6 2.4 6.1 8.3 6.1 12a7 7 0 0 1-14 0c0-3.7 4.5-9.6 6.1-12 .2-.3.5-.5.9-.5z"/></svg>`,
   me: sv(`<circle cx="12" cy="8" r="4"/><path d="M4 21c1.2-4.2 4.3-6.5 8-6.5s6.8 2.3 8 6.5"/>`),
   cal: sv(`<rect x="3" y="5" width="18" height="16" rx="2.5"/><path d="M3 10h18M8 3v4M16 3v4"/>`),
@@ -3915,6 +3952,16 @@ function matesOptions(id, d, dayBl, people){
   }
   return opts;
 }
+/* prova delle novità della scheda «In turno» (gruppi a pillola piena, «Non in turno»): per ora solo il responsabile */
+const NEWMATES = () => isAdmin();
+/* chi non lavora quel giorno sta nella scelta del menu se è il suo reparto di solito */
+function optHas(o, sid){
+  if (!o) return false; const v = o.v, ug = usualGroup(sid);
+  if (v === "tutti") return true;
+  if (v.startsWith("g:")) return v.slice(2).split("+").includes(ug);
+  if (v.startsWith("s:")){ const k = v.slice(2); return k === "tel" || k === "srv" ? ug === "TS" && usual(sid) === k : sigKey(S.usualAlt && S.usualAlt[sid]) === k; }
+  return false;
+}
 /* chi lavora quel giorno: i balordi in elenco e quelli del foglio messi da parte (non hanno l'accesso né un codice) */
 function matesPeople(id, d){
   const doc = P.shifts[d] || S.shifts[d] || {}, rows = doc.rows || {}, ext = doc.ext || {}, out = [], has = new Set(Object.keys(rows));
@@ -3956,6 +4003,11 @@ function renderMe(){
     .sort((a, b) => a.bk - b.bk || (a.bk === 0 ? Math.round(b.ov / 30) - Math.round(a.ov / 30) || Math.abs(toMin(a.bl[0].s) - myS) - Math.abs(toMin(b.bl[0].s) - myS) : 0)
       || (a.bk === 1 ? b.ov - a.ov : 0) || toMin(a.bl[0].s) - toMin(b.bl[0].s) || showName(a.st).localeCompare(showName(b.st)));
   const bkN = new Set(mates.map(x => x.bk)).size;
+  const WHY = {AVIS: ["avis", "AVIS", ICO.drop], F: ["fer", "Ferie", ICO.palm], R: ["rip", "Riposo", ICO.bed]};
+  const rest = NEWMATES() && known(d) ? (S.staff || []).filter(o => o.id !== id && !o.hide && !myRows(d, o.id).length && optHas(pickO, o.id))
+    .map(o => ({st: o, why: WHY[absOf(d, o.id)] ? absOf(d, o.id) : "R"})).sort((a, b) => "AVIS F R".indexOf(a.why) - "AVIS F R".indexOf(b.why) || showName(a.st).localeCompare(showName(b.st))) : [];
+  const restHtml = rest.length ? `<div class="mt-rest"><div class="mt-sep kr" aria-hidden="true"><span class="mt-lab"><i class="mt-ic">${ICO.bed}</i>Non in turno</span></div>
+    <ul class="rest-l">${rest.map(x => { const [c, l, ic] = WHY[x.why]; return `<li><span class="nm">${esc(showName(x.st))}</span><em class="why ${c}">${ic}${l}</em></li>`; }).join("")}</ul></div>` : "";
   const BKL = ["Con te", "Vi incrociate per poco", "Non vi incrociate"];
   const mtPick = known(d) && opts.length > 1 ? `<label class="mt-pick"><select data-mates-d="${d}" aria-label="Quale reparto vedere">${opts.map(o => `<option value="${esc(o.v)}" ${o.v === pick ? "selected" : ""}>${esc(o.l)}</option>`).join("")}</select></label>` : "";
   const wdays = [...Array(7)].map((_, i) => addDays(P.week, i));
@@ -3974,8 +4026,8 @@ function renderMe(){
   const cmp = !contr ? "Puoi impostare le ore da contratto nelle impostazioni" : wTot === contr * 60 ? `In linea con il contratto (${contr} h)` : wTot > contr * 60 ? `${hm(wTot - contr * 60)} in più del contratto (${contr} h)` : `${hm(contr * 60 - wTot)} in meno del contratto (${contr} h)`;
   const col = d => d === "alt" ? "ink-3" : d;
   const matesTitle = isT ? "In turno oggi" : `In turno ${relShort(d) === "Domani" || relShort(d) === "Ieri" ? relShort(d).toLowerCase() : dayShort(d).toLowerCase()}`;
-  const matesCard = mates.length || !isT || mtPick ? `<section class="card mates-c${isT ? "" : " silver"}${P.anim ? " in-" + P.anim : ""}"><h2>${esc(matesTitle)}${mates.length ? `<small>${mates.length}</small>` : ""}</h2>${mtPick}${mates.length ? `<ul class="mates">${mates.map((x, k) => { const sep = bkN > 1 && (k === 0 || mates[k - 1].bk !== x.bk) ? `<li class="mt-sep${x.bk ? " k" + x.bk : ""}" aria-hidden="true">${BKL[x.bk]}</li>` : ""; const w = dayBl.some(a => x.bl.some(b => { const ga = blkGroup(a, id), gb = blkGroup(b, x.st.id); return ga !== "NEUTRO" && (ga === gb || ga === "REGIA" || gb === "REGIA") && toMin(a.s) < toMin(b.e) && toMin(b.s) < toMin(a.e); })); return `${sep}<li>${S.avatars[x.st.id] ? `<button type="button" class="av me-av ${dCls(deptsOf(x.bl, x.st.id)[0])}" data-act="av-zoom" data-sid="${esc(x.st.id)}" aria-label="Guarda la foto di ${esc(showName(x.st))}">${avIn(x.st.id, showName(x.st))}</button>` : `<span class="av ${dCls(deptsOf(x.bl, x.st.id)[0])}">${avIn(x.st.id, showName(x.st))}</span>`}<b>${esc(showName(x.st))}</b><span class="num">${fasceNb(x.bl)}</span><small style="color:var(--ink-3)">${esc(deptsLabel(x.bl, x.st.id))}${w && x.bk === 0 ? ` · <span style="color:var(--ok)">con te</span>` : x.bk === 1 && dayBl.length ? ` · ${hm(x.ov)} insieme` : ""}</small></li>`; }).join("")}</ul>`
-      : `<p class="mut">${known(d) ? `${pickO.e || `Nessun altro collega ${pickO.n ? "in " + esc(pickO.n) + " " : ""}`.trim()} ${isT ? "oggi" : "quel giorno"}.` : "I turni di quel giorno non sono ancora stati caricati."}</p>`}</section>` : "";
+  const matesCard = mates.length || !isT || mtPick || rest.length ? `<section class="card mates-c${isT ? "" : " silver"}${P.anim ? " in-" + P.anim : ""}"><h2>${esc(matesTitle)}${mates.length ? `<small>${mates.length}</small>` : ""}</h2>${mtPick}${mates.length ? `<ul class="mates">${mates.map((x, k) => { const sep = bkN > 1 && (k === 0 || mates[k - 1].bk !== x.bk) ? `<li class="mt-sep k${x.bk}" aria-hidden="true"><span class="mt-lab"><i class="mt-ic">${[ICO.ovFull, ICO.ovSome, ICO.ovNone][x.bk]}</i>${BKL[x.bk]}</span></li>` : ""; const w = dayBl.some(a => x.bl.some(b => { const ga = blkGroup(a, id), gb = blkGroup(b, x.st.id); return ga !== "NEUTRO" && (ga === gb || ga === "REGIA" || gb === "REGIA") && toMin(a.s) < toMin(b.e) && toMin(b.s) < toMin(a.e); })); return `${sep}<li class="${bkN > 1 ? "b" + x.bk : ""}">${S.avatars[x.st.id] ? `<button type="button" class="av me-av ${dCls(deptsOf(x.bl, x.st.id)[0])}" data-act="av-zoom" data-sid="${esc(x.st.id)}" aria-label="Guarda la foto di ${esc(showName(x.st))}">${avIn(x.st.id, showName(x.st))}</button>` : `<span class="av ${dCls(deptsOf(x.bl, x.st.id)[0])}">${avIn(x.st.id, showName(x.st))}</span>`}<b>${esc(showName(x.st))}</b><span class="num">${fasceNb(x.bl)}</span><small style="color:var(--ink-3)">${esc(deptsLabel(x.bl, x.st.id))}${w && x.bk === 0 ? ` · <span class="w0">con te</span>` : x.bk === 1 && dayBl.length ? ` · <span class="w1">${hm(x.ov)} insieme</span>` : ""}</small></li>`; }).join("")}</ul>`
+      : `<p class="mut">${known(d) ? `${pickO.e || `Nessun altro collega ${pickO.n ? "in " + esc(pickO.n) + " " : ""}`.trim()} ${isT ? "oggi" : "quel giorno"}.` : "I turni di quel giorno non sono ancora stati caricati."}</p>`}${restHtml}</section>` : "";
   const fabWas = !!el.querySelector(".today-fab");
   el.innerHTML = `<div class="ph${P.browse ? " browsing" : ""}">
     <div class="ph-top">${isAdmin() ? `<button class="btn back ph-back" data-act="nav" data-to="agenda">${ICO.back}Agenda</button>` : ""}<span class="ph-date">${esc(capitalize(dateLong(t)))}</span>${msgBtn()}${gearBtn()}</div>
@@ -4503,6 +4555,7 @@ function startSession(u, data){
   S.canWrite = isAdmin() || isBanco();   // agenda: appuntamenti e note
   S.canShift = isAdmin();                // turni: solo il responsabile (i PC del negozio li vedono e basta)
   document.body.dataset.role = SES.member.role;
+  if (NEWMATES()) document.documentElement.dataset.sepv = "c"; else delete document.documentElement.dataset.sepv;
   startData();
   if (SES.memberUnsub) SES.memberUnsub();
   SES.memberUnsub = S.db.doc("members/" + u.uid).onSnapshot(s => {
