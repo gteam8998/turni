@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
 <title>Turni Arese</title>
-<!-- versione 2026.11.26-80 -->
+<!-- versione 2026.11.26-81 -->
 <meta name="description" content="Turni e agenda del reparto Telefonia &amp; Service, MediaWorld Arese">
 <meta name="theme-color" content="#FFFFFF" media="(prefers-color-scheme: light)">
 <meta name="theme-color" content="#0B0F17" media="(prefers-color-scheme: dark)">
@@ -881,8 +881,8 @@ html,body{background:var(--bg);transition:background-color .2s}
 .mt-pick{display:block;min-width:0;margin:-2px 0 12px}
 /* separatori nell'elenco dei colleghi in turno: con te, per poco, non vi incrociate */
 /* gruppi dei colleghi in turno: colore e icona propri (due cerchi che si sovrappongono tanto, poco, niente) */
-:root{--k0:#15803D;--k1:#C2410C;--k2:#6D28D9}
-:root[data-ui="dark"]{--k0:#4ADE80;--k1:#FB923C;--k2:#B69CFF}
+:root{--k0:#15803D;--k1:#D97706;--k2:#E0483E;--kt1:#2B1700}   /* con te verde, per poco ambra, non vi incrociate corallo */
+:root[data-ui="dark"]{--k0:#4ADE80;--k1:#FBBF24;--k2:#FF7A70}
 .mt-sep.k0,.mates li.b0{--kc:var(--k0)} .mt-sep.k1,.mates li.b1{--kc:var(--k1)} .mt-sep.k2,.mates li.b2{--kc:var(--k2)} .mt-sep.kr{--kc:var(--ink-3)}
 .mates li.mt-sep,.mt-sep{display:flex;align-items:center;gap:8px;padding:12px 0 4px;border:0;font-size:12px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:var(--kc);min-height:0;background:none}
 .mt-sep::after{content:"";flex:1;height:1px;background:var(--line-2)}
@@ -898,8 +898,9 @@ html,body{background:var(--bg);transition:background-color .2s}
 :root[data-sepv="b"] .mates li:is(.b0,.b1,.b2){box-shadow:inset 3px 0 0 var(--kc);padding-left:12px}
 :root[data-sepv="b"] .mt-sep .mt-ic svg{width:22px;height:22px}
 /* C: pillola piena */
-:root[data-sepv="c"] .mt-sep .mt-lab{padding:5px 11px 5px 7px;border-radius:999px;background:var(--kc);color:#fff}
+:root[data-sepv="c"] .mt-sep .mt-lab{padding:5px 11px 5px 7px;border-radius:999px;background:var(--kc);color:var(--kt,#fff)}
 :root[data-sepv="c"][data-ui="dark"] .mt-sep .mt-lab{color:#0B1220}
+.mt-sep.k0{--kt:var(--kt0,#fff)} .mt-sep.k1{--kt:var(--kt1,#fff)} .mt-sep.k2{--kt:var(--kt2,#fff)}
 :root[data-sepv="c"] .mt-sep.kr .mt-lab{background:color-mix(in srgb,var(--kc) 16%,transparent);color:var(--kc)}
 .mates .w0{color:var(--k0);font-weight:800}.mates .w1{color:var(--k1);font-weight:800}
 /* non in turno: nome e motivo */
@@ -1531,7 +1532,7 @@ function qrSvg(text, color = "#0B1220", bg = "#FFFFFF") {
 if (typeof module !== "undefined") module.exports = { QRGEN, qrSvg };
 
 </script>
-<script src="firebase-config.js?v=2026.11.26-80"></script>
+<script src="firebase-config.js?v=2026.11.26-81"></script>
 <script>
 (() => {
 "use strict";
@@ -4038,7 +4039,7 @@ function renderMe(){
   const cmp = !contr ? "Puoi impostare le ore da contratto nelle impostazioni" : wTot === contr * 60 ? `In linea con il contratto (${contr} h)` : wTot > contr * 60 ? `${hm(wTot - contr * 60)} in più del contratto (${contr} h)` : `${hm(contr * 60 - wTot)} in meno del contratto (${contr} h)`;
   const col = d => d === "alt" ? "ink-3" : d;
   const matesTitle = isT ? "In turno oggi" : `In turno ${relShort(d) === "Domani" || relShort(d) === "Ieri" ? relShort(d).toLowerCase() : dayShort(d).toLowerCase()}`;
-  const matesCard = mates.length || !isT || mtPick || rest.length ? `<section class="card mates-c${isT ? "" : " silver"}${P.anim ? " in-" + P.anim : ""}"><h2>${esc(matesTitle)}${mates.length ? `<small>${mates.length}</small>` : ""}</h2>${mtPick}${mates.length ? `<ul class="mates">${mates.map((x, k) => { const sep = bkN > 1 && (k === 0 || mates[k - 1].bk !== x.bk) ? `<li class="mt-sep k${x.bk}" aria-hidden="true"><span class="mt-lab"><i class="mt-ic">${[ICO.ovFull, ICO.ovSome, ICO.ovNone][x.bk]}</i>${BKL[x.bk]}</span></li>` : ""; const w = dayBl.some(a => x.bl.some(b => { const ga = blkGroup(a, id), gb = blkGroup(b, x.st.id); return ga !== "NEUTRO" && (ga === gb || ga === "REGIA" || gb === "REGIA") && toMin(a.s) < toMin(b.e) && toMin(b.s) < toMin(a.e); })); return `${sep}<li class="${bkN > 1 ? "b" + x.bk : ""}">${S.avatars[x.st.id] ? `<button type="button" class="av me-av ${dCls(deptsOf(x.bl, x.st.id)[0])}" data-act="av-zoom" data-sid="${esc(x.st.id)}" aria-label="Guarda la foto di ${esc(showName(x.st))}">${avIn(x.st.id, showName(x.st))}</button>` : `<span class="av ${dCls(deptsOf(x.bl, x.st.id)[0])}">${avIn(x.st.id, showName(x.st))}</span>`}<b>${esc(showName(x.st))}</b><span class="num">${fasceNb(x.bl)}</span><small style="color:var(--ink-3)">${esc(deptsLabel(x.bl, x.st.id))}${w && x.bk === 0 ? ` · <span class="w0">con te</span>` : x.bk === 1 && dayBl.length ? ` · <span class="w1">${hm(x.ov)} insieme</span>` : ""}</small></li>`; }).join("")}</ul>`
+  const matesCard = mates.length || !isT || mtPick || rest.length ? `<section class="card mates-c${isT ? "" : " silver"}${P.anim ? " in-" + P.anim : ""}"><h2>${esc(matesTitle)}${mates.length ? `<small>${mates.length}</small>` : ""}</h2>${mtPick}${mates.length ? `<ul class="mates">${mates.map((x, k) => { const sep = bkN > 1 && (k === 0 || mates[k - 1].bk !== x.bk) ? `<li class="mt-sep k${x.bk}" aria-hidden="true"><span class="mt-lab"><i class="mt-ic">${[ICO.ovFull, ICO.ovSome, ICO.ovNone][x.bk]}</i>${BKL[x.bk]}</span></li>` : ""; const w = dayBl.some(a => x.bl.some(b => { const ga = blkGroup(a, id), gb = blkGroup(b, x.st.id); return ga !== "NEUTRO" && (ga === gb || ga === "REGIA" || gb === "REGIA") && toMin(a.s) < toMin(b.e) && toMin(b.s) < toMin(a.e); })); return `${sep}<li class="${bkN > 1 ? "b" + x.bk : ""}">${S.avatars[x.st.id] ? `<button type="button" class="av me-av ${dCls(deptsOf(x.bl, x.st.id)[0])}" data-act="av-zoom" data-sid="${esc(x.st.id)}" aria-label="Guarda la foto di ${esc(showName(x.st))}">${avIn(x.st.id, showName(x.st))}</button>` : `<span class="av ${dCls(deptsOf(x.bl, x.st.id)[0])}">${avIn(x.st.id, showName(x.st))}</span>`}<b>${esc(showName(x.st))}</b><span class="num">${fasceNb(x.bl)}</span><small style="color:var(--ink-3)">${esc(deptsLabel(x.bl, x.st.id))}${NEWMATES() ? (x.ov > 0 && dayBl.length ? ` · <span class="w${x.bk}">${hm(x.ov)} insieme</span>` : "") : w && x.bk === 0 ? ` · <span class="w0">con te</span>` : x.bk === 1 && dayBl.length ? ` · <span class="w1">${hm(x.ov)} insieme</span>` : ""}</small></li>`; }).join("")}</ul>`
       : `<p class="mut">${known(d) ? `${pickO.e || `Nessun altro collega ${pickO.n ? "in " + esc(pickO.n) + " " : ""}`.trim()} ${isT ? "oggi" : "quel giorno"}.` : "I turni di quel giorno non sono ancora stati caricati."}</p>`}${restHtml}</section>` : "";
   const fabWas = !!el.querySelector(".today-fab");
   el.innerHTML = `<div class="ph${P.browse ? " browsing" : ""}">
