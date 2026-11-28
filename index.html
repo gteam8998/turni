@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
 <title>Turni Arese</title>
-<!-- versione 2026.11.26-83 -->
+<!-- versione 2026.11.28-84 -->
 <meta name="description" content="Turni e agenda del reparto Telefonia &amp; Service, MediaWorld Arese">
 <meta name="theme-color" content="#FFFFFF" media="(prefers-color-scheme: light)">
 <meta name="theme-color" content="#0B0F17" media="(prefers-color-scheme: dark)">
@@ -902,6 +902,31 @@ html,body{background:var(--bg);transition:background-color .2s}
 :root[data-sepv="c"][data-ui="dark"] .mt-sep .mt-lab{color:#0B1220}
 .mt-sep.k0{--kt:var(--kt0,#fff)} .mt-sep.k1{--kt:var(--kt1,#fff)} .mt-sep.k2{--kt:var(--kt2,#fff)}
 :root[data-sepv="c"] .mt-sep.kr .mt-lab{background:color-mix(in srgb,var(--kc) 16%,transparent);color:var(--kc)}
+/* compleanno: emoji sospese dietro ai contenuti (non coprono i testi), con un leggero ondeggiare */
+.bday-on body{background:transparent}   /* lo sfondo resta su html: le emoji (dietro ai contenuti) si vedono */
+#bdFx{position:fixed;inset:0;z-index:-1;pointer-events:none;overflow:hidden;
+  --gut:max(22px,calc((100vw - 560px) / 2));--es:clamp(15px,calc(var(--gut) * .62),34px)}
+#bdFx span{position:absolute;font-size:var(--es);line-height:1;filter:drop-shadow(0 3px 5px rgba(0,0,0,.15));animation:bd-float var(--t) ease-in-out calc(var(--d) * -1) infinite alternate}
+#bdFx span.l{left:calc((var(--gut) - var(--es)) / 2)} #bdFx span.r{right:calc((var(--gut) - var(--es)) / 2)}
+@keyframes bd-float{0%{transform:translateY(0) rotate(calc(var(--a) * -1))}50%{transform:translateY(-12px) rotate(0deg)}100%{transform:translateY(7px) rotate(var(--a))}}
+/* in alto, accanto alla data o al titolo: una fila di palloncini che ondeggia */
+.bday-on .ph-top::after{content:"🎈🎉🎂";margin-left:auto;font-size:20px;letter-spacing:4px;line-height:1;animation:bd-float 5s ease-in-out infinite alternate;--a:6deg;pointer-events:none}
+@media (prefers-reduced-motion:reduce){#bdFx span{animation:none}}
+/* compleanno: banner festoso con coriandoli che cadono piano */
+.bday-bn{position:relative;overflow:hidden;display:flex;align-items:center;gap:12px;margin:0 0 12px;padding:12px 14px;border-radius:20px;color:#2A1030;
+  background:linear-gradient(115deg,#FFE3EE 0%,#FFF1D6 50%,#E4F3FF 100%);box-shadow:0 10px 26px -16px rgba(200,40,110,.55),inset 0 0 0 1.5px rgba(255,92,138,.35)}
+:root[data-ui="dark"] .bday-bn{color:#FFF;background:linear-gradient(115deg,#5A1E45 0%,#5C3A12 55%,#173B63 100%);box-shadow:0 10px 26px -16px rgba(255,92,138,.6),inset 0 0 0 1.5px rgba(255,140,180,.35)}
+.bd-cake{font-size:30px;line-height:1;animation:bd-hop 2.4s ease-in-out infinite;transform-origin:50% 100%}
+.bd-av{width:40px;height:40px;flex:none;box-shadow:0 0 0 2.5px #FF5C8A,0 0 0 5px rgba(255,92,138,.25)}
+.bd-t{display:flex;flex-direction:column;min-width:0;position:relative}
+.bd-t small{font:800 11px/1.2 var(--f-body);letter-spacing:.07em;text-transform:uppercase;opacity:.75}
+.bd-t b{font:700 19px/1.2 var(--f-head);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.bd-e{margin-left:auto;font-size:26px;animation:bd-hop 2.4s ease-in-out .6s infinite;position:relative}
+.bd-conf{position:absolute;inset:0;pointer-events:none;overflow:hidden;border-radius:inherit}
+.bd-conf i{position:absolute;top:-10px;left:var(--x);width:6px;height:10px;border-radius:2px;background:var(--c);opacity:.85;transform:rotate(var(--r));animation:bd-fall 4.2s linear calc(var(--d) * -1) infinite}
+@keyframes bd-fall{0%{transform:translateY(-10px) rotate(var(--r))}100%{transform:translateY(110px) rotate(calc(var(--r) + 300deg))}}
+@keyframes bd-hop{0%,70%,100%{transform:translateY(0) rotate(0)}80%{transform:translateY(-5px) rotate(-6deg)}90%{transform:translateY(0) rotate(4deg)}}
+@media (prefers-reduced-motion:reduce){.bd-conf i,.bd-cake,.bd-e{animation:none}.bd-conf{display:none}}
 .mates .w0{color:var(--k0);font-weight:800}.mates .w1{color:var(--k1);font-weight:800}
 /* non in turno: nome e motivo */
 .mt-rest{margin-top:6px}
@@ -1532,7 +1557,7 @@ function qrSvg(text, color = "#0B1220", bg = "#FFFFFF") {
 if (typeof module !== "undefined") module.exports = { QRGEN, qrSvg };
 
 </script>
-<script src="firebase-config.js?v=2026.11.26-83"></script>
+<script src="firebase-config.js?v=2026.11.28-84"></script>
 <script>
 (() => {
 "use strict";
@@ -3835,6 +3860,30 @@ const hmShort = m => { const h = Math.floor(m / 60), r = m % 60; return r ? `${h
 /* orari con l'icona della fascia (mattino, pomeriggio, sera), come nella scheda del turno */
 const fasceNb = bl => bl.map(b => { const f = (fasceOf([b]) || {main: "mat"}).main; return `<span class="nb"><i class="fi ${f}" title="${fascia(f).lbl}" aria-label="${fascia(f).di}">${FICO[f]}</i>${fmtR(b)}</span>`; }).join(`<span class="sep">,</span> `);
 const nbList = bl => bl.map(b => `<span class="nb">${fmtR(b)}</span>`).join(`<span class="sep"> · </span>`);
+/* compleanni (mese-giorno): banner in testa alla «mia area»; per il festeggiato auguri al posto del saluto */
+const BDAYS = [{md: "11-28", name: "Leonardo Serafini"}];
+/* anteprima: per ora lo vede solo il responsabile, esattamente come lo vedrebbe il festeggiato */
+const BDAY_PREVIEW = true;
+const bdayMine = (b, id) => !!b && (BDAY_PREVIEW ? isAdmin() : !!b.st && b.st.id === id);
+function bdayToday(t){
+  const b = BDAYS.find(x => x.md === t.slice(5)); if (!b) return null;
+  const w = words(b.name), st = (S.staffAll || S.staff || []).find(o => { const fw = words(o.full || o.name); return w.every(x => fw.includes(x)); });
+  return {name: b.name, first: b.name.split(" ")[0], st};
+}
+const CONF = n => Array.from({length: n}, (_, i) => `<i style="--x:${(i * 37 + 11) % 100}%;--d:${(i * 0.61 % 4.2).toFixed(2)}s;--c:${["#FF5C8A", "#FFB020", "#3DD6A3", "#5B8CFF", "#C77DFF", "#FF7A45"][i % 6]};--r:${(i * 47) % 360}deg"></i>`).join("");
+function bdayFx(){
+  const b = SES.member && meId() ? bdayToday(todayStr()) : null, on = bdayMine(b, meId());
+  let fx = document.getElementById("bdFx");
+  if (!on){ if (fx) fx.remove(); document.documentElement.classList.remove("bday-on"); return; }
+  if (fx) return;
+  const E = ["🎈", "🎉", "🎂", "🎁", "✨", "🥳", "🎊", "🍰", "🎈", "✨", "🎁", "🎈", "🎉", "✨", "🎂", "🎊"];
+  fx = document.createElement("div"); fx.id = "bdFx"; fx.setAttribute("aria-hidden", "true");
+  /* metà a sinistra e metà a destra, nei margini fuori dalle schede: non coprono mai il testo */
+  fx.innerHTML = E.map((e, i) => { const r = i % 2, top = 6 + ((i >> 1) * 11.7 + r * 5.5) % 88;
+    return `<span class="${r ? "r" : "l"}" style="top:${top.toFixed(1)}%;--t:${(4.6 + i * 0.7 % 3.2).toFixed(1)}s;--d:${(i * 0.53 % 3).toFixed(2)}s;--a:${r ? 8 : -8}deg">${e}</span>`; }).join("");
+  document.body.appendChild(fx);
+  document.documentElement.classList.add("bday-on");
+}
 function greet(){ const h = new Date().getHours(); return h < 5 ? "Buonanotte" : h < 13 ? "Buongiorno" : h < 18 ? "Buon pomeriggio" : "Buonasera"; }
 function nextShift(id, from = todayStr()){ for (let i = 1; i <= 35; i++){ const d = addDays(from, i), bl = sorted(myRows(d, id)); if (bl.length) return {d, bl}; } return null; }
 /* giorno che sto guardando nella mia area: oggi, oppure quello scelto con le frecce */
@@ -4041,9 +4090,13 @@ function renderMe(){
   const matesTitle = isT ? "In turno oggi" : `In turno ${relShort(d) === "Domani" || relShort(d) === "Ieri" ? relShort(d).toLowerCase() : dayShort(d).toLowerCase()}`;
   const matesCard = mates.length || !isT || mtPick || rest.length ? `<section class="card mates-c${isT ? "" : " silver"}${P.anim ? " in-" + P.anim : ""}"><h2>${esc(matesTitle)}${mates.length ? `<small>${mates.length}</small>` : ""}</h2>${mtPick}${mates.length ? `<ul class="mates">${mates.map((x, k) => { const sep = bkN > 1 && (k === 0 || mates[k - 1].bk !== x.bk) ? `<li class="mt-sep k${x.bk}" aria-hidden="true"><span class="mt-lab"><i class="mt-ic">${[ICO.ovFull, ICO.ovSome, ICO.ovNone][x.bk]}</i>${BKL[x.bk]}</span></li>` : ""; const w = dayBl.some(a => x.bl.some(b => { const ga = blkGroup(a, id), gb = blkGroup(b, x.st.id); return ga !== "NEUTRO" && (ga === gb || ga === "REGIA" || gb === "REGIA") && toMin(a.s) < toMin(b.e) && toMin(b.s) < toMin(a.e); })); return `${sep}<li class="${bkN > 1 ? "b" + x.bk : ""}">${S.avatars[x.st.id] ? `<button type="button" class="av me-av ${dCls(deptsOf(x.bl, x.st.id)[0])}" data-act="av-zoom" data-sid="${esc(x.st.id)}" aria-label="Guarda la foto di ${esc(showName(x.st))}">${avIn(x.st.id, showName(x.st))}</button>` : `<span class="av ${dCls(deptsOf(x.bl, x.st.id)[0])}">${avIn(x.st.id, showName(x.st))}</span>`}<b>${esc(showName(x.st))}</b><span class="num">${fasceNb(x.bl)}</span><small style="color:var(--ink-3)">${esc(deptsLabel(x.bl, x.st.id))}${NEWMATES() ? (x.ov > 0 && dayBl.length ? ` · <span class="w${x.bk}">${hm(x.ov)} insieme</span>` : "") : w && x.bk === 0 ? ` · <span class="w0">con te</span>` : x.bk === 1 && dayBl.length ? ` · <span class="w1">${hm(x.ov)} insieme</span>` : ""}</small></li>`; }).join("")}</ul>`
       : `<p class="mut">${known(d) ? `${pickO.e || `Nessun altro collega ${pickO.n ? "in " + esc(pickO.n) + " " : ""}`.trim()} ${isT ? "oggi" : "quel giorno"}.` : "I turni di quel giorno non sono ancora stati caricati."}</p>`}${restHtml}</section>` : "";
+  try { bdayFx(); } catch {}
   const fabWas = !!el.querySelector(".today-fab");
   el.innerHTML = `<div class="ph${P.browse ? " browsing" : ""}">
     <div class="ph-top">${isAdmin() ? `<button class="btn back ph-back" data-act="nav" data-to="agenda">${ICO.back}Agenda</button>` : ""}<span class="ph-date">${esc(capitalize(dateLong(t)))}</span>${msgBtn()}${gearBtn()}</div>
+    ${(() => { const b = bdayToday(t); if (!bdayMine(b, id)) return ""; const mine = true;
+      return `<div class="bday-bn${mine ? " mine" : ""}" role="note"><span class="bd-conf" aria-hidden="true">${CONF(16)}</span>${!mine && b.st && S.avatars[b.st.id] ? `<span class="av bd-av">${avIn(b.st.id, b.name)}</span>` : `<span class="bd-cake" aria-hidden="true">🎂</span>`}
+        <span class="bd-t"><small>${mine ? "Oggi è il tuo compleanno" : "Oggi è il compleanno di"}</small><b>${mine ? `Tanti auguri, ${esc(b.first)}!` : esc(b.name)}</b></span><span class="bd-e" aria-hidden="true">🎉</span></div>`; })()}
     <header class="me-id">${S.avatars[id] ? `<button type="button" class="av me-av ${dCls(todayD[0] || usual(id))}" data-act="av-zoom" aria-label="Guarda la tua foto profilo">${avIn(id, st.name)}</button>` : `<span class="av ${dCls(todayD[0] || usual(id))}">${avIn(id, st.name)}</span>`}
       <div><small class="me-gr">${greet()}</small><h1>${esc(firstName(st))}</h1></div>${pill}</header>
     ${installCardHtml("me") || pushCardHtml("me")}
@@ -4633,6 +4686,7 @@ function route(){
   else if (h === "carica"){ if (U.step === "done") resetUpload(); renderUpload(); }
   else if (h === "agenda") render();
   renderTabbar();
+  try { bdayFx(); } catch {}
   if (changed) window.scrollTo(0, 0);
 }
 
