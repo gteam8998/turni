@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
 <title>Turni Arese</title>
-<!-- versione 2026.11.28-85 -->
+<!-- versione 2026.11.28-86 -->
 <meta name="description" content="Turni e agenda del reparto Telefonia &amp; Service, MediaWorld Arese">
 <meta name="theme-color" content="#FFFFFF" media="(prefers-color-scheme: light)">
 <meta name="theme-color" content="#0B0F17" media="(prefers-color-scheme: dark)">
@@ -1551,7 +1551,7 @@ function qrSvg(text, color = "#0B1220", bg = "#FFFFFF") {
 if (typeof module !== "undefined") module.exports = { QRGEN, qrSvg };
 
 </script>
-<script src="firebase-config.js?v=2026.11.28-85"></script>
+<script src="firebase-config.js?v=2026.11.28-86"></script>
 <script>
 (() => {
 "use strict";
@@ -3857,7 +3857,7 @@ const nbList = bl => bl.map(b => `<span class="nb">${fmtR(b)}</span>`).join(`<sp
 /* compleanni (mese-giorno): banner in testa alla «mia area»; per il festeggiato auguri al posto del saluto */
 const BDAYS = [{md: "11-28", name: "Leonardo Serafini"}];
 /* anteprima: per ora lo vede solo il responsabile, esattamente come lo vedrebbe il festeggiato */
-const BDAY_PREVIEW = true;
+const BDAY_PREVIEW = false;
 const bdayMine = (b, id) => !!b && (BDAY_PREVIEW ? isAdmin() : !!b.st && b.st.id === id);
 function bdayToday(t){
   const b = BDAYS.find(x => x.md === t.slice(5)); if (!b) return null;
